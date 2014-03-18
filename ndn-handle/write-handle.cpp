@@ -328,9 +328,9 @@ WriteHandle::onSegmentTimeoutControl(ProcessId processId, const Interest& intere
     return;
   }
   ProcessInfo& process = m_processes[processId];
-  RepoCommandResponse& response = process.response;
-  SegmentNo& nextSegment = process.nextSegment;
-  queue<SegmentNo>& nextSegmentQueue = process.nextSegmentQueue;
+  // RepoCommandResponse& response = process.response;
+  // SegmentNo& nextSegment = process.nextSegment;
+  // queue<SegmentNo>& nextSegmentQueue = process.nextSegmentQueue;
   map<SegmentNo, int>& retryCounts = process.retryCounts;
 
   SegmentNo timeoutSegment = interest.getName().get(-1).toSegment();

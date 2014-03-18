@@ -13,6 +13,7 @@
 #include "../storage/sqlite/sqlite-handle.hpp"
 #include "../ndn-handle/read-handle.hpp"
 #include "../ndn-handle/write-handle.hpp"
+#include "../ndn-handle/delete-handle.hpp"
 
 using namespace repo;
 
@@ -68,7 +69,8 @@ main(int argc, char** argv) {
   readHandle.listen(dataPrefix);
   WriteHandle writeHandle(face, sqliteHandle, keyChain, scheduler, validator);
   writeHandle.listen(repoPrefix);
-
+  DeleteHandle deleteHandle(face, sqliteHandle, keyChain, scheduler, validator);
+  deleteHandle.listen(repoPrefix);
   face.processEvents();
   return 0;
 }

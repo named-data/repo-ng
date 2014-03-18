@@ -11,12 +11,12 @@
 
 namespace repo {
 
-class ReadHandle : BaseHandle
+class ReadHandle : public BaseHandle
 {
 
 public:
-  ReadHandle(Face* face, StorageHandle* storageHandle)
-  : BaseHandle(face, storageHandle)
+  ReadHandle(Face& face, StorageHandle& storageHandle, KeyChain keyChain, Scheduler& scheduler)
+    : BaseHandle(face, storageHandle, keyChain, scheduler)
   {
   }
 
@@ -25,7 +25,7 @@ public:
 
 private:
   /**
-   * @brief Read the name from backend storage
+   * @brief Read data from backend storage
    */
   void
   onInterest(const Name& prefix, const Interest& interest);

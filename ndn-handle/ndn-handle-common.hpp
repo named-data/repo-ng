@@ -20,13 +20,12 @@
 #include <ndn-cpp-dev/face.hpp>
 #include <ndn-cpp-dev/security/key-chain.hpp>
 #include <ndn-cpp-dev/util/command-interest-validator.hpp>
+#include <ndn-cpp-dev/util/time.hpp>
+#include <ndn-cpp-dev/util/scheduler.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <map>
-
-#define RETRY_TIMEOUT 3
-#define DEFAULT_CREDIT 12
-#define NOEND_TIMEOUT 10000
+#include <algorithm>
 
 namespace repo {
 
@@ -37,8 +36,12 @@ using ndn::KeyChain;
 using ndn::Selectors;
 using ndn::bind;
 using ndn::CommandInterestValidator;
+using ndn::Scheduler;
 
 using boost::shared_ptr;
+
+typedef uint64_t ProcessId;
+typedef uint64_t SegmentNo;
 
 }
 

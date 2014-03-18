@@ -7,10 +7,12 @@
 #include <string>
 #include <iostream>
 #include <ndn-cpp-dev/face.hpp>
+#include <ndn-cpp-dev/util/command-interest-validator.hpp>
 
 #include "../storage/storage-handle.hpp"
 #include "../storage/sqlite/sqlite-handle.hpp"
 #include "../ndn-handle/read-handle.hpp"
+#include "../ndn-handle/write-handle.hpp"
 
 using namespace repo;
 
@@ -41,14 +43,32 @@ main(int argc, char** argv) {
       break;
     }
   }
-  SqliteHandle sqliteHandle(dbPath);
-  StorageHandle* handle = &sqliteHandle;
 
-  Face face;
-  ReadHandle readHandle(&face, handle);
   if (confPath.empty()) {
     confPath = "./repo.conf";
   }
+
+  Name dataPrefix("ndn:/example/data");
+  Name repoPrefix("ndn:/example/repo");
+  /// @todo read from configuration
+
+  SqliteHandle sqliteHandle(dbPath);
+
+  shared_ptr<boost::asio::io_service> io =
+    ndn::make_shared<boost::asio::io_service>();
+
+  Face face(io);
+  Scheduler scheduler(*io);
+
+  /// @todo specify trust model
+  CommandInterestValidator validator;
+  KeyChain keyChain;
+
+  ReadHandle readHandle(face, sqliteHandle, keyChain, scheduler);
+  readHandle.listen(dataPrefix);
+  WriteHandle writeHandle(face, sqliteHandle, keyChain, scheduler, validator);
+  writeHandle.listen(repoPrefix);
+
   face.processEvents();
   return 0;
 }

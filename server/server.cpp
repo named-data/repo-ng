@@ -4,80 +4,79 @@
  * See COPYING for copyright and distribution information.
  */
 
-#include <string>
-#include <iostream>
-#include <ndn-cpp-dev/face.hpp>
-#include <ndn-cpp-dev/util/command-interest-validator.hpp>
-
-#include "../storage/storage-handle.hpp"
-#include "../storage/sqlite/sqlite-handle.hpp"
-#include "../ndn-handle/read-handle.hpp"
-#include "../ndn-handle/write-handle.hpp"
-#include "../ndn-handle/tcp-bulk-insert-handle.hpp"
-#include "../ndn-handle/delete-handle.hpp"
+#include "config.hpp"
+#include "repo.hpp"
 
 using namespace repo;
 
 static const string ndnRepoUsageMessage =
-  "ndn-repo - NDNx Repository Daemon\n"
-  "-d: set database path\n"
+  /* argv[0] */ " - Next generation of NDN repository\n"
   "-h: show help message\n"
   "-c: set config file path\n"
   ;
 
+void
+terminate(boost::asio::io_service& ioService,
+          const boost::system::error_code& error,
+          int signalNo,
+          boost::asio::signal_set& signalSet)
+{
+  if (error)
+    return;
+
+  if (signalNo == SIGINT ||
+      signalNo == SIGTERM)
+    {
+      ioService.stop();
+      std::cout << "Caught signal '" << strsignal(signalNo) << "', exiting..." << std::endl;
+    }
+  else
+    {
+      /// \todo May be try to reload config file
+      signalSet.async_wait(bind(&terminate, boost::ref(ioService), _1, _2,
+                                boost::ref(signalSet)));
+    }
+}
+
 int
-main(int argc, char** argv) {
+main(int argc, char** argv)
+{
+  string configPath = DEFAULT_CONFIG_FILE;
   int opt;
-  string dbPath;
-  string confPath;
-  while ((opt = getopt(argc, argv, "d:hc:")) != -1) {
+  while ((opt = getopt(argc, argv, "hc:")) != -1) {
     switch (opt) {
-    case 'd':
-      dbPath = string(optarg);
-      break;
     case 'h':
-      std::cout << ndnRepoUsageMessage << std::endl;
+      std::cout << argv[0] << ndnRepoUsageMessage << std::endl;
       return 1;
     case 'c':
-      confPath = string(optarg);
+      configPath = string(optarg);
       break;
     default:
       break;
     }
   }
 
-  if (confPath.empty()) {
-    confPath = "./repo.conf";
+  try {
+    boost::asio::io_service ioService;
+    Repo repoInstance(ioService, parseConfig(configPath));
+
+    boost::asio::signal_set signalSet(ioService);
+    signalSet.add(SIGINT);
+    signalSet.add(SIGTERM);
+    signalSet.add(SIGHUP);
+    signalSet.add(SIGUSR1);
+    signalSet.add(SIGUSR2);
+    signalSet.async_wait(bind(&terminate, boost::ref(ioService), _1, _2,
+                              boost::ref(signalSet)));
+
+    repoInstance.enableListening();
+
+    ioService.run();
+  }
+  catch (const std::exception& e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+    return 2;
   }
 
-  Name dataPrefix("ndn:/");
-  Name repoPrefix("ndn:/example/repo");
-  /// @todo read from configuration
-
-  SqliteHandle sqliteHandle(dbPath);
-
-  shared_ptr<boost::asio::io_service> io =
-    ndn::make_shared<boost::asio::io_service>();
-
-  Face face(io);
-  Scheduler scheduler(*io);
-
-  /// @todo specify trust model
-  CommandInterestValidator validator;
-  KeyChain keyChain;
-
-  ReadHandle readHandle(face, sqliteHandle, keyChain, scheduler);
-  readHandle.listen(dataPrefix);
-
-  WriteHandle writeHandle(face, sqliteHandle, keyChain, scheduler, validator);
-  writeHandle.listen(repoPrefix);
-
-  DeleteHandle deleteHandle(face, sqliteHandle, keyChain, scheduler, validator);
-  deleteHandle.listen(repoPrefix);
-
-  TcpBulkInsertHandle tcpBulkInsertHandle(*io, sqliteHandle);
-  tcpBulkInsertHandle.listen("localhost", "7376");
-
-  face.processEvents();
   return 0;
 }

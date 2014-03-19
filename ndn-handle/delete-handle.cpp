@@ -88,7 +88,7 @@ DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, con
 void
 DeleteHandle::listen(const Name& prefix)
 {
-  getFace().setInterestFilter(prefix,
+  getFace().setInterestFilter(Name(prefix).append("delete"),
                               bind(&DeleteHandle::onInterest, this, _1, _2),
                               bind(&DeleteHandle::onRegisterFailed, this, _1, _2));
 }

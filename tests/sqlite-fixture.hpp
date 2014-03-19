@@ -20,13 +20,6 @@ class SqliteFixture
 public:
   SqliteFixture()
   {
-    boost::filesystem::path testPath("unittestdb");
-    boost::filesystem::file_status testPathStatus = boost::filesystem::status(testPath);
-    if (!boost::filesystem::is_directory(testPathStatus)) {
-      if (!boost::filesystem::create_directory(boost::filesystem::path(testPath))) {
-        BOOST_FAIL("Cannot create unittestdb folder");
-      }
-    }
     handle = new SqliteHandle("unittestdb");
   }
 

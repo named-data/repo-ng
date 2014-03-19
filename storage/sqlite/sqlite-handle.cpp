@@ -4,7 +4,9 @@
  * See COPYING for copyright and distribution information.
  */
 
+#include "config.hpp"
 #include "sqlite-handle.hpp"
+#include <boost/filesystem.hpp>
 
 namespace repo {
 
@@ -17,6 +19,14 @@ SqliteHandle::SqliteHandle(const string& dbPath)
     m_dbPath = string("ndn_repo.db");
   }
   else {
+    boost::filesystem::path fsPath(dbPath);
+    boost::filesystem::file_status fsPathStatus = boost::filesystem::status(fsPath);
+    if (!boost::filesystem::is_directory(fsPathStatus)) {
+      if (!boost::filesystem::create_directory(boost::filesystem::path(fsPath))) {
+        throw Error("Folder '" + dbPath + "' does not exists and cannot be created");
+      }
+    }
+
     m_dbPath = dbPath + "/ndn_repo.db";
   }
   initializeRepo();
@@ -26,7 +36,16 @@ void
 SqliteHandle::initializeRepo()
 {
   char* errMsg = 0;
-  int rc = sqlite3_open(m_dbPath.c_str(), &m_db);
+
+  int rc = sqlite3_open_v2(m_dbPath.c_str(), &m_db,
+                           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+#ifdef DISABLE_SQLITE3_FS_LOCKING
+                           "unix-dotfile"
+#else
+                           0
+#endif
+                           );
+
   if (rc == SQLITE_OK) {
     sqlite3_exec(m_db, "CREATE TABLE NDN_REPO ("
                       "name BLOB PRIMARY KEY, "

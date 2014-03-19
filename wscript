@@ -8,10 +8,8 @@ def options(opt):
     opt.load('compiler_c compiler_cxx gnu_dirs')
     opt.load('boost default-compiler-flags doxygen', tooldir=['.waf-tools'])
 
-    ropt = opt.add_option_group('NDN Repo Options')
+    ropt = opt.add_option_group('ndn-repo-ng Options')
 
-    ropt.add_option('--debug',action = 'store_true',default = False,dest = 'debug',
-                    help='''debugging mode''')
     ropt.add_option('--with-tests', action = 'store_true', default=False, dest = 'with_tests',
                     help = '''build unit tests''')
 
@@ -43,6 +41,11 @@ def configure(conf):
     except:
         pass
 
+    conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env['SYSCONFDIR'])
+
+    if not conf.options.with_sqlite_locking:
+        conf.define('DISABLE_SQLITE3_FS_LOCKING', 1)
+
     conf.write_config_header('config.hpp')
 
 def build(bld):
@@ -51,12 +54,14 @@ def build(bld):
         features = ["cxx"],
         source = bld.path.ant_glob(['ndn-handle/*.cpp',
                                     'storage/**/*.cpp',
-                                    'helpers/*.cpp']),
+                                    'helpers/*.cpp',
+                                    'server/*.cpp'],
+                                    excl=['server/server.cpp']),
         use = 'NDNCPPDEV BOOST SQLITE3',
         includes = ".",
         )
 
-    bld(target = "ndn-repo",
+    bld(target = "ndn-repo-ng",
         features = ["cxx", "cxxprogram"],
         source = bld.path.ant_glob(['server/server.cpp']),
         use = 'ndn-repo-objects',
@@ -66,3 +71,5 @@ def build(bld):
     # Unit tests
     if bld.env['WITH_TESTS']:
         bld.recurse('tests')
+
+    bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')

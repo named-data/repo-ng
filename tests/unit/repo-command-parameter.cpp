@@ -18,6 +18,7 @@
  */
 
 #include "repo-command-parameter.hpp"
+
 #include <ndn-cxx/selectors.hpp>
 
 #include <boost/test/unit_test.hpp>

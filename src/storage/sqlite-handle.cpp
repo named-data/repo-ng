@@ -442,6 +442,8 @@ SqliteHandle::readData(const Interest& interest, Data& data)
   }
   else {
     if (readNameSelector(interest, names)) {
+      if (names.empty())
+        return false;
       if (!filterNameChild(interest.getName(), interest.getChildSelector(), names, resultName)) {
         return false;
       }
@@ -458,8 +460,10 @@ SqliteHandle::readDataPlain(const Name& name, Data& data)
   vector<Name> names;
   Name resultName;
   readDataName(name, names);
-  filterNameChild(name, 0, names, resultName);
-  if (!resultName.empty()) {
+  if (names.empty())
+    return false;
+  bool isOk = filterNameChild(name, 0, names, resultName);
+  if (isOk) {
     return readData(resultName, data);
   }
   else
@@ -670,7 +674,12 @@ bool
 SqliteHandle::filterNameChild(const Name& name, int childSelector,
                               const vector<Name>& names, Name& resultName)
 {
-  if (childSelector == 0) {
+  BOOST_ASSERT(!names.empty());
+
+  if (childSelector < 0) {
+    resultName = *names.begin();
+  }
+  else if (childSelector == 0) {
     if (!names.empty()) {
       resultName = *std::min_element(names.begin(), names.end());
     }
@@ -687,6 +696,7 @@ SqliteHandle::filterNameChild(const Name& name, int childSelector,
     }
   }
   else {
+    std::cerr << "Unknown ChildSelector specified" << std::endl;
     return false;
   }
   return true;
@@ -705,6 +715,8 @@ SqliteHandle::readNameAny(const Name& name, const Selectors& selectors, vector<N
     Interest interest(name);
     interest.setSelectors(selectors);
     readNameSelector(interest, names);
+    if (names.empty())
+      return false;
     if (selectors.getChildSelector() >= 0) {
       Name resultName;
       if (!filterNameChild(name, selectors.getChildSelector(), names, resultName))

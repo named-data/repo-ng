@@ -32,8 +32,8 @@ class SqliteFixture
 {
 public:
   SqliteFixture()
+    : handle(new SqliteHandle("unittestdb"))
   {
-    handle = new SqliteHandle("unittestdb");
   }
 
   ~SqliteFixture()

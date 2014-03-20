@@ -19,8 +19,8 @@
 
 #include "handles/tcp-bulk-insert-handle.hpp"
 
-#include "sqlite-fixture.hpp"
-#include "dataset-fixtures.hpp"
+#include "../sqlite-fixture.hpp"
+#include "../dataset-fixtures.hpp"
 
 #include <boost/test/unit_test.hpp>
 

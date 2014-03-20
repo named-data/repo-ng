@@ -63,11 +63,10 @@ def build(bld):
         use='ndn-repo-objects',
         )
 
-    # Unit tests
-    if bld.env['WITH_TESTS']:
-        bld.recurse('tests')
+    # Tests
+    bld.recurse('tests')
 
-    if bld.env['WITH_TOOLS']:
-        bld.recurse("tools")
+    # Tools
+    bld.recurse('tools')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')

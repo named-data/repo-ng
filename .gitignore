@@ -10,12 +10,14 @@
 
 .DS_Store
 .lock*
-.waf*
+.waf-1*
+.waf-tools/*.pyc
 build/
 
 *.db
 *.dat
 *.properties
 *.pyc
+*.db*
 
 .tags*

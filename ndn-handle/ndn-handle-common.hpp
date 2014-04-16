@@ -38,7 +38,9 @@ using ndn::bind;
 using ndn::CommandInterestValidator;
 using ndn::Scheduler;
 
-using boost::shared_ptr;
+using ndn::shared_ptr;
+using ndn::make_shared;
+using ndn::enable_shared_from_this;
 
 typedef uint64_t ProcessId;
 typedef uint64_t SegmentNo;

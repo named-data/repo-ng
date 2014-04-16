@@ -10,12 +10,13 @@
 #include <boost/test/unit_test.hpp>
 
 namespace repo {
+namespace tests {
 
-BOOST_AUTO_TEST_SUITE(TestRepoCommandParameter)
+BOOST_AUTO_TEST_SUITE(RepoCommandParameter)
 
-BOOST_AUTO_TEST_CASE(TestRepoCommandParameter)
+BOOST_AUTO_TEST_CASE(EncodeDecode)
 {
-  RepoCommandParameter parameter;
+  repo::RepoCommandParameter parameter;
   parameter.setName("/a/b/c");
   parameter.setStartBlockId(1);
   parameter.setEndBlockId(100);
@@ -40,9 +41,9 @@ BOOST_AUTO_TEST_CASE(TestRepoCommandParameter)
   BOOST_REQUIRE_EQUAL_COLLECTIONS(expected, expected + sizeof(expected),
                                   wire.begin(), wire.end());
 
-  BOOST_REQUIRE_NO_THROW(RepoCommandParameter(wire));
+  BOOST_REQUIRE_NO_THROW(repo::RepoCommandParameter(wire));
 
-  RepoCommandParameter decoded(wire);
+  repo::RepoCommandParameter decoded(wire);
   //std::cout << decoded << std::endl;
   BOOST_CHECK_EQUAL(decoded.getName(), parameter.getName());
   BOOST_CHECK_EQUAL(decoded.getStartBlockId(), parameter.getStartBlockId());
@@ -54,4 +55,5 @@ BOOST_AUTO_TEST_CASE(TestRepoCommandParameter)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+} // namespace tests
 } // namespace repo

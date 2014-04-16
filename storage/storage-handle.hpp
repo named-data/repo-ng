@@ -32,8 +32,8 @@ using std::vector;
 using std::string;
 using boost::noncopyable;
 
-/**   
- * @brief this class defines handles to read, insert and delete data packets in storage media
+/**
+ * @brief this class defines handles to read, insert and delete data packets in storage media
  */
 
 class StorageHandle : noncopyable
@@ -100,6 +100,12 @@ public:
    */
   virtual bool
   readNameAny(const Name& name, const Selectors& selectors, vector<Name>& names) = 0;
+
+  /**
+   * @brief Get the number of Data packets stored
+   */
+  virtual size_t
+  size() = 0;
 
 private:
   StorageMethod m_storageMethod;

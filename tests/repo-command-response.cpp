@@ -9,12 +9,13 @@
 #include <boost/test/unit_test.hpp>
 
 namespace repo {
+namespace tests {
 
-BOOST_AUTO_TEST_SUITE(TestRepoCommandResponse)
+BOOST_AUTO_TEST_SUITE(RepoCommandResponse)
 
-BOOST_AUTO_TEST_CASE(TestRepoCommandResponse)
+BOOST_AUTO_TEST_CASE(EncodeDecode)
 {
-  RepoCommandResponse response;
+  repo::RepoCommandResponse response;
   response.setStatusCode(404);
   response.setStartBlockId(1);
   response.setEndBlockId(100);
@@ -38,9 +39,9 @@ BOOST_AUTO_TEST_CASE(TestRepoCommandResponse)
   BOOST_REQUIRE_EQUAL_COLLECTIONS(expected, expected + sizeof(expected),
                                   wire.begin(), wire.end());
 
-  BOOST_REQUIRE_NO_THROW(RepoCommandResponse(wire));
+  BOOST_REQUIRE_NO_THROW(repo::RepoCommandResponse(wire));
 
-  RepoCommandResponse decoded(wire);
+  repo::RepoCommandResponse decoded(wire);
   BOOST_CHECK_EQUAL(decoded.getStatusCode(), response.getStatusCode());
   BOOST_CHECK_EQUAL(decoded.getStartBlockId(), response.getStartBlockId());
   BOOST_CHECK_EQUAL(decoded.getEndBlockId(), response.getEndBlockId());
@@ -51,4 +52,5 @@ BOOST_AUTO_TEST_CASE(TestRepoCommandResponse)
 
 BOOST_AUTO_TEST_SUITE_END()
 
+} // namespace tests
 } // namespace repo

@@ -33,7 +33,9 @@ SqliteHandle::initializeRepo()
                       "data BLOB, "
                       "parentName BLOB, "
                       "nChildren INTEGER);\n"
-                      "CREATE INDEX NdnRepoparentName ON NDN_REPO (parentName)", 0, 0, &errMsg);
+                      "CREATE INDEX NdnRepoParentName ON NDN_REPO (parentName);\n"
+                      "CREATE INDEX NdnRepoData ON NDN_REPO (data);\n"
+                 , 0, 0, &errMsg);
     // Ignore errors (when database already exists, errors are expected)
   }
   else {
@@ -504,7 +506,7 @@ SqliteHandle::readDataName(const Name& name, vector<Name>& names) const
           if (nChildren > 0) {
             internalNames.push(elementName);
           }
-          if (sqlite3_column_type(queryParentStmt, 3) != SQLITE_NULL) {
+          if (sqlite3_column_type(queryParentStmt, 1) != SQLITE_NULL) {
             names.push_back(elementName);
           }
         }
@@ -777,6 +779,31 @@ SqliteHandle::hasParentName(const Name& parentName) const
     sqlite3_finalize(queryStmt);
   }
   return true;
+}
+
+size_t
+SqliteHandle::size()
+{
+  sqlite3_stmt* queryStmt = 0;
+  string sql("SELECT count(*) FROM NDN_REPO WHERE data IS NOT NULL");
+  int rc = sqlite3_prepare_v2(m_db, sql.c_str(), -1, &queryStmt, 0);
+  if (rc != SQLITE_OK)
+    {
+      std::cerr << "Database query failure rc:" << rc << std::endl;
+      sqlite3_finalize(queryStmt);
+      throw Error("Database query failure");
+    }
+
+  rc = sqlite3_step(queryStmt);
+  if (rc != SQLITE_ROW)
+    {
+      std::cerr << "Database query failure rc:" << rc << std::endl;
+      sqlite3_finalize(queryStmt);
+      throw Error("Database query failure");
+    }
+
+  size_t nDatas = static_cast<size_t>(sqlite3_column_int64(queryStmt, 0));
+  return nDatas;
 }
 
 } //namespace repo

@@ -60,6 +60,9 @@ public:
   virtual bool
   readNameAny(const Name& name, const Selectors& selectors, vector<Name>& names);
 
+  virtual size_t
+  size();
+
 private:
   void
   initializeRepo();

@@ -13,6 +13,7 @@
 #include "../storage/sqlite/sqlite-handle.hpp"
 #include "../ndn-handle/read-handle.hpp"
 #include "../ndn-handle/write-handle.hpp"
+#include "../ndn-handle/tcp-bulk-insert-handle.hpp"
 #include "../ndn-handle/delete-handle.hpp"
 
 using namespace repo;
@@ -49,7 +50,7 @@ main(int argc, char** argv) {
     confPath = "./repo.conf";
   }
 
-  Name dataPrefix("ndn:/example/data");
+  Name dataPrefix("ndn:/");
   Name repoPrefix("ndn:/example/repo");
   /// @todo read from configuration
 
@@ -67,10 +68,16 @@ main(int argc, char** argv) {
 
   ReadHandle readHandle(face, sqliteHandle, keyChain, scheduler);
   readHandle.listen(dataPrefix);
+
   WriteHandle writeHandle(face, sqliteHandle, keyChain, scheduler, validator);
   writeHandle.listen(repoPrefix);
+
   DeleteHandle deleteHandle(face, sqliteHandle, keyChain, scheduler, validator);
   deleteHandle.listen(repoPrefix);
+
+  TcpBulkInsertHandle tcpBulkInsertHandle(*io, sqliteHandle);
+  tcpBulkInsertHandle.listen("localhost", "7376");
+
   face.processEvents();
   return 0;
 }

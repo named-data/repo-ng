@@ -7,9 +7,9 @@
 #ifndef REPO_HELPERS_REPO_COMMAND_RESPONSE_HPP
 #define REPO_HELPERS_REPO_COMMAND_RESPONSE_HPP
 
-#include <ndn-cpp-dev/encoding/block.hpp>
-#include <ndn-cpp-dev/encoding/encoding-buffer.hpp>
-#include <ndn-cpp-dev/encoding/tlv-nfd.hpp>
+#include <ndn-cxx/encoding/block.hpp>
+#include <ndn-cxx/encoding/encoding-buffer.hpp>
+#include <ndn-cxx/encoding/tlv-nfd.hpp>
 #include "repo-tlv.hpp"
 
 namespace repo {

@@ -25,8 +25,8 @@ def configure(conf):
     conf.check_cfg(package = 'sqlite3', args = ['--cflags', '--libs'],
                    uselib_store = 'SQLITE3', mandatory = True)
 
-    conf.check_cfg(package = 'libndn-cpp-dev', args = ['--cflags', '--libs'],
-                   uselib_store = 'NDNCPPDEV', mandatory = True)
+    conf.check_cfg(package = 'libndn-cxx', args = ['--cflags', '--libs'],
+                   uselib_store = 'NDN_CXX', mandatory = True)
 
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True
@@ -57,7 +57,7 @@ def build(bld):
                                     'helpers/*.cpp',
                                     'server/*.cpp'],
                                     excl=['server/server.cpp']),
-        use = 'NDNCPPDEV BOOST SQLITE3',
+        use = 'NDN_CXX BOOST SQLITE3',
         includes = ".",
         )
 

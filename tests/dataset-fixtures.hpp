@@ -7,7 +7,7 @@
 #ifndef REPO_TESTS_DATASET_FIXTURES_HPP
 #define REPO_TESTS_DATASET_FIXTURES_HPP
 
-#include <ndn-cpp-dev/security/key-chain.hpp>
+#include <ndn-cxx/security/key-chain.hpp>
 
 namespace repo {
 namespace tests {

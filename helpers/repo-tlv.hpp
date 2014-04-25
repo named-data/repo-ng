@@ -7,7 +7,7 @@
 #ifndef REPO_HELPERS_REPO_TLV_HPP
 #define REPO_HELPERS_REPO_TLV_HPP
 
-#include <ndn-cpp-dev/encoding/tlv.hpp>
+#include <ndn-cxx/encoding/tlv.hpp>
 
 namespace repo {
 namespace tlv {

@@ -7,9 +7,9 @@
 #ifndef REPO_HELPERS_REPO_COMMAND_PARAMETER_HPP
 #define REPO_HELPERS_REPO_COMMAND_PARAMETER_HPP
 
-#include <ndn-cpp-dev/encoding/encoding-buffer.hpp>
-#include <ndn-cpp-dev/name.hpp>
-#include <ndn-cpp-dev/selectors.hpp>
+#include <ndn-cxx/encoding/encoding-buffer.hpp>
+#include <ndn-cxx/name.hpp>
+#include <ndn-cxx/selectors.hpp>
 #include "repo-tlv.hpp"
 
 namespace repo {

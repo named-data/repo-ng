@@ -5,7 +5,7 @@
  */
 
 #include "../helpers/repo-command-parameter.hpp"
-#include <ndn-cpp-dev/selectors.hpp>
+#include <ndn-cxx/selectors.hpp>
 
 #include <boost/test/unit_test.hpp>
 

@@ -6,7 +6,7 @@ Prerequisites
 
 Required:
 
-* [ndn-cpp-dev and its dependencies](https://github.com/named-data/ndn-cpp-dev)
+* [ndn-cxx and its dependencies](https://github.com/named-data/ndn-cxx)
 * sqlite3
 * Boost libraries
 

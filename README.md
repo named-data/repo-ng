@@ -6,7 +6,7 @@ ndn-repo-ng: Next generation of NDN repository
 
 * http://redmine.named-data.net/projects/repo-ng/wiki
 
-**ndn-repo-ng** uses [ndn-cpp-dev](https://github.com/cawka/ndn-cpp) library as NDN
+**ndn-repo-ng** uses [ndn-cxx](https://github.com/named-data/ndn-cxx) library as NDN
 development library, and uses sqlite3 as underlying storage.
 
 **ndn-repo-ng** is open source under a license described in the file COPYING.  While the

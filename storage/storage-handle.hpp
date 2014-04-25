@@ -10,11 +10,11 @@
 #include <string>
 #include <stdexcept>
 
-#include <ndn-cpp-dev/interest.hpp>
-#include <ndn-cpp-dev/name.hpp>
-#include <ndn-cpp-dev/data.hpp>
-#include <ndn-cpp-dev/selectors.hpp>
-#include <ndn-cpp-dev/key-locator.hpp>
+#include <ndn-cxx/interest.hpp>
+#include <ndn-cxx/name.hpp>
+#include <ndn-cxx/data.hpp>
+#include <ndn-cxx/selectors.hpp>
+#include <ndn-cxx/key-locator.hpp>
 
 #include "storage-method.hpp"
 

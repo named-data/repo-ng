@@ -17,11 +17,11 @@
 #include <iostream>
 #include <time.h>
 #include <unistd.h>
-#include <ndn-cpp-dev/face.hpp>
-#include <ndn-cpp-dev/security/key-chain.hpp>
-#include <ndn-cpp-dev/util/command-interest-validator.hpp>
-#include <ndn-cpp-dev/util/time.hpp>
-#include <ndn-cpp-dev/util/scheduler.hpp>
+#include <ndn-cxx/face.hpp>
+#include <ndn-cxx/security/key-chain.hpp>
+#include <ndn-cxx/util/command-interest-validator.hpp>
+#include <ndn-cxx/util/time.hpp>
+#include <ndn-cxx/util/scheduler.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <map>

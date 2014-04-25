@@ -18,8 +18,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <ndn-cpp-dev/face.hpp>
-#include <ndn-cpp-dev/util/command-interest-validator.hpp>
+#include <ndn-cxx/face.hpp>
+#include <ndn-cxx/util/command-interest-validator.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 

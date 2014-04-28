@@ -28,7 +28,7 @@ class ReadHandle : public BaseHandle
 {
 
 public:
-  ReadHandle(Face& face, StorageHandle& storageHandle, KeyChain keyChain, Scheduler& scheduler)
+  ReadHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain, Scheduler& scheduler)
     : BaseHandle(face, storageHandle, keyChain, scheduler)
   {
   }

@@ -203,7 +203,7 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
 
   if (parameter.hasEndBlockId()) {
     initialCredit =
-      std::min(initialCredit, parameter.getEndBlockId() - parameter.getStartBlockId());
+      std::min(initialCredit, parameter.getEndBlockId() - parameter.getStartBlockId() + 1);
   }
   else {
     // set noEndTimeout timer

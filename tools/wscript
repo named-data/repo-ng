@@ -8,4 +8,5 @@ def build(bld):
             target='%s' % (str(app.change_ext('', '.cpp'))),
             source=app,
             use='NDN_CXX',
+            includes='..',
             )

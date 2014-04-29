@@ -6,7 +6,7 @@ from waflib import Build, Logs, Utils, Task, TaskGen, Configure
 
 def options(opt):
     opt.load('compiler_c compiler_cxx gnu_dirs')
-    opt.load('boost default-compiler-flags doxygen', tooldir=['.waf-tools'])
+    opt.load('boost default-compiler-flags doxygen sqlite3', tooldir=['.waf-tools'])
 
     ropt = opt.add_option_group('ndn-repo-ng Options')
 
@@ -16,20 +16,13 @@ def options(opt):
     ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
                     help='''Do not build tools''')
 
-    ropt.add_option('--without-sqlite-locking', action='store_false', default=True,
-                    dest='with_sqlite_locking',
-                    help='''Disable filesystem locking in sqlite3 database (use unix-dot '''
-                         '''locking mechanism instead). This option may be necessary if home '''
-                         '''directory is hosted on NFS.''')
-
 def configure(conf):
-    conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags")
-
-    conf.check_cfg(package='sqlite3', args=['--cflags', '--libs'],
-                   uselib_store='SQLITE3', mandatory=True)
+    conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags sqlite3")
 
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
                    uselib_store='NDN_CXX', mandatory=True)
+
+    conf.check_sqlite3(mandatory=True)
 
     if conf.options.with_tests:
         conf.env['WITH_TESTS'] = True

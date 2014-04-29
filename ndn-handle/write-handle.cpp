@@ -294,7 +294,7 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
   nextSegmentQueue.pop();
 
   //check whether sendingSegment exceeds
-  if (sendingSegment > response.getEndBlockId()) {
+  if (response.hasEndBlockId() && sendingSegment > response.getEndBlockId()) {
     //do not do anything
     return;
   }
@@ -327,7 +327,7 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
     retryCounts[sendingSegment] = retryCounts[sendingSegment] + 1;
   }
   //increase the next seg and put it into the queue
-  if ((nextSegment + 1) <= response.getEndBlockId()) {
+  if (!response.hasEndBlockId() || (nextSegment + 1) <= response.getEndBlockId()) {
     nextSegment++;
     nextSegmentQueue.push(nextSegment);
   }

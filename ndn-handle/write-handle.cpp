@@ -226,7 +226,6 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
 
   queue<SegmentNo>& nextSegmentQueue = process.nextSegmentQueue;
 
-  segment++;
   process.nextSegment = segment;
   nextSegmentQueue.push(segment);
 }

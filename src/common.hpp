@@ -17,47 +17,56 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_NDN_HANDLE_NDN_HANDLE_COMMON_HPP
-#define REPO_NDN_HANDLE_NDN_HANDLE_COMMON_HPP
+#ifndef REPO_COMMON_HPP
+#define REPO_COMMON_HPP
 
-
-#include "../storage/storage-handle.hpp"
-#include "../helpers/repo-command-response.hpp"
-#include "../helpers/repo-command-parameter.hpp"
-
-#include <cstdlib>
-#include <sstream>
-#include <iostream>
-#include <time.h>
-#include <unistd.h>
 #include <ndn-cxx/face.hpp>
+#include <ndn-cxx/interest.hpp>
+#include <ndn-cxx/name.hpp>
+#include <ndn-cxx/data.hpp>
+#include <ndn-cxx/selectors.hpp>
+#include <ndn-cxx/key-locator.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/util/command-interest-validator.hpp>
 #include <ndn-cxx/util/time.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
+
+#include <boost/utility.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+
 #include <map>
+#include <string>
+#include <vector>
 #include <algorithm>
 
 namespace repo {
 
 using ndn::Face;
+using ndn::Block;
 using ndn::Name;
 using ndn::Interest;
-using ndn::KeyChain;
 using ndn::Selectors;
-using ndn::bind;
+using ndn::Exclude;
+using ndn::Data;
+using ndn::KeyLocator;
+using ndn::KeyChain;
 using ndn::CommandInterestValidator;
 using ndn::Scheduler;
 
+using ndn::bind;
 using ndn::shared_ptr;
 using ndn::make_shared;
 using ndn::enable_shared_from_this;
 
+using std::vector;
+using std::string;
+
+using boost::noncopyable;
+
 typedef uint64_t ProcessId;
 typedef uint64_t SegmentNo;
 
-}
+} // namespace repo
 
-#endif // REPO_NDN_HANDLE_NDN_HANDLE_COMMON_HPP
+#endif // REPO_COMMON_HPP

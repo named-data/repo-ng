@@ -20,7 +20,7 @@
 #ifndef REPO_TESTS_SQLITE_FIXTURE_HPP
 #define REPO_TESTS_SQLITE_FIXTURE_HPP
 
-#include "../storage/sqlite/sqlite-handle.hpp"
+#include "storage/sqlite-handle.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>

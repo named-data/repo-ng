@@ -17,36 +17,56 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_NDN_HANDLE_READ_HANDLE_HPP
-#define REPO_NDN_HANDLE_READ_HANDLE_HPP
+#ifndef REPO_HANDLES_TCP_BULK_INSERT_HANDLE_HPP
+#define REPO_HANDLES_TCP_BULK_INSERT_HANDLE_HPP
 
-#include "base-handle.hpp"
+#include "common.hpp"
+#include "storage/storage-handle.hpp"
+
+#include <boost/asio.hpp>
 
 namespace repo {
 
-class ReadHandle : public BaseHandle
+class TcpBulkInsertHandle : noncopyable
 {
+public:
+  class Error : public std::runtime_error
+  {
+  public:
+    explicit
+    Error(const std::string& what)
+      : std::runtime_error(what)
+    {
+    }
+  };
 
 public:
-  ReadHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain, Scheduler& scheduler)
-    : BaseHandle(face, storageHandle, keyChain, scheduler)
+  TcpBulkInsertHandle(boost::asio::io_service& ioService,
+                      StorageHandle& storageHandle);
+
+  void
+  listen(const std::string& host, const std::string& port);
+
+  void
+  stop();
+
+  StorageHandle&
+  getStorageHandle()
   {
+    return m_storageHandle;
   }
 
-  virtual void
-  listen(const Name& prefix);
+private:
+  void
+  handleAccept(const boost::system::error_code& error,
+               const shared_ptr<boost::asio::ip::tcp::socket>& socket);
 
 private:
-  /**
-   * @brief Read data from backend storage
-   */
-  void
-  onInterest(const Name& prefix, const Interest& interest);
-
-  void
-  onRegisterFailed(const Name& prefix, const std::string& reason);
+  boost::asio::ip::tcp::acceptor m_acceptor;
+  boost::asio::ip::tcp::endpoint m_localEndpoint;
+  StorageHandle& m_storageHandle;
 };
 
-} //namespace repo
+} // namespace repo
 
-#endif // REPO_NDN_HANDLE_READ_HANDLE_HPP
+#endif // REPO_HANDLES_TCP_BULK_INSERT_HANDLE_HPP

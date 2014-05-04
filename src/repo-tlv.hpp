@@ -17,15 +17,28 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_STORAGE_STORAGE_METHOD_HPP
-#define REPO_STORAGE_STORAGE_METHOD_HPP
+#ifndef REPO_REPO_TLV_HPP
+#define REPO_REPO_TLV_HPP
+
+#include <ndn-cxx/encoding/tlv.hpp>
 
 namespace repo {
+namespace tlv {
 
-enum StorageMethod {
-  STORAGE_METHOD_SQLITE  = 1
+using namespace ndn::Tlv;
+
+enum {
+  RepoCommandParameter = 201,
+  StartBlockId         = 204,
+  EndBlockId           = 205,
+  ProcessId            = 206,
+  RepoCommandResponse  = 207,
+  StatusCode           = 208,
+  InsertNum            = 209,
+  DeleteNum            = 210
 };
 
-} //namespace repo
+} // tlv
+} // repo
 
-#endif
+#endif // REPO_REPO_TLV_HPP

@@ -17,7 +17,7 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../storage/sqlite/sqlite-handle.hpp"
+#include "storage/sqlite-handle.hpp"
 
 #include "sqlite-fixture.hpp"
 #include "dataset-fixtures.hpp"

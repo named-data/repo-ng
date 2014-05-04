@@ -17,7 +17,7 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../ndn-handle/tcp-bulk-insert-handle.hpp"
+#include "handles/tcp-bulk-insert-handle.hpp"
 
 #include "sqlite-fixture.hpp"
 #include "dataset-fixtures.hpp"

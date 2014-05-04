@@ -17,7 +17,7 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../helpers/repo-command-response.hpp"
+#include "repo-command-response.hpp"
 
 #include <boost/test/unit_test.hpp>
 

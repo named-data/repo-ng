@@ -17,10 +17,9 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_NDN_HANDLE_DELETE_HANDLE_HPP
-#define REPO_NDN_HANDLE_DELETE_HANDLE_HPP
+#ifndef REPO_HANDLES_DELETE_HANDLE_HPP
+#define REPO_HANDLES_DELETE_HANDLE_HPP
 
-#include "ndn-handle-common.hpp"
 #include "base-handle.hpp"
 
 namespace repo {
@@ -91,6 +90,6 @@ private:
 
 };
 
-} //namespace repo
+} // namespace repo
 
-#endif // REPO_NDN_HANDLE_DELETE_HANDLE_HPP
+#endif // REPO_HANDLES_DELETE_HANDLE_HPP

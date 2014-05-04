@@ -17,7 +17,7 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../helpers/repo-command-parameter.hpp"
+#include "repo-command-parameter.hpp"
 #include <ndn-cxx/selectors.hpp>
 
 #include <boost/test/unit_test.hpp>

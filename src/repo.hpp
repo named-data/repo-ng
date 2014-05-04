@@ -17,22 +17,20 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_SERVER_REPO_HPP
-#define REPO_SERVER_REPO_HPP
+#ifndef REPO_REPO_HPP
+#define REPO_REPO_HPP
 
-#include "../storage/storage-handle.hpp"
-#include "../storage/sqlite/sqlite-handle.hpp"
-#include "../ndn-handle/read-handle.hpp"
-#include "../ndn-handle/write-handle.hpp"
-#include "../ndn-handle/delete-handle.hpp"
-#include "../ndn-handle/tcp-bulk-insert-handle.hpp"
+#include "storage/storage-handle.hpp"
+#include "storage/sqlite-handle.hpp"
 
-#include <string>
-#include <iostream>
-#include <fstream>
-#include <vector>
+#include "handles/read-handle.hpp"
+#include "handles/write-handle.hpp"
+#include "handles/delete-handle.hpp"
+#include "handles/tcp-bulk-insert-handle.hpp"
+
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/util/command-interest-validator.hpp>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
@@ -96,4 +94,4 @@ private:
 
 } // namespace repo
 
-#endif // REPO_SERVER_REPO_HPP
+#endif // REPO_REPO_HPP

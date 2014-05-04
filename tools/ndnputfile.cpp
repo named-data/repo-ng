@@ -17,8 +17,8 @@
  * repo-ng, e.g., in COPYING.md file.  if (not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "helpers/repo-command-parameter.hpp"
-#include "helpers/repo-command-response.hpp"
+#include "../src/repo-command-parameter.hpp"
+#include "../src/repo-command-response.hpp"
 
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>

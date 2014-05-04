@@ -17,10 +17,14 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_NDN_HANDLE_BASE_HANDLE_HPP
-#define REPO_NDN_HANDLE_BASE_HANDLE_HPP
+#ifndef REPO_HANDLES_BASE_HANDLE_HPP
+#define REPO_HANDLES_BASE_HANDLE_HPP
 
-#include "ndn-handle-common.hpp"
+#include "common.hpp"
+
+#include "storage/storage-handle.hpp"
+#include "repo-command-response.hpp"
+#include "repo-command-parameter.hpp"
 
 namespace repo {
 
@@ -111,6 +115,6 @@ BaseHandle::extractParameter(const Interest& interest, const Name& prefix,
   parameter.wireDecode(interest.getName().get(prefix.size()).blockFromValue());
 }
 
-} //namespace repo
+} // namespace repo
 
-#endif // REPO_NDN_HANDLE_BASE_HANDLE_HPP
+#endif // REPO_HANDLES_BASE_HANDLE_HPP

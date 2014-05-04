@@ -20,30 +20,10 @@
 #ifndef REPO_STORAGE_STORAGE_HANDLE_HPP
 #define REPO_STORAGE_STORAGE_HANDLE_HPP
 
-#include <string>
-#include <stdexcept>
-
-#include <ndn-cxx/interest.hpp>
-#include <ndn-cxx/name.hpp>
-#include <ndn-cxx/data.hpp>
-#include <ndn-cxx/selectors.hpp>
-#include <ndn-cxx/key-locator.hpp>
-
+#include "common.hpp"
 #include "storage-method.hpp"
 
 namespace repo {
-
-using ndn::Interest;
-using ndn::Name;
-using ndn::Data;
-using ndn::Selectors;
-using ndn::KeyLocator;
-using ndn::Block;
-using ndn::Exclude;
-
-using std::vector;
-using std::string;
-using boost::noncopyable;
 
 /**
  * @brief this class defines handles to read, insert and delete data packets in storage media

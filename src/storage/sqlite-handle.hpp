@@ -17,10 +17,10 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_STORAGE_SQLITE_SQLITE_HANDLE_HPP
-#define REPO_STORAGE_SQLITE_SQLITE_HANDLE_HPP
+#ifndef REPO_STORAGE_SQLITE_HANDLE_HPP
+#define REPO_STORAGE_SQLITE_HANDLE_HPP
 
-#include "../storage-handle.hpp"
+#include "storage-handle.hpp"
 
 #include <string>
 #include <iostream>
@@ -141,4 +141,4 @@ private:
 
 } // namespace repo
 
-#endif
+#endif // REPO_STORAGE_SQLITE_HANDLE_HPP

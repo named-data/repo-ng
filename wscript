@@ -29,7 +29,7 @@ def configure(conf):
 
     conf.env['WITH_TOOLS'] = conf.options.with_tools
 
-    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'thread']
+    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem']
     if conf.env['WITH_TESTS']:
         USED_BOOST_LIBS += ['unit_test_framework']
     conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True)
@@ -44,26 +44,23 @@ def configure(conf):
     if not conf.options.with_sqlite_locking:
         conf.define('DISABLE_SQLITE3_FS_LOCKING', 1)
 
-    conf.write_config_header('config.hpp')
+    conf.write_config_header('src/config.hpp')
 
 def build(bld):
     bld(target="ndn-repo-objects",
         name="ndn-repo-objects",
         features=["cxx"],
-        source=bld.path.ant_glob(['ndn-handle/*.cpp',
-                                  'storage/**/*.cpp',
-                                  'helpers/*.cpp',
-                                  'server/*.cpp'],
-                                 excl=['server/server.cpp']),
+        source=bld.path.ant_glob(['src/**/*.cpp'],
+                                 excl=['src/main.cpp']),
         use='NDN_CXX BOOST SQLITE3',
-        includes=".",
+        includes="src",
+        export_includes="src",
         )
 
     bld(target="ndn-repo-ng",
         features=["cxx", "cxxprogram"],
-        source=bld.path.ant_glob(['server/server.cpp']),
+        source=bld.path.ant_glob(['src/main.cpp']),
         use='ndn-repo-objects',
-        includes=".",
         )
 
     # Unit tests

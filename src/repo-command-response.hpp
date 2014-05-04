@@ -17,8 +17,8 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_HELPERS_REPO_COMMAND_RESPONSE_HPP
-#define REPO_HELPERS_REPO_COMMAND_RESPONSE_HPP
+#ifndef REPO_REPO_COMMAND_RESPONSE_HPP
+#define REPO_REPO_COMMAND_RESPONSE_HPP
 
 #include <ndn-cxx/encoding/block.hpp>
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
@@ -391,5 +391,7 @@ operator<<(std::ostream& os, const RepoCommandResponse& repoCommandResponse)
   os << " )";
   return os;
 }
-} //namespace repo
-#endif
+
+} // namespace repo
+
+#endif // REPO_REPO_COMMAND_RESPONSE_HPP

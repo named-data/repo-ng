@@ -17,8 +17,8 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_HELPERS_REPO_COMMAND_PARAMETER_HPP
-#define REPO_HELPERS_REPO_COMMAND_PARAMETER_HPP
+#ifndef REPO_REPO_COMMAND_PARAMETER_HPP
+#define REPO_REPO_COMMAND_PARAMETER_HPP
 
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
 #include <ndn-cxx/name.hpp>
@@ -339,6 +339,6 @@ operator<<(std::ostream& os, const RepoCommandParameter& repoCommandParameter)
   return os;
 }
 
-} //namespace repo
+} // namespace repo
 
-#endif
+#endif // REPO_REPO_COMMAND_PARAMETER_HPP

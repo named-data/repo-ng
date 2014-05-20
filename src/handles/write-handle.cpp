@@ -51,6 +51,12 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
                           bind(&WriteHandle::onValidationFailed, this, _1));
 }
 
+void
+WriteHandle::onRegisterSuccess(const Name& prefix)
+{
+  std::cerr << "Successfully registered prefix " << prefix << std::endl;
+}
+
 // onRegisterFailed.
 void
 WriteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
@@ -180,11 +186,13 @@ WriteHandle::listen(const Name& prefix)
   insertPrefix.append(prefix).append("insert");
   getFace().setInterestFilter(insertPrefix,
                               bind(&WriteHandle::onInterest, this, _1, _2),
+                              bind(&WriteHandle::onRegisterSuccess, this, _1),
                               bind(&WriteHandle::onRegisterFailed, this, _1, _2));
   Name insertCheckPrefix;
   insertCheckPrefix.append(prefix).append("insert check");
   getFace().setInterestFilter(insertCheckPrefix,
                               bind(&WriteHandle::onCheckInterest, this, _1, _2),
+                              bind(&WriteHandle::onRegisterSuccess, this, _1),
                               bind(&WriteHandle::onRegisterFailed, this, _1, _2));
 }
 

@@ -19,6 +19,7 @@
 
 #include "ndngetfile.hpp"
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
 namespace repo {
 

@@ -22,12 +22,15 @@
 
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
+#include <ndn-cxx/util/scheduler.hpp>
 #include <ndn-cxx/util/command-interest-generator.hpp>
 #include <fstream>
 #include <string>
 #include <stdlib.h>
+#include <stdint.h>
 #include <boost/filesystem.hpp>
-
+#include <boost/lexical_cast.hpp>
+#include <boost/asio.hpp>
 #include <boost/iostreams/operations.hpp>
 #include <boost/iostreams/read.hpp>
 
@@ -95,6 +98,9 @@ private:
 
   void
   onSingleInterest(const ndn::Name& prefix, const ndn::Interest& interest);
+
+  void
+  onRegisterSuccess(const ndn::Name& prefix);
 
   void
   onRegisterFailed(const ndn::Name& prefix, const std::string& reason);
@@ -212,17 +218,19 @@ NdnPutFile::run()
                              ndn::bind(&NdnPutFile::onSingleInterest, this, _1, _2)
                              :
                              ndn::bind(&NdnPutFile::onInterest, this, _1, _2),
+                           ndn::bind(&NdnPutFile::onRegisterSuccess, this, _1),
                            ndn::bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
-
-  // @todo Move startCommand
-  // setInterestFilter doesn't currently have "onSuccess" callback,
-  // so insertCommand needs to be started right away
-  startInsertCommand();
 
   if (hasTimeout)
     m_scheduler.scheduleEvent(timeout, ndn::bind(&NdnPutFile::stopProcess, this));
 
   m_face.processEvents();
+}
+
+void
+NdnPutFile::onRegisterSuccess(const Name& prefix)
+{
+  startInsertCommand();
 }
 
 void

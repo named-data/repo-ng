@@ -21,6 +21,7 @@
 #define REPO_REPO_COMMAND_RESPONSE_HPP
 
 #include <ndn-cxx/encoding/block.hpp>
+#include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
 #include <ndn-cxx/encoding/tlv-nfd.hpp>
 #include "repo-tlv.hpp"

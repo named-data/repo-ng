@@ -21,6 +21,8 @@
 #define REPO_TESTS_DATASET_FIXTURES_HPP
 
 #include <ndn-cxx/security/key-chain.hpp>
+#include <vector>
+#include <boost/mpl/vector.hpp>
 
 namespace repo {
 namespace tests {

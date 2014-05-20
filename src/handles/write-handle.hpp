@@ -112,6 +112,9 @@ private: // insert command
   void
   onValidationFailed(const shared_ptr<const Interest>& interest);
 
+  void
+  onRegisterSuccess(const Name& prefix);
+
   /**
    * @brief insert command prefix register failed
    */

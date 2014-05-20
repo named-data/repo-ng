@@ -44,6 +44,9 @@ private:
   onInterest(const Name& prefix, const Interest& interest);
 
   void
+  onRegisterSuccess(const Name& prefix);
+
+  void
   onRegisterFailed(const Name& prefix, const std::string& reason);
 };
 

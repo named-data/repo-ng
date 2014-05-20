@@ -253,6 +253,7 @@ Fixture<T>::scheduleInsertEvent()
     //The delayEvent will be canceled in onInsertInterest
     insertFace.setInterestFilter(insertParameter.getName(),
                                  bind(&Fixture<T>::onInsertInterest, this, _2),
+                                 ndn::RegisterPrefixSuccessCallback(),
                                  bind(&Fixture<T>::onRegisterFailed, this, _2));
     timeCount++;
   }

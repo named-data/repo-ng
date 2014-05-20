@@ -36,6 +36,11 @@ DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
                        bind(&DeleteHandle::onValidationFailed, this, _1, prefix));
 }
 
+void
+DeleteHandle::onRegisterSuccess(const Name& prefix)
+{
+  std::cerr << "Successfully registered prefix " << prefix << std::endl;
+}
 
 void
 DeleteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
@@ -103,6 +108,7 @@ DeleteHandle::listen(const Name& prefix)
 {
   getFace().setInterestFilter(Name(prefix).append("delete"),
                               bind(&DeleteHandle::onInterest, this, _1, _2),
+                              bind(&DeleteHandle::onRegisterSuccess, this, _1),
                               bind(&DeleteHandle::onRegisterFailed, this, _1, _2));
 }
 

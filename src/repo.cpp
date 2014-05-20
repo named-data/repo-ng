@@ -107,16 +107,10 @@ parseConfig(const std::string& configPath)
   return repoConfig;
 }
 
-inline static void
-NullDeleter(boost::asio::io_service* variable)
-{
-  // do nothing
-}
-
 Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   : m_config(config)
   , m_scheduler(ioService)
-  , m_face(shared_ptr<boost::asio::io_service>(&ioService, &NullDeleter))
+  , m_face(ioService)
   , m_storageHandle(openStorage(config))
   , m_readHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler)
   , m_writeHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler, m_validator)

@@ -31,6 +31,12 @@ ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 }
 
 void
+ReadHandle::onRegisterSuccess(const Name& prefix)
+{
+  std::cerr << "Successfully registered prefix " << prefix << std::endl;
+}
+
+void
 ReadHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
   std::cerr << "ERROR: Failed to register prefix in local hub's daemon" << std::endl;
@@ -42,6 +48,7 @@ ReadHandle::listen(const Name& prefix)
 {
   getFace().setInterestFilter(prefix,
                               bind(&ReadHandle::onInterest, this, _1, _2),
+                              bind(&ReadHandle::onRegisterSuccess, this, _1),
                               bind(&ReadHandle::onRegisterFailed, this, _1, _2));
 }
 

@@ -34,6 +34,33 @@ repo
 
   validator
   {
-    policy "not implemented yet"
+    ; This rule is just an example of validation of signed interests for commands.
+    ; User could define its own rule for signed command interest or data to be inserted
+    ; according to Validator Configuration File Format.
+    ; (http://redmine.named-data.net/projects/ndn-cxx/wiki/CommandValidatorConf)
+    rule
+    {
+      id "Simple Rule For Interest"
+      for interest
+      filter
+      {
+        type name
+        name /example/repo/1
+        relation is-prefix-of
+      }
+      checker
+      {
+        type fixed-signer
+        sig-type rsa-sha256
+        signer
+        {
+          type file
+          ; repo-ng.cert.sample is just a non-existent certificate.
+          ; User should create its own certification using Security Tool.
+          ; (http://redmine.named-data.net/projects/ndn-cxx/wiki/SecurityTools)
+          file-name "repo-ng.cert.sample"
+        }
+      }
+    }
   }
 }

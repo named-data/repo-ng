@@ -42,7 +42,7 @@ public:
 
 public:
   DeleteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
-               Scheduler& scheduler, CommandInterestValidator& validator);
+               Scheduler& scheduler, ValidatorConfig& validator);
 
   virtual void
   listen(const Name& prefix);
@@ -61,7 +61,7 @@ private:
   onValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onValidationFailed(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
 
   /**
   * @todo delete check has not been realized due to the while loop of segmented data deletion.
@@ -89,7 +89,7 @@ private:
   processSegmentDeleteCommand(const Interest& interest, RepoCommandParameter& parameter);
 
 private:
-  CommandInterestValidator& m_validator;
+  ValidatorConfig& m_validator;
 
 };
 

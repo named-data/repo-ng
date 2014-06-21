@@ -22,7 +22,7 @@
 namespace repo {
 
 DeleteHandle::DeleteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
-                           Scheduler& scheduler, CommandInterestValidator& validator)
+                           Scheduler& scheduler, ValidatorConfig& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
 {
@@ -31,9 +31,8 @@ DeleteHandle::DeleteHandle(Face& face, StorageHandle& storageHandle, KeyChain& k
 void
 DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
 {
-  //std::cout << "call DeleteHandle" << std::endl;
   m_validator.validate(interest, bind(&DeleteHandle::onValidated, this, _1, prefix),
-                       bind(&DeleteHandle::onValidationFailed, this, _1, prefix));
+                       bind(&DeleteHandle::onValidationFailed, this, _1, _2));
 }
 
 void
@@ -97,9 +96,9 @@ DeleteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name
 }
 
 void
-DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, const Name& prefix)
+DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason)
 {
-  std::cout << "invalidated" << std::endl;
+  std::cerr << reason << std::endl;
   negativeReply(*interest, 401);
 }
 

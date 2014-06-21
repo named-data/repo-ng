@@ -28,8 +28,7 @@
 #include "handles/delete-handle.hpp"
 #include "handles/tcp-bulk-insert-handle.hpp"
 
-#include <ndn-cxx/face.hpp>
-#include <ndn-cxx/util/command-interest-validator.hpp>
+#include "common.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
@@ -42,13 +41,12 @@ using std::pair;
 
 struct RepoConfig
 {
+  string repoConfigPath;
   //StorageMethod storageMethod; This will be implemtented if there is other method.
   std::string dbPath;
   vector<ndn::Name> dataPrefixes;
   vector<ndn::Name> repoPrefixes;
   vector<pair<string, string> > tcpBulkInsertEndpoints;
-
-  //@todo validator should be configured in config file
   boost::property_tree::ptree validatorNode;
 };
 
@@ -75,6 +73,9 @@ public:
   void
   enableListening();
 
+  void
+  enableValidation();
+
 private:
   static shared_ptr<StorageHandle>
   openStorage(const RepoConfig& config);
@@ -85,7 +86,7 @@ private:
   ndn::Face m_face;
   shared_ptr<StorageHandle> m_storageHandle;
   KeyChain m_keyChain;
-  CommandInterestValidator m_validator;
+  ValidatorConfig m_validator;
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;
   DeleteHandle m_deleteHandle;

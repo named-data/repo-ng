@@ -44,9 +44,9 @@ parseConfig(const std::string& configPath)
   ptree repoConf = propertyTree.get_child("repo");
 
   RepoConfig repoConfig;
+  repoConfig.repoConfigPath = configPath;
 
   ptree dataConf = repoConf.get_child("data");
-
   for (ptree::const_iterator it = dataConf.begin();
        it != dataConf.end();
        ++it)
@@ -112,17 +112,13 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_scheduler(ioService)
   , m_face(ioService)
   , m_storageHandle(openStorage(config))
+  , m_validator(m_face)
   , m_readHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler)
   , m_writeHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_deleteHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_tcpBulkInsertHandle(ioService, *m_storageHandle)
 
 {
-  //Trust model not implemented, this is just an empty validator
-  //@todo add a function to parse RepoConfig.validatorNode and define the trust model
-  m_validator.addInterestRule("^<>",
-                              *m_keyChain.
-                              getCertificate(m_keyChain.getDefaultCertificateName()));
 }
 
 shared_ptr<StorageHandle>
@@ -159,6 +155,12 @@ Repo::enableListening()
     {
       m_tcpBulkInsertHandle.listen(it->first, it->second);
     }
+}
+
+void
+Repo::enableValidation()
+{
+  m_validator.load(m_config.validatorNode, m_config.repoConfigPath);
 }
 
 } // namespace repo

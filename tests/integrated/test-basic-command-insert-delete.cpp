@@ -21,13 +21,16 @@
 #include "handles/delete-handle.hpp"
 #include "storage/storage-handle.hpp"
 #include "storage/sqlite-handle.hpp"
+#include "common.hpp"
 
 #include "../sqlite-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
-#include <ndn-cxx/util/command-interest-generator.hpp>
+#include <ndn-cxx/util/random.hpp>
+#include <ndn-cxx/util/io.hpp>
 
 #include <boost/test/unit_test.hpp>
+#include <fstream>
 
 namespace repo {
 namespace tests {
@@ -48,13 +51,12 @@ class Fixture : public SqliteFixture, public Dataset
 public:
   Fixture()
     : scheduler(repoFace.getIoService())
+    , validator(repoFace)
     , writeHandle(repoFace, *handle, keyChain, scheduler, validator)
     , deleteHandle(repoFace, *handle, keyChain, scheduler, validator)
     , insertFace(repoFace.getIoService())
     , deleteFace(repoFace.getIoService())
   {
-    validator.addInterestRule("^<>",
-                              *keyChain.getCertificate(keyChain.getDefaultCertificateName()));
     writeHandle.listen(Name("/repo/command"));
     deleteHandle.listen(Name("/repo/command"));
   }
@@ -63,6 +65,9 @@ public:
   {
     repoFace.getIoService().stop();
   }
+
+  void
+  generateDefaultCertificateFile();
 
   void
   scheduleInsertEvent();
@@ -102,23 +107,38 @@ public:
   sendDeleteInterest(const Interest& deleteInterest);
 
   void
-  checkInsertOK(const Interest& interest);
+  checkInsertOk(const Interest& interest);
 
   void
-  checkDeleteOK(const Interest& interest);
+  checkDeleteOk(const Interest& interest);
 
 public:
   Face repoFace;
   Scheduler scheduler;
-  CommandInterestValidator validator;
+  ValidatorConfig validator;
   KeyChain keyChain;
-  ndn::CommandInterestGenerator generator;
   WriteHandle writeHandle;
   DeleteHandle deleteHandle;
   Face insertFace;
   Face deleteFace;
   std::map<Name, EventId> insertEvents;
 };
+
+template<class T>  void
+Fixture<T>::generateDefaultCertificateFile()
+{
+  Name defaultIdentity = keyChain.getDefaultIdentity();
+  Name defaultKeyname = keyChain.getDefaultKeyNameForIdentity(defaultIdentity);
+  Name defaultCertficateName = keyChain.getDefaultCertificateNameForKey(defaultKeyname);
+  shared_ptr<ndn::IdentityCertificate> defaultCertficate =
+    keyChain.getCertificate(defaultCertficateName);
+  //test-integrated should run in root directory of repo-ng.
+  //certificate file should be removed after tests for security issue.
+  std::fstream certificateFile("tests/integrated/insert-delete-test.cert",
+                               std::ios::out | std::ios::binary | std::ios::trunc);
+  ndn::io::save(*defaultCertficate, certificateFile);
+  certificateFile.close();
+}
 
 template<class T> void
 Fixture<T>::onInsertInterest(const Interest& interest)
@@ -134,9 +154,9 @@ Fixture<T>::onInsertInterest(const Interest& interest)
     scheduler.cancelEvent(event->second);
     insertEvents.erase(event);
   }
-  // schedule an event 50ms later to check whether insert is OK
+  // schedule an event 50ms later to check whether insert is Ok
   scheduler.scheduleEvent(milliseconds(50),
-                          bind(&Fixture<T>::checkInsertOK, this, interest));
+                          bind(&Fixture<T>::checkInsertOk, this, interest));
 
 }
 
@@ -176,9 +196,9 @@ Fixture<T>::onDeleteData(const Interest& interest, Data& data)
   int statusCode = response.getStatusCode();
   BOOST_CHECK_EQUAL(statusCode, 200);
 
-  //schedlute an event to check whether delete is OK.
+  //schedlute an event to check whether delete is Ok.
   scheduler.scheduleEvent(milliseconds(100),
-                          bind(&Fixture<T>::checkDeleteOK, this, interest));
+                          bind(&Fixture<T>::checkDeleteOk, this, interest));
 }
 
 template<class T> void
@@ -210,7 +230,7 @@ Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
 }
 
 template<class T> void
-Fixture<T>::checkInsertOK(const Interest& interest)
+Fixture<T>::checkInsertOk(const Interest& interest)
 {
   Data data;
   BOOST_TEST_MESSAGE(interest);
@@ -220,7 +240,7 @@ Fixture<T>::checkInsertOK(const Interest& interest)
 }
 
 template<class T> void
-Fixture<T>::checkDeleteOK(const Interest& interest)
+Fixture<T>::checkDeleteOk(const Interest& interest)
 {
   Data data;
   BOOST_CHECK_EQUAL(handle->readData(interest, data), false);
@@ -240,7 +260,7 @@ Fixture<T>::scheduleInsertEvent()
 
     insertCommandName.append(insertParameter.wireEncode());
     Interest insertInterest(insertCommandName);
-    generator.generateWithIdentity(insertInterest, keyChain.getDefaultIdentity());
+    keyChain.signByIdentity(insertInterest, keyChain.getDefaultIdentity());
     //schedule a job to express insertInterest every 50ms
     scheduler.scheduleEvent(milliseconds(timeCount * 50 + 1000),
                             bind(&Fixture<T>::sendInsertInterest, this, insertInterest));
@@ -274,7 +294,7 @@ Fixture<T>::scheduleDeleteEvent()
     deleteParameter.setName((*i)->getName());
     deleteCommandName.append(deleteParameter.wireEncode());
     Interest deleteInterest(deleteCommandName);
-    generator.generateWithIdentity(deleteInterest, keyChain.getDefaultIdentity());
+    keyChain.signByIdentity(deleteInterest, keyChain.getDefaultIdentity());
     scheduler.scheduleEvent(milliseconds(4000 + timeCount * 50),
                             bind(&Fixture<T>::sendDeleteInterest, this, deleteInterest));
     timeCount++;
@@ -283,6 +303,9 @@ Fixture<T>::scheduleDeleteEvent()
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, DatasetFixtures, Fixture<T>)
 {
+  this->generateDefaultCertificateFile();
+  this->validator.load("tests/integrated/insert-delete-validator-config.conf");
+
   // schedule events
   this->scheduler.scheduleEvent(seconds(0),
                                 bind(&Fixture<T>::scheduleInsertEvent, this));

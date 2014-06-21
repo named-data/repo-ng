@@ -27,7 +27,7 @@ static const ndn::time::milliseconds NOEND_TIMEOUT(10000);
 static const ndn::time::milliseconds PROCESS_DELETE_TIME(10000);
 
 WriteHandle::WriteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
-                         Scheduler& scheduler, CommandInterestValidator& validator)
+                         Scheduler& scheduler, ValidatorConfig& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
   , m_retryTime(RETRY_TIMEOUT)
@@ -48,7 +48,7 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
 {
   m_validator.validate(interest,
                           bind(&WriteHandle::onValidated, this, _1, prefix),
-                          bind(&WriteHandle::onValidationFailed, this, _1));
+                          bind(&WriteHandle::onValidationFailed, this, _1, _2));
 }
 
 void
@@ -98,18 +98,15 @@ WriteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name&
 }
 
 void
-WriteHandle::onValidationFailed(const shared_ptr<const Interest>& interest)
+WriteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason)
 {
-  std::cout << "invalidated" << std::endl;
+  std::cerr << reason << std::endl;
   negativeReply(*interest, 401);
 }
 
 void
 WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId processId)
 {
-  //std::cout << "onData" << std::endl;
-  //std::cout << "I: " << interest.toUri() << std::endl;
-  //std::cout << "D: " << data.getName().toUri() << std::endl;
   if (m_processes.count(processId) == 0) {
     return;
   }
@@ -128,10 +125,6 @@ WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId process
 void
 WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId processId)
 {
-  //std::cout << "I: " << interest.toUri() << std::endl;
-  //std::cout << "D: " << data.getName().toUri() << std::endl;
-  //retrieve the process from the responsemap
-
   if (m_processes.count(processId) == 0) {
     return;
   }
@@ -153,13 +146,9 @@ WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId proce
   }
 
   //insert data
-  //std::cout << "start to insert" << std::endl;
   if (getStorageHandle().insertData(data)) {
     response.setInsertNum(response.getInsertNum() + 1);
   }
-  //std::cout << "end of insert" << std::endl;
-
-  //it->second = response;
 
   onSegmentDataControl(processId, interest);
 }
@@ -167,14 +156,14 @@ WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId proce
 void
 WriteHandle::onTimeout(const ndn::Interest& interest, ProcessId processId)
 {
-  std::cout << "Timeout" << std::endl;
+  std::cerr << "Timeout" << std::endl;
   m_processes.erase(processId);
 }
 
 void
 WriteHandle::onSegmentTimeout(const Interest& interest, ProcessId processId)
 {
-  std::cout << "SegTimeout" << std::endl;
+  std::cerr << "SegTimeout" << std::endl;
 
   onSegmentTimeoutControl(processId, interest);
 }
@@ -224,7 +213,6 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
     Name fetchName = name;
     fetchName.appendSegment(segment);
     Interest interest(fetchName);
-    //std::cout << "seg:" << j<<std::endl;
     getFace().expressInterest(interest,
                               bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
                               bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
@@ -241,8 +229,6 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
 void
 WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
 {
-  //std::cout << "onSegmentDataControl: " << processId << std::endl;
-
   if (m_processes.count(processId) == 0) {
     return;
   }
@@ -263,7 +249,7 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
     ndn::time::steady_clock::TimePoint now = ndn::time::steady_clock::now();
 
     if (now > noEndTime) {
-      std::cout << "noEndtimeout: " << processId << std::endl;
+      std::cerr << "noEndtimeout: " << processId << std::endl;
       //m_processes.erase(processId);
       //StatusCode should be refreshed as 405
       response.setStatusCode(405);
@@ -325,7 +311,6 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
                             bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
   //When an interest is expressed, processCredit--
   processCredit--;
-  //std::cout << "sent seg: " << sendingSegment << std::endl;
   if (retryCounts.count(sendingSegment) == 0) {
     //not found
     retryCounts[sendingSegment] = 0;
@@ -355,7 +340,7 @@ WriteHandle::onSegmentTimeoutControl(ProcessId processId, const Interest& intere
 
   SegmentNo timeoutSegment = interest.getName().get(-1).toSegment();
 
-  std::cout << "timeoutSegment: " << timeoutSegment << std::endl;
+  std::cerr << "timeoutSegment: " << timeoutSegment << std::endl;
 
   BOOST_ASSERT(retryCounts.count(timeoutSegment) != 0);
 
@@ -363,7 +348,7 @@ WriteHandle::onSegmentTimeoutControl(ProcessId processId, const Interest& intere
   int& retryTime = retryCounts[timeoutSegment];
   if (retryTime >= m_retryTime) {
     //fail this process
-    std::cout << "Retry timeout: " << processId << std::endl;
+    std::cerr << "Retry timeout: " << processId << std::endl;
     m_processes.erase(processId);
     return;
   }
@@ -406,7 +391,7 @@ WriteHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const 
   //check whether this process exists
   ProcessId processId = parameter.getProcessId();
   if (m_processes.count(processId) == 0) {
-    std::cout << "no such processId: " << processId << std::endl;
+    std::cerr << "no such processId: " << processId << std::endl;
     negativeReply(*interest, 404);
     return;
   }
@@ -484,8 +469,6 @@ WriteHandle::processSegmentedInsertCommand(const Interest& interest,
 
     SegmentNo startBlockId = parameter.getStartBlockId();
     SegmentNo endBlockId = parameter.getEndBlockId();
-    //std::cout << "startBlockId: " << startBlockId << std::endl;
-    //std::cout << "endBlockId: " << endBlockId << std::endl;
     if (startBlockId > endBlockId) {
       negativeReply(interest, 403);
       return;
@@ -493,7 +476,6 @@ WriteHandle::processSegmentedInsertCommand(const Interest& interest,
 
     ProcessId processId = generateProcessId();
     ProcessInfo& process = m_processes[processId];
-    //std::cout << "processId: " << processId << std::endl;
     RepoCommandResponse& response = process.response;
     response.setStatusCode(100);
     response.setProcessId(processId);
@@ -512,7 +494,6 @@ WriteHandle::processSegmentedInsertCommand(const Interest& interest,
     //no EndBlockId, so fetch FinalBlockId in data, if timeout, stop
     ProcessId processId = generateProcessId();
     ProcessInfo& process = m_processes[processId];
-    //std::cout << "processId: " << processId << std::endl;
     RepoCommandResponse& response = process.response;
     response.setStatusCode(100);
     response.setProcessId(processId);

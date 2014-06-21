@@ -27,7 +27,7 @@
 #include <ndn-cxx/selectors.hpp>
 #include <ndn-cxx/key-locator.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
-#include <ndn-cxx/util/command-interest-validator.hpp>
+#include <ndn-cxx/security/validator-config.hpp>
 #include <ndn-cxx/util/time.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 
@@ -55,8 +55,8 @@ using ndn::Exclude;
 using ndn::Data;
 using ndn::KeyLocator;
 using ndn::KeyChain;
-using ndn::CommandInterestValidator;
 using ndn::Scheduler;
+using ndn::ValidatorConfig;
 
 using ndn::bind;
 using ndn::shared_ptr;

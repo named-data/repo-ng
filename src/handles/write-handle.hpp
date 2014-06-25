@@ -128,6 +128,10 @@ private: // single data fetching
   void
   onData(const Interest& interest, Data& data, ProcessId processId);
 
+  void
+  onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+                  ProcessId processId);
+
   /**
    * @brief handle when fetching one data timeout
    */
@@ -143,6 +147,10 @@ private:  // segmented data fetching
    */
   void
   onSegmentData(const Interest& interest, Data& data, ProcessId processId);
+
+  void
+  onSegmentDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+                         ProcessId processId);
 
   /**
    * @brief Timeout when fetching segmented data. Data can be fetched RETRY_TIMEOUT times.
@@ -171,6 +179,13 @@ private:  // segmented data fetching
   void
   processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter);
 
+private:
+  /**
+   * @brief failure of validation for both one or segmented data
+   */
+  void
+  onDataValidationFailed(const shared_ptr<const Data>& data, const std::string& reason);
+
   /**
    * @brief extends noEndTime of process if not noEndTimeout, set StatusCode 405
    *
@@ -197,7 +212,7 @@ private: // insert state check command
   onCheckValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onCheckValidationFailed(const shared_ptr<const Interest>& interest);
+  onCheckValidationFailed(const shared_ptr<const Interest>& interest, const std::string& reason);
 
 private:
   void

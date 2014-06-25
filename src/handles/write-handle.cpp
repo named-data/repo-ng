@@ -47,8 +47,8 @@ void
 WriteHandle::onInterest(const Name& prefix, const Interest& interest)
 {
   m_validator.validate(interest,
-                          bind(&WriteHandle::onValidated, this, _1, prefix),
-                          bind(&WriteHandle::onValidationFailed, this, _1, _2));
+                       bind(&WriteHandle::onValidated, this, _1, prefix),
+                       bind(&WriteHandle::onValidationFailed, this, _1, _2));
 }
 
 void
@@ -61,6 +61,7 @@ WriteHandle::onRegisterSuccess(const Name& prefix)
 void
 WriteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
+  std::cerr << reason << std::endl;
   throw Error("Insert prefix registration failed");
 }
 
@@ -68,6 +69,7 @@ WriteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 void
 WriteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason)
 {
+  std::cerr << reason << std::endl;
   throw Error("Insert check prefix registration failed");
 }
 
@@ -107,6 +109,15 @@ WriteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, cons
 void
 WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId processId)
 {
+  m_validator.validate(data,
+                       bind(&WriteHandle::onDataValidated, this, interest, _1, processId),
+                       bind(&WriteHandle::onDataValidationFailed, this, _1, _2));
+}
+
+void
+WriteHandle::onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+                             ProcessId processId)
+{
   if (m_processes.count(processId) == 0) {
     return;
   }
@@ -115,7 +126,7 @@ WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId process
   RepoCommandResponse& response = process.response;
 
   if (response.getInsertNum() == 0) {
-    getStorageHandle().insertData(data);
+    getStorageHandle().insertData(*data);
     response.setInsertNum(1);
   }
 
@@ -123,7 +134,23 @@ WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId process
 }
 
 void
+WriteHandle::onDataValidationFailed(const shared_ptr<const Data>& data, const std::string& reason)
+{
+  std::cerr << reason << std::endl;
+}
+
+void
 WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId processId)
+{
+  m_validator.validate(data,
+                       bind(&WriteHandle::onSegmentDataValidated, this, interest, _1, processId),
+                       bind(&WriteHandle::onDataValidationFailed, this, _1, _2));
+}
+
+void
+WriteHandle::onSegmentDataValidated(const Interest& interest,
+                                    const shared_ptr<const Data>& data,
+                                    ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
     return;
@@ -131,7 +158,7 @@ WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId proce
   RepoCommandResponse& response = m_processes[processId].response;
 
   //refresh endBlockId
-  Name::Component finalBlockId = data.getFinalBlockId();
+  Name::Component finalBlockId = data->getFinalBlockId();
 
   if (!finalBlockId.empty()) {
     SegmentNo final = finalBlockId.toSegment();
@@ -146,7 +173,7 @@ WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId proce
   }
 
   //insert data
-  if (getStorageHandle().insertData(data)) {
+  if (getStorageHandle().insertData(*data)) {
     response.setInsertNum(response.getInsertNum() + 1);
   }
 
@@ -367,8 +394,8 @@ void
 WriteHandle::onCheckInterest(const Name& prefix, const Interest& interest)
 {
   m_validator.validate(interest,
-                          bind(&WriteHandle::onCheckValidated, this, _1, prefix),
-                          bind(&WriteHandle::onCheckValidationFailed, this, _1));
+                       bind(&WriteHandle::onCheckValidated, this, _1, prefix),
+                       bind(&WriteHandle::onCheckValidationFailed, this, _1, _2));
 
 }
 
@@ -419,8 +446,10 @@ WriteHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const 
 }
 
 void
-WriteHandle::onCheckValidationFailed(const shared_ptr<const Interest>& interest)
+WriteHandle::onCheckValidationFailed(const shared_ptr<const Interest>& interest,
+                                     const std::string& reason)
 {
+  std::cerr << reason << std::endl;
   negativeReply(*interest, 401);
 }
 

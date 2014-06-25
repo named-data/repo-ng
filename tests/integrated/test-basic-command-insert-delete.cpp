@@ -146,7 +146,7 @@ Fixture<T>::onInsertInterest(const Interest& interest)
   Data data(Name(interest.getName()));
   data.setContent(content, sizeof(content));
   data.setFreshnessPeriod(milliseconds(0));
-  keyChain.sign(data);
+  keyChain.signByIdentity(data, keyChain.getDefaultIdentity());
   insertFace.put(data);
 
   std::map<Name, EventId>::iterator event = insertEvents.find(interest.getName());

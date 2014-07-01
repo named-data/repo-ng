@@ -50,6 +50,23 @@ public:
 
   typedef std::list<std::pair<ndn::Interest, ndn::shared_ptr<ndn::Data> > > InterestContainer;
   InterestContainer interests;
+
+
+  struct DataSetNameCompare
+  {
+    bool operator()(const ndn::Name& a, const ndn::Name& b) const
+    {
+      return a < b;
+    }
+  };
+
+  struct DataSetDataCompare
+  {
+    bool operator()(const Data& a, const Data& b) const
+    {
+      return a.getName() < b.getName();
+    }
+  };
 };
 
 

@@ -51,6 +51,11 @@ public:
   typedef std::list<std::pair<ndn::Interest, ndn::shared_ptr<ndn::Data> > > InterestContainer;
   InterestContainer interests;
 
+  typedef std::list<std::pair<ndn::Interest, int > > InterestIdContainer;
+  InterestIdContainer interestsSelectors;
+
+  typedef std::list<std::pair<int, ndn::shared_ptr<ndn::Data> > > IdContainer;
+  IdContainer ids, insert;
 
   struct DataSetNameCompare
   {
@@ -91,6 +96,7 @@ public:
       this->data.push_back(data);
 
       this->interests.push_back(std::make_pair(Interest(name), data));
+      this->ids.push_back(std::make_pair(i+2, data));
     }
   }
 };
@@ -110,19 +116,23 @@ public:
   {
     this->data.push_back(createData("/a"));
     this->interests.push_back(std::make_pair(Interest("/a"), this->data.back()));
+    this->ids.push_back(std::make_pair(2, this->data.back()));
 
     this->data.push_back(createData("/a/b"));
     this->interests.push_back(std::make_pair(Interest("/a/b"), this->data.back()));
+    this->ids.push_back(std::make_pair(3, this->data.back()));
 
     this->data.push_back(createData("/a/b/c"));
     this->interests.push_back(std::make_pair(Interest("/a/b/c"), this->data.back()));
+    this->ids.push_back(std::make_pair(4, this->data.back()));
 
     this->data.push_back(createData("/a/b/c/d"));
     this->interests.push_back(std::make_pair(Interest("/a/b/c/d"), this->data.back()));
+    this->ids.push_back(std::make_pair(5, this->data.back()));
   }
 };
 
-
+//Fetch by prefix is useless due to the database is fetched by id
 class FetchByPrefixTestFixture : public DatasetBase
 {
 public:
@@ -179,11 +189,11 @@ public:
     this->interests.push_back(std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u"),
                                              this->data.back()));
     this->interests.push_back(
-       std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v"),
-                      this->data.back()));
+      std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v"),
+                     this->data.back()));
     this->interests.push_back(
-       std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w"),
-                      this->data.back()));
+      std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w"),
+                     this->data.back()));
     this->interests.push_back(
       std::make_pair(Interest("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x"),
                      this->data.back()));
@@ -212,29 +222,252 @@ public:
     this->data.push_back(createData("/a/1"));
     this->data.push_back(createData("/b/1"));
     this->interests.push_back(std::make_pair(Interest()
-                                         .setName("/b")
-                                         .setSelectors(Selectors()
-                                                         .setChildSelector(0)),
-                                       this->data.back()));
+                                               .setName("/b")
+                                               .setSelectors(Selectors()
+                                                               .setChildSelector(0)),
+                                             this->data.back()));
 
     this->data.push_back(createData("/c/1"));
     this->data.push_back(createData("/b/99"));
     this->interests.push_back(std::make_pair(Interest()
-                                         .setName("/b")
-                                         .setSelectors(Selectors()
-                                                         .setChildSelector(1)),
-                                       this->data.back()));
+                                               .setName("/b")
+                                               .setSelectors(Selectors()
+                                                               .setChildSelector(1)),
+                                             this->data.back()));
     this->data.push_back(createData("/b/5"));
     this->data.push_back(createData("/b/55"));
   }
 };
 
+class IndexTestFixture : public DatasetBase
+{
+public:
+  static const std::string&
+  getName()
+  {
+    static std::string name = "IndexTest";
+    return name;
+  }
+
+  IndexTestFixture()
+  {
+    this->data.push_back(createData("/a/b/c"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/c"), this->data.back()));
+    this->ids.push_back(std::make_pair(2, this->data.back()));
+    this->insert.push_back(std::make_pair(2, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d/1"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d"), this->data.back()));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/1"), this->data.back()));
+    this->ids.push_back(std::make_pair(3, this->data.back()));
+    this->ids.push_back(std::make_pair(3, this->data.back()));
+    this->insert.push_back(std::make_pair(3, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d/2"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/2"), this->data.back()));
+    this->ids.push_back(std::make_pair(4, this->data.back()));
+    this->insert.push_back(std::make_pair(4, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d/3"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/3"), this->data.back()));
+    this->ids.push_back(std::make_pair(5, this->data.back()));
+    this->insert.push_back(std::make_pair(5, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d/4/I"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/4/I"), this->data.back()));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/4"), this->data.back()));
+    this->ids.push_back(std::make_pair(6, this->data.back()));
+    this->ids.push_back(std::make_pair(6, this->data.back()));
+    this->insert.push_back(std::make_pair(6, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d/4"));
+  //  this->ids.push_back(std::make_pair(7, this->data.back()));
+    this->insert.push_back(std::make_pair(7, this->data.back()));
+
+    this->data.push_back(createData("/a/b/d"));
+  //  this->ids.push_back(std::make_pair(8, this->data.back()));
+    this->insert.push_back(std::make_pair(8, this->data.back()));
+
+    this->data.push_back(createData("/a/b/e/1"));
+    this->interests.push_back(std::make_pair(Interest("/a/b/e"), this->data.back()));
+    this->interests.push_back(std::make_pair(Interest("/a/b/e/1"), this->data.back()));
+    this->ids.push_back(std::make_pair(9, this->data.back()));
+    this->ids.push_back(std::make_pair(9, this->data.back()));
+    this->insert.push_back(std::make_pair(9, this->data.back()));
+
+    Selectors selector_keylocator;
+    ndn::SignatureSha256WithRsa rsaSignature(this->data.back()->getSignature());
+
+    this->data.push_back(createData("/a/b/e"));
+    this->ids.push_back(std::make_pair(10, this->data.back()));
+    this->insert.push_back(std::make_pair(10, this->data.back()));
+
+    Selectors selector;
+    selector.setMinSuffixComponents(3);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                       6));
+
+    selector.setMinSuffixComponents(-1);
+    selector.setChildSelector(0);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                       3));
+
+    selector.setMinSuffixComponents(2);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                       3));
+
+    selector.setChildSelector(1);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                       7));
+
+    selector.setChildSelector(-1);
+    selector.setMaxSuffixComponents(2);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b").setSelectors(selector),
+                                                       2));
+
+    ndn::name::Component from("3");
+    ndn::name::Component to("4");
+    Exclude exclude;
+    exclude.excludeRange(from, to);
+    selector.setChildSelector(1);
+    selector.setExclude(exclude);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                       4));
+
+
+    KeyLocator keylocate = rsaSignature.getKeyLocator();
+    // std::cout<<"keylocator from data = "<<keylocate.wireEncode()<<std::endl;
+    selector_keylocator.setPublisherPublicKeyLocator(keylocate);
+    this->interestsSelectors.push_back(std::make_pair
+                                        (Interest("/a/b/e").setSelectors(selector_keylocator), 9));
+  }
+};
+
+class ChildSelectorTestFixture : public DatasetBase
+{
+public:
+  static const std::string&
+  getName()
+  {
+    static std::string name = "storage";
+    return name;
+  }
+
+  ChildSelectorTestFixture()
+  {
+    this->data.push_back(createData("/a/b/1"));
+    this->insert.push_back(std::make_pair(2, this->data.back()));
+    this->data.push_back(createData("/a/c/1"));
+    this->insert.push_back(std::make_pair(3, this->data.back()));
+
+    this->data.push_back(createData("/a/c/2"));
+    this->insert.push_back(std::make_pair(4, this->data.back()));
+
+    this->data.push_back(createData("/b"));
+    this->insert.push_back(std::make_pair(5, this->data.back()));
+
+    Selectors selector;
+    selector.setChildSelector(1);
+    this->interestsSelectors.push_back(std::make_pair(Interest("/a").setSelectors(selector),
+                                                       3));
+  }
+};
+
+class StorageFixture : public DatasetBase
+{
+public:
+    static const std::string&
+    getName()
+    {
+        static std::string name = "storage";
+        return name;
+    }
+
+    StorageFixture()
+    {
+        this->data.push_back(createData("/a/b/c"));
+        this->interests.push_back(std::make_pair(Interest("/a/b/c"), this->data.back()));
+        this->ids.push_back(std::make_pair(2, this->data.back()));
+        this->insert.push_back(std::make_pair(2, this->data.back()));
+
+        this->data.push_back(createData("/a/b/d/1"));
+        this->interests.push_back(std::make_pair(Interest("/a/b/d/1"), this->data.back()));
+        this->ids.push_back(std::make_pair(3, this->data.back()));
+        this->insert.push_back(std::make_pair(3, this->data.back()));
+
+        this->data.push_back(createData("/a/b/d/2"));
+        this->interests.push_back(std::make_pair(Interest("/a/b/d/2"), this->data.back()));
+        this->ids.push_back(std::make_pair(4, this->data.back()));
+        this->insert.push_back(std::make_pair(4, this->data.back()));
+
+        this->data.push_back(createData("/a/b/d/3"));
+        this->interests.push_back(std::make_pair(Interest("/a/b/d/3"), this->data.back()));
+        this->ids.push_back(std::make_pair(5, this->data.back()));
+        this->insert.push_back(std::make_pair(5, this->data.back()));
+
+        this->data.push_back(createData("/a/b/d/4"));
+        this->ids.push_back(std::make_pair(6, this->data.back()));
+        this->interests.push_back(std::make_pair(Interest("/a/b/d/4"), this->data.back()));
+        this->insert.push_back(std::make_pair(6, this->data.back()));
+
+        this->data.push_back(createData("/a/b/e/1"));
+        this->interests.push_back(std::make_pair(Interest("/a/b/e/1"), this->data.back()));
+        this->ids.push_back(std::make_pair(7, this->data.back()));
+        this->insert.push_back(std::make_pair(7, this->data.back()));
+
+        Selectors selector_keylocator;
+        ndn::SignatureSha256WithRsa rsaSignature(this->data.back()->getSignature());
+
+        this->data.push_back(createData("/a/b/e/2"));
+        this->ids.push_back(std::make_pair(8, this->data.back()));
+        this->interests.push_back(std::make_pair(Interest("/a/b/e/2"), this->data.back()));
+        this->insert.push_back(std::make_pair(8, this->data.back()));
+
+        Selectors selector;
+        selector.setChildSelector(0);
+        this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                          3));
+
+
+        selector.setChildSelector(1);
+        this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                          6));
+
+        selector.setChildSelector(-1);
+        selector.setMaxSuffixComponents(2);
+        this->interestsSelectors.push_back(std::make_pair(Interest("/a/b").setSelectors(selector),
+                                                          2));
+        ndn::name::Component from("3");
+        ndn::name::Component to("4");
+        Exclude exclude;
+        exclude.excludeRange(from, to);
+        selector.setChildSelector(1);
+        selector.setExclude(exclude);
+        this->interestsSelectors.push_back(std::make_pair(Interest("/a/b/d").setSelectors(selector),
+                                                          4));
+
+
+        KeyLocator keylocate = rsaSignature.getKeyLocator();
+        selector_keylocator.setPublisherPublicKeyLocator(keylocate);
+        this->interestsSelectors.push_back(std::make_pair
+                                           (Interest("/a/b/e").setSelectors(selector_keylocator),
+                                            7));
+    }
+};
 
 typedef boost::mpl::vector< BaseTestFixture,
                             FetchByPrefixTestFixture,
                             SelectorTestFixture,
                             BaseSmoketestFixture<1>,
-                            BaseSmoketestFixture<100> > DatasetFixtures;
+                            BaseSmoketestFixture<10> > DatasetFixtures;
+
+typedef boost::mpl::vector< BaseTestFixture,
+                            BaseSmoketestFixture<1>,
+                            BaseSmoketestFixture<10> > DatasetFixtures_Sqlite;
+
+typedef boost::mpl::vector<IndexTestFixture> DatasetFixtures_Index;
+typedef boost::mpl::vector<StorageFixture> DatasetFixtures_Storage;
+typedef boost::mpl::vector<ChildSelectorTestFixture> DatasetFixtures_Selector;
 
 } // namespace tests
 } // namespace repo

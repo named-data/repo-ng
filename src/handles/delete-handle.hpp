@@ -21,7 +21,7 @@
 #define REPO_HANDLES_DELETE_HANDLE_HPP
 
 #include "base-handle.hpp"
-
+#include <ndn-cxx/security/validator-config.hpp>
 namespace repo {
 
 using std::vector;
@@ -41,7 +41,7 @@ public:
   };
 
 public:
-  DeleteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
+  DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
                Scheduler& scheduler, ValidatorConfig& validator);
 
   virtual void
@@ -50,9 +50,6 @@ public:
 private:
   void
   onInterest(const Name& prefix, const Interest& interest);
-
-  void
-  onRegisterSuccess(const Name& prefix);
 
   void
   onRegisterFailed(const Name& prefix, const std::string& reason);

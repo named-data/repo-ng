@@ -21,7 +21,7 @@
 #define REPO_HANDLES_TCP_BULK_INSERT_HANDLE_HPP
 
 #include "common.hpp"
-#include "storage/storage-handle.hpp"
+#include "storage/repo-storage.hpp"
 
 #include <boost/asio.hpp>
 
@@ -42,7 +42,7 @@ public:
 
 public:
   TcpBulkInsertHandle(boost::asio::io_service& ioService,
-                      StorageHandle& storageHandle);
+                      RepoStorage& storageHandle);
 
   void
   listen(const std::string& host, const std::string& port);
@@ -50,7 +50,7 @@ public:
   void
   stop();
 
-  StorageHandle&
+  RepoStorage&
   getStorageHandle()
   {
     return m_storageHandle;
@@ -64,7 +64,7 @@ private:
 private:
   boost::asio::ip::tcp::acceptor m_acceptor;
   boost::asio::ip::tcp::endpoint m_localEndpoint;
-  StorageHandle& m_storageHandle;
+  RepoStorage& m_storageHandle;
 };
 
 } // namespace repo

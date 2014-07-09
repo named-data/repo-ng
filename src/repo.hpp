@@ -20,8 +20,9 @@
 #ifndef REPO_REPO_HPP
 #define REPO_REPO_HPP
 
-#include "storage/storage-handle.hpp"
-#include "storage/sqlite-handle.hpp"
+//#include "storage/repo_storage.hpp"
+#include "storage/sqlite-storage.hpp"
+#include "storage/repo-storage.hpp"
 
 #include "handles/read-handle.hpp"
 #include "handles/write-handle.hpp"
@@ -47,6 +48,7 @@ struct RepoConfig
   vector<ndn::Name> dataPrefixes;
   vector<ndn::Name> repoPrefixes;
   vector<pair<string, string> > tcpBulkInsertEndpoints;
+  int64_t nMaxPackets;
   boost::property_tree::ptree validatorNode;
 };
 
@@ -55,7 +57,6 @@ parseConfig(const std::string& confPath);
 
 class Repo : noncopyable
 {
-
 public:
   class Error : public std::runtime_error
   {
@@ -77,14 +78,11 @@ public:
   enableValidation();
 
 private:
-  static shared_ptr<StorageHandle>
-  openStorage(const RepoConfig& config);
-
-private:
   RepoConfig m_config;
   ndn::Scheduler m_scheduler;
   ndn::Face m_face;
-  shared_ptr<StorageHandle> m_storageHandle;
+  shared_ptr<Storage> m_store;
+  RepoStorage m_storageHandle;
   KeyChain m_keyChain;
   ValidatorConfig m_validator;
   ReadHandle m_readHandle;

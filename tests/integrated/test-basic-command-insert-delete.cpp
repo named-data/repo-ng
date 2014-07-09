@@ -19,16 +19,16 @@
 
 #include "handles/write-handle.hpp"
 #include "handles/delete-handle.hpp"
-#include "storage/storage-handle.hpp"
-#include "storage/sqlite-handle.hpp"
+#include "storage/sqlite-storage.hpp"
+#include "storage/repo-storage.hpp"
 #include "common.hpp"
 
-#include "../sqlite-fixture.hpp"
+#include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
 #include <ndn-cxx/util/random.hpp>
 #include <ndn-cxx/util/io.hpp>
-
+#include <boost/preprocessor/comparison/not_equal.hpp>
 #include <boost/test/unit_test.hpp>
 #include <fstream>
 
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_SUITE(TestBasicCommandInsertDelete)
 const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
 
 template<class Dataset>
-class Fixture : public SqliteFixture, public Dataset
+class Fixture : public RepoStorageFixture, public Dataset
 {
 public:
   Fixture()
@@ -148,14 +148,13 @@ Fixture<T>::onInsertInterest(const Interest& interest)
   data.setFreshnessPeriod(milliseconds(0));
   keyChain.signByIdentity(data, keyChain.getDefaultIdentity());
   insertFace.put(data);
-
   std::map<Name, EventId>::iterator event = insertEvents.find(interest.getName());
   if (event != insertEvents.end()) {
     scheduler.cancelEvent(event->second);
     insertEvents.erase(event);
   }
   // schedule an event 50ms later to check whether insert is Ok
-  scheduler.scheduleEvent(milliseconds(50),
+  scheduler.scheduleEvent(milliseconds(500),
                           bind(&Fixture<T>::checkInsertOk, this, interest));
 
 }
@@ -186,6 +185,7 @@ Fixture<T>::onInsertData(const Interest& interest, Data& data)
   response.wireDecode(data.getContent().blockFromValue());
   int statusCode = response.getStatusCode();
   BOOST_CHECK_EQUAL(statusCode, 100);
+  //  std::cout<<"statuse code of insert name = "<<response.getName()<<std::endl;
 }
 
 template<class T> void
@@ -232,20 +232,23 @@ Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
 template<class T> void
 Fixture<T>::checkInsertOk(const Interest& interest)
 {
-  Data data;
   BOOST_TEST_MESSAGE(interest);
-  BOOST_CHECK_EQUAL(handle->readData(interest, data), true);
-  int rc = memcmp(data.getContent().value(), content, sizeof(content));
-  BOOST_CHECK_EQUAL(rc, 0);
+  shared_ptr<Data> data = handle->readData(interest);
+  if (data) {
+    int rc = memcmp(data->getContent().value(), content, sizeof(content));
+    BOOST_CHECK_EQUAL(rc, 0);
+  }
+  else {
+    std::cerr<<"Check Insert Failed"<<std::endl;
+  }
 }
 
 template<class T> void
 Fixture<T>::checkDeleteOk(const Interest& interest)
 {
-  Data data;
-  BOOST_CHECK_EQUAL(handle->readData(interest, data), false);
+  shared_ptr<Data> data = handle->readData(interest);
+  BOOST_CHECK_EQUAL(data, shared_ptr<Data>());
 }
-
 
 template<class T> void
 Fixture<T>::scheduleInsertEvent()
@@ -278,7 +281,6 @@ Fixture<T>::scheduleInsertEvent()
     timeCount++;
   }
 }
-
 
 template<class T> void
 Fixture<T>::scheduleDeleteEvent()
@@ -313,7 +315,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, DatasetFixtures, Fixture<T>)
                                 bind(&Fixture<T>::scheduleDeleteEvent, this));
 
   // schedule an event to terminate IO
-  this->scheduler.scheduleEvent(seconds(20),
+  this->scheduler.scheduleEvent(seconds(30),
                                 bind(&Fixture<T>::stopFaceProcess, this));
   this->repoFace.getIoService().run();
 }

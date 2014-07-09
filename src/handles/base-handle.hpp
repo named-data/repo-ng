@@ -22,7 +22,7 @@
 
 #include "common.hpp"
 
-#include "storage/storage-handle.hpp"
+#include "storage/repo-storage.hpp"
 #include "repo-command-response.hpp"
 #include "repo-command-parameter.hpp"
 
@@ -30,7 +30,6 @@ namespace repo {
 
 class BaseHandle : noncopyable
 {
-
 public:
   class Error : std::runtime_error
   {
@@ -43,11 +42,13 @@ public:
   };
 
 public:
-  BaseHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain, Scheduler& scheduler)
+  BaseHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
+             Scheduler& scheduler)
     : m_face(face)
     , m_storageHandle(storageHandle)
     , m_keyChain(keyChain)
     , m_scheduler(scheduler)
+   // , m_storeindex(storeindex)
   {
   }
 
@@ -62,7 +63,7 @@ protected:
     return m_face;
   }
 
-  inline StorageHandle&
+  inline RepoStorage&
   getStorageHandle()
   {
     return m_storageHandle;
@@ -73,7 +74,13 @@ protected:
   {
     return m_scheduler;
   }
-
+/*
+  inline RepoStorage&
+  getStoreIndex()
+  {
+    return m_storeindex;
+  }
+*/
   uint64_t
   generateProcessId();
 
@@ -94,9 +101,10 @@ protected:
 private:
 
   Face& m_face;
-  StorageHandle& m_storageHandle;
+  RepoStorage& m_storageHandle;
   KeyChain& m_keyChain;
   Scheduler& m_scheduler;
+ // RepoStorage& m_storeindex;
 };
 
 inline void

@@ -24,16 +24,11 @@ namespace repo {
 void
 ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 {
-  Data data;
-  if (getStorageHandle().readData(interest, data)) {
-    getFace().put(data);
-  }
-}
 
-void
-ReadHandle::onRegisterSuccess(const Name& prefix)
-{
-  std::cerr << "Successfully registered prefix " << prefix << std::endl;
+  shared_ptr<ndn::Data> data = getStorageHandle().readData(interest);
+  if (data != NULL) {
+      getFace().put(*data);
+  }
 }
 
 void
@@ -46,9 +41,9 @@ ReadHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 void
 ReadHandle::listen(const Name& prefix)
 {
-  getFace().setInterestFilter(prefix,
+  ndn::InterestFilter filter(prefix);
+  getFace().setInterestFilter(filter,
                               bind(&ReadHandle::onInterest, this, _1, _2),
-                              bind(&ReadHandle::onRegisterSuccess, this, _1),
                               bind(&ReadHandle::onRegisterFailed, this, _1, _2));
 }
 

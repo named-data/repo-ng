@@ -17,38 +17,38 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_HANDLES_READ_HANDLE_HPP
-#define REPO_HANDLES_READ_HANDLE_HPP
+#ifndef REPO_TESTS_REPO_STORAGE_FIXTURE_HPP
+#define REPO_TESTS_REPO_STORAGE_FIXTURE_HPP
 
-#include "base-handle.hpp"
+#include "storage/repo-storage.hpp"
 
+#include <boost/filesystem.hpp>
+#include <boost/test/unit_test.hpp>
 
 namespace repo {
+namespace tests {
 
-class ReadHandle : public BaseHandle
+class RepoStorageFixture
 {
-
 public:
-  ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-             Scheduler& scheduler)
-    : BaseHandle(face, storageHandle, keyChain, scheduler)
+  RepoStorageFixture()
+    : store(make_shared<SqliteStorage>("unittestdb"))
+    , handle(new RepoStorage(static_cast<int64_t>(65535), *store))
   {
   }
 
-  virtual void
-  listen(const Name& prefix);
+  ~RepoStorageFixture()
+  {
+    boost::filesystem::remove_all(boost::filesystem::path("unittestdb"));
+  }
 
-private:
-  /**
-   * @brief Read data from backend storage
-   */
-  void
-  onInterest(const Name& prefix, const Interest& interest);
 
-  void
-  onRegisterFailed(const Name& prefix, const std::string& reason);
+public:
+  shared_ptr<Storage> store;
+  shared_ptr<RepoStorage> handle;
 };
 
+} // namespace tests
 } // namespace repo
 
-#endif // REPO_HANDLES_READ_HANDLE_HPP
+#endif // REPO_TESTS_REPO_STORAGE_FIXTURE_HPP

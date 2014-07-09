@@ -21,8 +21,9 @@
 
 namespace repo {
 
-DeleteHandle::DeleteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
-                           Scheduler& scheduler, ValidatorConfig& validator)
+DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
+                           Scheduler& scheduler,// RepoStorage& storeindex,
+                           ValidatorConfig& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
 {
@@ -35,11 +36,6 @@ DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
                        bind(&DeleteHandle::onValidationFailed, this, _1, _2));
 }
 
-void
-DeleteHandle::onRegisterSuccess(const Name& prefix)
-{
-  std::cerr << "Successfully registered prefix " << prefix << std::endl;
-}
 
 void
 DeleteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
@@ -101,13 +97,14 @@ DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, con
   std::cerr << reason << std::endl;
   negativeReply(*interest, 401);
 }
-
+//listen change the setinterestfilter
 void
 DeleteHandle::listen(const Name& prefix)
 {
-  getFace().setInterestFilter(Name(prefix).append("delete"),
+  ndn::Name deleteprefix = Name(prefix).append("delete");
+  ndn::InterestFilter filter(deleteprefix);
+  getFace().setInterestFilter(filter,
                               bind(&DeleteHandle::onInterest, this, _1, _2),
-                              bind(&DeleteHandle::onRegisterSuccess, this, _1),
                               bind(&DeleteHandle::onRegisterFailed, this, _1, _2));
 }
 
@@ -139,31 +136,28 @@ void
 DeleteHandle::processSingleDeleteCommand(const Interest& interest,
                                          RepoCommandParameter& parameter)
 {
-  uint64_t nDeletedDatas = 0;
-  if (getStorageHandle().deleteData(parameter.getName())) {
-    nDeletedDatas++;
+  int64_t nDeletedDatas = getStorageHandle().deleteData(parameter.getName());
+  if (nDeletedDatas == -1) {
+    std::cerr << "Deletion Failed!" <<std::endl;
+    negativeReply(interest, 405); //405 means deletion fail
   }
-  positiveReply(interest, parameter, 200, nDeletedDatas);
+  else
+    positiveReply(interest, parameter, 200, nDeletedDatas);
 }
 
 void
 DeleteHandle::processSelectorDeleteCommand(const Interest& interest,
                                            RepoCommandParameter& parameter)
 {
-  uint64_t nDeletedDatas = 0;
-  Name name = parameter.getName();
-  Selectors selectors = parameter.getSelectors();
-  vector<Name> names;
-  getStorageHandle().readNameAny(name, selectors, names);
-
-  for (vector<Name>::iterator it = names.begin(); it != names.end(); ++it) {
-    if (getStorageHandle().deleteData(*it)) {
-      nDeletedDatas++;
-    }
+  int64_t nDeletedDatas = getStorageHandle()
+                            .deleteData(Interest(parameter.getName())
+                                          .setSelectors(parameter.getSelectors()));
+  if (nDeletedDatas == -1) {
+    std::cerr << "Deletion Failed!" <<std::endl;
+    negativeReply(interest, 405); //405 means deletion fail
   }
-
-  //All data has been deleted, return 200
-  positiveReply(interest, parameter, 200, nDeletedDatas);
+  else
+    positiveReply(interest, parameter, 200, nDeletedDatas);
 }
 
 void

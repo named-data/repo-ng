@@ -21,7 +21,9 @@
 #define REPO_HANDLES_WRITE_HANDLE_HPP
 
 #include "base-handle.hpp"
-
+//#include <ndn-cxx/security/signature-sha256.hpp>
+#include <ndn-cxx/security/signature-sha256-with-rsa.hpp>
+#include <ndn-cxx/security/validator-config.hpp>
 #include <queue>
 
 namespace repo {
@@ -67,7 +69,7 @@ public:
 
 
 public:
-  WriteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
+  WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
               Scheduler& scheduler, ValidatorConfig& validator);
 
   virtual void
@@ -111,9 +113,6 @@ private: // insert command
 
   void
   onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
-
-  void
-  onRegisterSuccess(const Name& prefix);
 
   /**
    * @brief insert command prefix register failed

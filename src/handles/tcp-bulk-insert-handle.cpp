@@ -66,7 +66,7 @@ private:
 } // namespace detail
 
 TcpBulkInsertHandle::TcpBulkInsertHandle(boost::asio::io_service& ioService,
-                                         StorageHandle& storageHandle)
+                                         RepoStorage& storageHandle)
   : m_acceptor(ioService)
   , m_storageHandle(storageHandle)
 {

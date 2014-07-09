@@ -18,7 +18,7 @@
  */
 
 #include "repo.hpp"
-
+#include "storage/sqlite-storage.hpp"
 namespace repo {
 
 RepoConfig
@@ -104,6 +104,9 @@ parseConfig(const std::string& configPath)
   repoConfig.dbPath = repoConf.get<std::string>("storage.path");
 
   repoConfig.validatorNode = repoConf.get_child("validator");
+
+  repoConfig.nMaxPackets = repoConf.get<int>("storage.max-packets");
+
   return repoConfig;
 }
 
@@ -111,21 +114,16 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   : m_config(config)
   , m_scheduler(ioService)
   , m_face(ioService)
-  , m_storageHandle(openStorage(config))
+  , m_store(make_shared<SqliteStorage>(config.dbPath))
+  , m_storageHandle(config.nMaxPackets, *m_store)
   , m_validator(m_face)
-  , m_readHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler)
-  , m_writeHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler, m_validator)
-  , m_deleteHandle(m_face, *m_storageHandle, m_keyChain, m_scheduler, m_validator)
-  , m_tcpBulkInsertHandle(ioService, *m_storageHandle)
+  , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler)
+  , m_writeHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
+  , m_deleteHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
+  , m_tcpBulkInsertHandle(ioService, m_storageHandle)
 
 {
-}
-
-shared_ptr<StorageHandle>
-Repo::openStorage(const RepoConfig& config)
-{
-  shared_ptr<StorageHandle> storageHandle = ndn::make_shared<SqliteHandle>(config.dbPath);
-  return storageHandle;
+  m_validator.load(config.validatorNode, config.repoConfigPath);
 }
 
 void

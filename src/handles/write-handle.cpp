@@ -26,8 +26,9 @@ static const int DEFAULT_CREDIT = 12;
 static const ndn::time::milliseconds NOEND_TIMEOUT(10000);
 static const ndn::time::milliseconds PROCESS_DELETE_TIME(10000);
 
-WriteHandle::WriteHandle(Face& face, StorageHandle& storageHandle, KeyChain& keyChain,
-                         Scheduler& scheduler, ValidatorConfig& validator)
+WriteHandle::WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
+                         Scheduler& scheduler,// RepoStorage& storeindex,
+                         ValidatorConfig& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
   , m_retryTime(RETRY_TIMEOUT)
@@ -49,12 +50,6 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
   m_validator.validate(interest,
                        bind(&WriteHandle::onValidated, this, _1, prefix),
                        bind(&WriteHandle::onValidationFailed, this, _1, _2));
-}
-
-void
-WriteHandle::onRegisterSuccess(const Name& prefix)
-{
-  std::cerr << "Successfully registered prefix " << prefix << std::endl;
 }
 
 // onRegisterFailed.
@@ -127,6 +122,8 @@ WriteHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
 
   if (response.getInsertNum() == 0) {
     getStorageHandle().insertData(*data);
+   // getStorageHandle().insertEntry(*data);
+   // getStoreIndex().insert(*data);
     response.setInsertNum(1);
   }
 
@@ -200,15 +197,15 @@ WriteHandle::listen(const Name& prefix)
 {
   Name insertPrefix;
   insertPrefix.append(prefix).append("insert");
-  getFace().setInterestFilter(insertPrefix,
+  ndn::InterestFilter filter_insert(insertPrefix);
+  getFace().setInterestFilter(filter_insert,
                               bind(&WriteHandle::onInterest, this, _1, _2),
-                              bind(&WriteHandle::onRegisterSuccess, this, _1),
                               bind(&WriteHandle::onRegisterFailed, this, _1, _2));
   Name insertCheckPrefix;
   insertCheckPrefix.append(prefix).append("insert check");
-  getFace().setInterestFilter(insertCheckPrefix,
+  ndn::InterestFilter filter_insertCheck(insertCheckPrefix);
+  getFace().setInterestFilter(filter_insertCheck,
                               bind(&WriteHandle::onCheckInterest, this, _1, _2),
-                              bind(&WriteHandle::onRegisterSuccess, this, _1),
                               bind(&WriteHandle::onRegisterFailed, this, _1, _2));
 }
 

@@ -20,7 +20,7 @@
 #ifndef REPO_TESTS_SQLITE_FIXTURE_HPP
 #define REPO_TESTS_SQLITE_FIXTURE_HPP
 
-#include "storage/sqlite-handle.hpp"
+#include "storage/sqlite-storage.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -32,7 +32,7 @@ class SqliteFixture
 {
 public:
   SqliteFixture()
-    : handle(new SqliteHandle("unittestdb"))
+    : handle(new SqliteStorage("unittestdb"))
   {
   }
 
@@ -43,7 +43,7 @@ public:
   }
 
 public:
-  SqliteHandle* handle;
+  SqliteStorage* handle;
 };
 
 } // namespace tests

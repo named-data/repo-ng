@@ -18,10 +18,10 @@
  */
 
 #include "handles/read-handle.hpp"
-#include "storage/storage-handle.hpp"
-#include "storage/sqlite-handle.hpp"
+#include "storage/sqlite-storage.hpp"
+#include "storage/repo-storage.hpp"
 
-#include "../sqlite-fixture.hpp"
+#include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
 #include <ndn-cxx/util/random.hpp>
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_SUITE(TestBasicInerestRead)
 const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
 
 template<class Dataset>
-class BasicInterestReadFixture : public SqliteFixture, public Dataset
+class BasicInterestReadFixture : public RepoStorageFixture, public Dataset
 {
 public:
   BasicInterestReadFixture()
@@ -71,7 +71,6 @@ public:
       bool rc = handle->insertData(**i);
 
       BOOST_CHECK_EQUAL(rc, true);
-
       Interest readInterest((*i)->getName());
       readInterest.setMustBeFresh(true);
       scheduler.scheduleEvent(ndn::time::milliseconds(timeCount * 50),
@@ -92,8 +91,6 @@ public:
   {
     int rc = memcmp(data.getContent().value(), content, sizeof(content));
     BOOST_CHECK_EQUAL(rc, 0);
-    //then delete the data
-    BOOST_CHECK_EQUAL(handle->deleteData(data.getName()), true);
   }
 
   void
@@ -122,19 +119,19 @@ public:
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, DatasetFixtures, BasicInterestReadFixture<T>)
 {
   // Insert dataset
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) {
-    BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
-  }
+ // for (typename T::DataContainer::iterator i = this->data.begin();
+ //      i != this->data.end(); ++i) {
+ //   BOOST_CHECK_EQUAL(this->handle.insertData(**i), true);
+ // }
 
-  BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
+//  BOOST_CHECK_EQUAL(this->handle.size(), this->data.size());
 
   this->startListen();
   this->scheduler.scheduleEvent(ndn::time::seconds(0),
                                 ndn::bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
 
   // schedule an event to terminate IO
-  this->scheduler.scheduleEvent(ndn::time::seconds(10),
+  this->scheduler.scheduleEvent(ndn::time::seconds(20),
                                 ndn::bind(&BasicInterestReadFixture<T>::stopFaceProcess, this));
   this->repoFace.getIoService().run();
 

@@ -36,7 +36,7 @@ class Fixture : public Dataset
 {
 };
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(NdnNameSkipList, T, DatasetFixtures_Index, Fixture<T>)
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(NdnNameSkipList, T, DatasetFixtures, Fixture<T>)
 {
   repo::SkipList<ndn::Name, typename T::DataSetNameCompare> skipList;
   //Insert
@@ -49,7 +49,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(NdnNameSkipList, T, DatasetFixtures_Index, Fixt
   for (typename T::DataContainer::iterator i = this->data.begin();
        i != this->data.end(); ++i) {
     typename repo::SkipList<ndn::Name, typename T::DataSetNameCompare>::iterator findIterator =
-      skipList.lower_bound((*i)->getName());
+      skipList.find((*i)->getName());
     skipList.erase(findIterator);
   }
 

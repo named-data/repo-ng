@@ -37,47 +37,51 @@ class Fixture : public Dataset
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(IndexGeneralTest, T, DatasetFixtures_Storage, Fixture<T>)
 {
-  Index index(65535);
-  for (typename T::IdContainer::iterator i = this->insert.begin();
-       i != this->insert.end(); ++i)
-  {
-    BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
-  }
-  BOOST_CHECK_EQUAL(index.size(), 7);
+   Index index(65535);
+   for (typename T::IdContainer::iterator i = this->insert.begin();
+        i != this->insert.end(); ++i)
+   {
+     BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
+   }
+   BOOST_CHECK_EQUAL(index.size(), 7);
 
-  typename T::IdContainer::iterator id = this->ids.begin();
-  for (typename T::InterestContainer::iterator i = this->interests.begin();
-       i != this->interests.end(); ++i)
-  {
-    vector<std::pair<int, ndn::Name> > id_names;
-    BOOST_CHECK_EQUAL(index.find(i->first.getName()).first, id->first);
-    BOOST_CHECK_EQUAL(index.hasData(*i->second), true);
-    ++id;
-  }
+   typename T::IdContainer::iterator id = this->ids.begin();
+   for (typename T::InterestContainer::iterator i = this->interests.begin();
+        i != this->interests.end(); ++i)
+   {
+     vector<std::pair<int, ndn::Name> > id_names;
+     BOOST_CHECK_EQUAL(index.find(i->first.getName()).first, id->first);
+     BOOST_CHECK_EQUAL(index.hasData(*i->second), true);
+     ++id;
+   }
 
-  for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
-       i != this->interestsSelectors.end(); ++i)
-  {
-    BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
-    ndn::Name name = index.find(i->first).second;
-    BOOST_CHECK_EQUAL(index.erase(name), true);
-  }
-  BOOST_CHECK_EQUAL(index.size(), 2);
+   for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
+        i != this->interestsSelectors.end(); ++i)
+   {
+
+     BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
+     ndn::Name name = index.find(i->first).second;
+     BOOST_CHECK_EQUAL(index.erase(name), true);
+   }
+   BOOST_CHECK_EQUAL(index.size(), 2);
 }
 
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(IndexTestSelector, T, DatasetFixtures_Selector, Fixture<T>)
 {
-  Index index(65535);
-  for (typename T::IdContainer::iterator i = this->insert.begin();
-       i != this->insert.end(); ++i)
-    BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
-  for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
-       i != this->interestsSelectors.end(); ++i)
-  {
-    BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
-  }
+   Index index(65535);
+   for (typename T::IdContainer::iterator i = this->insert.begin();
+        i != this->insert.end(); ++i)
+     BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
+   for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
+        i != this->interestsSelectors.end(); ++i)
+   {
+     BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
+   }
+
+
 }
+
 
 class FindFixture
 {
@@ -104,7 +108,7 @@ protected:
     return *m_interest;
   }
 
-  int
+  uint64_t
   find()
   {
     std::pair<int,Name> found = m_index.find(*m_interest);

@@ -22,17 +22,13 @@
 
 #include "common.hpp"
 
-#include <boost/utility.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-
 namespace repo {
 
-class SkipList32Layers25Probabilty
+class SkipList32Levels25Probabilty
 {
 public:
   static size_t
-  getMaxLayers()
+  getMaxLevels()
   {
     return 32;
   }
@@ -40,325 +36,398 @@ public:
   static double
   getProbability()
   {
-    return 0.25; /* 25% */
+    return 0.25;  // 25%
   }
 };
 
+template<typename T>
+struct SkipListNode
+{
+  typedef SkipListNode<T>* SkipListNodePointer;
+  T data;
+  std::vector<SkipListNodePointer> prevs;
+  std::vector<SkipListNodePointer> nexts;
+};
+
+template<typename T, class Ref, class Ptr>
+class SkipListIterator : public std::iterator<std::bidirectional_iterator_tag, T>
+{
+public:
+  typedef SkipListNode<T>* NodePointer;
+  NodePointer node;
+
+  typedef SkipListIterator<T, Ref, Ptr> Self;
+  typedef T value_type;
+  typedef Ptr pointer;
+  typedef Ref reference;
+  typedef ptrdiff_t difference_type;
+  typedef SkipListIterator<T, const T&, const T*> const_iterator;
+  /// alias of const_iterator
+  typedef const_iterator iterator;
+
+public:
+  // constructor
+  SkipListIterator()
+  {
+  }
+
+  explicit
+  SkipListIterator(NodePointer x)
+    : node(x)
+  {
+  }
+
+  SkipListIterator(const SkipListIterator& x)
+    : node(x.node)
+  {
+  }
+
+  bool
+  operator==(const const_iterator& x) const
+  {
+    return node == x.node;
+  }
+
+  bool
+  operator!=(const const_iterator& x) const
+  {
+    return node != x.node;
+  }
+
+  reference
+  operator*() const
+  {
+    return (*node).data;
+  }
+
+  pointer
+  operator->() const
+  {
+    return &(operator*());
+  }
+
+  Self&
+  operator++()
+  {
+    node = node->nexts[0];
+    return *this;
+  }
+
+  Self
+  operator++(int)
+  {
+    Self tmp = *this;
+    ++*this;
+    return tmp;
+  }
+
+  Self&
+  operator--()
+  {
+    node = node->prevs[0];
+    return *this;
+  }
+
+  Self
+  operator--(int)
+  {
+    Self tmp = *this;
+    --*this;
+    return tmp;
+  }
+};
+
+/*
+ * @brief SkipList
+ *
+ * Examples of internal structure:
+ * "A <-i-> B" means A->nexts[i] = B and B->prevs[i] = A
+ *
+ * case 1: an empty skip list
+ * m_head <-0-> m_head
+ *
+ * case 2: a skip list with only one level and only one node
+ * m_head <-0-> A <-0-> m_head
+ *
+ * case 3: a skip list with three nodes, node A and B appear on one level,
+ * node C appears on two levels
+ * m_head         <-1->         C <-1-> m_head
+ * m_head <-0-> A <-0-> B <-0-> C <-0-> m_head
+ */
+
 template<typename T, typename Compare = std::less<T>,
-         typename Traits = SkipList32Layers25Probabilty >
+         typename Traits = SkipList32Levels25Probabilty>
 class SkipList
 {
 public:
-  //@brief layer of skiplist is std::list
-  typedef std::list<T> SkipListLayer;
-  //@brief iterator of skiplist
-  typedef typename SkipListLayer::iterator iterator;
+  typedef T value_type;
+  typedef value_type* pointer;
+  typedef const value_type* const_pointer;
+  typedef value_type& reference;
+  typedef const value_type& const_reference;
+  typedef SkipListNode<T> Node;
+  typedef Node* NodePointer;
+  typedef size_t size_type;
+  typedef ptrdiff_t difference_type;
+  typedef SkipListIterator<T, const T&, const T*> const_iterator;
+  /// alias of const_iterator
+  typedef const_iterator iterator;
 
 public:
   explicit
-  SkipList();
+  SkipList()
+  {
+    initializeHead();
+  }
 
-  ~SkipList();
+  ~SkipList()
+  {
+    clear();
+    deallocateNode(m_head);
+  }
+
+  const_iterator
+  begin() const
+  {
+    return const_iterator(*(*m_head).nexts.begin());
+  }
+
+  const_iterator
+  end() const
+  {
+    return const_iterator(m_head);
+  }
+
+  bool
+  empty() const
+  {
+    return *(m_head->nexts.begin()) == m_head;
+  }
 
   size_t
-  size() const;
+  size() const
+  {
+    return m_size;
+  }
 
-public: // enumeration
+  const_iterator
+  lower_bound(const T& x) const;
 
-  iterator
-  begin() const;
+  const_iterator
+  find(const T& x) const;
 
-  iterator
-  end() const;
+  std::pair<const_iterator, bool>
+  insert(const T& x);
 
-  iterator
-  find(const T& key);
+  const_iterator
+  erase(const_iterator it);
 
-  iterator
-  lower_bound(const T& key);
+protected:
+  /*
+   * @brief allocate memory for node
+   */
+  NodePointer
+  allocateNode()
+  {
+    return m_skiplistAllocator.allocate(sizeof(Node));
+  }
 
-  std::pair<iterator, bool>
-  insert(const T& key);
+  /*
+   * @brief deallocate memory of node
+   */
+  void
+  deallocateNode(NodePointer p)
+  {
+    m_skiplistAllocator.deallocate(p, sizeof(Node));
+  }
 
-  iterator
-  erase(iterator it);
+  /*
+   * @brief initialize the node
+   */
+  NodePointer
+  createNode()
+  {
+    NodePointer p = allocateNode();
+    Node node;
+    m_skiplistAllocator.construct(p, node);
+    return p;
+  }
 
-private:
+  /*
+   * @brief initialize the node with given value
+   * @para to be set to the value of node
+   */
+  NodePointer
+  createNode(const T& x)
+  {
+    NodePointer p = allocateNode();
+    Node node;
+    m_skiplistAllocator.construct(p, node);
+    m_dataAllocator.construct(&(p->data), x);
+    return p;
+  }
+
+  /*
+   * @brief destructror of the node
+   * @para given pointer of node to be destructed
+   */
+  void
+  destroyNode(NodePointer p)
+  {
+    m_skiplistAllocator.destroy(p);
+    deallocateNode(p);
+  }
+
+  /*
+   * @brief initialize the head
+   */
+  void
+  initializeHead()
+  {
+    m_head = createNode();
+    m_head->prevs.push_back(m_head);
+    m_head->nexts.push_back(m_head);
+    m_size = 0;
+  }
+
+  /*
+   * @brief destroy all the nodes of skiplist except the head
+   */
+  void
+  clear()
+  {
+    NodePointer cur = m_head->nexts[0];
+    while (cur != m_head) {
+      NodePointer tmp = cur;
+      cur = cur->nexts[0];
+      destroyNode(tmp);
+    }
+    m_head->nexts[0] = m_head;
+    m_head->prevs[0] = m_head;
+  }
+
+  /*
+   * @brief pick a random height for inserted skiplist entry
+   */
   size_t
-  pickRandomLayer() const;
+  pickRandomLevel() const
+  {
+    static boost::random::mt19937 gen;
+    static boost::random::geometric_distribution<size_t> dist(Traits::getProbability());
+    return std::min(dist(gen), Traits::getMaxLevels());
+  }
 
-private:
-  //@brief store multiple layers
-  typedef std::list<shared_ptr<SkipListLayer> > SkipListHeadLayer;
-  //@brief iterate one layer of skiplist
-  typedef typename SkipListLayer::iterator layer_iterator;
-  //@brief iterate among different layers
-  typedef typename SkipListHeadLayer::iterator head_iterator;
-  typedef typename SkipListHeadLayer::reverse_iterator head_reverse_iterator;
-
-private:
-  SkipListHeadLayer m_skipList;
-  //@brief keep the locations of iterator where element is inserted in each layer
-  //key of external map is the layer of skiplist
-  //value is the internal map which maps the key T with the iterator of each layer
-  std::map<size_t, std::map<T, layer_iterator, Compare> > m_layerToEntry;
+protected:
+  NodePointer m_head;
+  std::allocator<Node> m_skiplistAllocator;
+  std::allocator<T> m_dataAllocator;
   Compare m_compare;
+  size_t m_size;
 };
 
+
 template<typename T, typename Compare, typename Traits>
-inline
-SkipList<T, Compare, Traits>::SkipList()
+typename SkipList<T, Compare, Traits>::const_iterator
+SkipList<T, Compare, Traits>::lower_bound(const T& x) const
 {
-  shared_ptr<SkipListLayer> zeroLayer = make_shared<SkipListLayer>();
-  m_skipList.push_back(zeroLayer);
+  size_t nLevels = m_head->nexts.size();
+  NodePointer p = m_head;
+  NodePointer q = p->nexts[nLevels - 1];
+  for (int i = nLevels - 1; i >= 0; --i) {
+    q = p->nexts[i];
+    if (q != m_head) {
+      while (m_compare(q->data, x)) {
+        p = p->nexts[i];
+        q = p->nexts[i];
+        if (q == m_head) {
+          break;
+        }
+      }
+    }
+  }
+  return const_iterator(q);
 }
 
 template<typename T, typename Compare, typename Traits>
-inline
-SkipList<T, Compare, Traits>::~SkipList()
+typename SkipList<T, Compare, Traits>::const_iterator
+SkipList<T, Compare, Traits>::find(const T& x) const
 {
-}
-
-template<typename T, typename Compare, typename Traits>
-inline size_t
-SkipList<T, Compare, Traits>::size() const
-{
-  return (*m_skipList.begin())->size();
-}
-
-template<typename T, typename Compare, typename Traits>
-inline typename SkipList<T, Compare, Traits>::iterator
-SkipList<T, Compare, Traits>::begin() const
-{
-   return (*m_skipList.begin())->begin();
-}
-
-template<typename T, typename Compare, typename Traits>
-inline typename SkipList<T, Compare, Traits>::iterator
-SkipList<T, Compare, Traits>::end() const
-{
-  return (*m_skipList.begin())->end();
-}
-
-template<typename T, typename Compare, typename Traits>
-inline typename SkipList<T, Compare, Traits>::iterator
-SkipList<T, Compare, Traits>::find(const T& key)
-{
-  iterator it = this->lower_bound(key);
-  if (it == this->end() || *it != key)
+  const_iterator it = this->lower_bound(x);
+  if (it == this->end() || *it != x)
     return this->end();
   return it;
 }
 
 template<typename T, typename Compare, typename Traits>
-inline typename SkipList<T, Compare, Traits>::iterator
-SkipList<T, Compare, Traits>::lower_bound(const T& key)
+std::pair<typename SkipList<T, Compare, Traits>::const_iterator, bool>
+SkipList<T, Compare, Traits>::insert(const T& x)
 {
-  bool isIterated = false;
-  bool isIdentical = false;
-  head_reverse_iterator topLayer = m_skipList.rbegin();
-  layer_iterator head = (*topLayer)->begin();
-
-  if (!(*topLayer)->empty()) {
-    size_t layer = m_skipList.size() - 1;
-    for (head_reverse_iterator headReverseIterator = topLayer;
-         headReverseIterator != m_skipList.rend(); ++headReverseIterator) {
-      if (!isIterated)
-        head = (*headReverseIterator)->begin();
-
-      if (head != (*headReverseIterator)->end()) {
-        if (!isIterated && (!m_compare(*head, key) && !m_compare(key, *head))) {
-          if (layer > 0) {
-            layer--;
-            continue; // try lower layer
-          }
-          else {
-            isIterated = true;
-            isIdentical = true;
-          }
-        }
-        else {
-          layer_iterator layerIterator = head;
-          while (m_compare((*layerIterator) , key)) {
-            head = layerIterator;
-            isIterated = true;
-
-            ++layerIterator;
-            if (layerIterator == (*headReverseIterator)->end())
-              break;
-          }
-
-        }
-      }
-
-      if (layer > 0) {
-        //find the head in the lower layer
-        head = m_layerToEntry[layer - 1][*head];
-      }
-      else {  //if we reached the first layer
-        if (isIterated) {
-          if (!isIdentical)
-            ++head;
-          //result = head;
-          return head;
-        }
-        else {
-          return head;
-        }
-      }
-
-      layer--;
-    }
-  }
-  return (*m_skipList.begin())->end();
-}
-
-template<typename T, typename Compare, typename Traits>
-inline size_t
-SkipList<T, Compare, Traits>::pickRandomLayer() const
-{
-  static boost::random::mt19937 gen;
-  static boost::random::geometric_distribution<size_t> dist(Traits::getProbability());
-  return std::min(dist(gen), Traits::getMaxLayers());
-}
-
-template<typename T, typename Compare, typename Traits>
-inline std::pair<typename SkipList<T, Compare, Traits>::iterator ,bool>
-SkipList<T, Compare, Traits>::insert(const T& key)
-{
-  bool insertInFront = false;
-  bool isIterated = false;
-  head_reverse_iterator topLayer = m_skipList.rbegin();
-  std::vector<layer_iterator> updateTable(Traits::getMaxLayers());
-  layer_iterator head = (*topLayer)->begin();
-
-  if (!(*topLayer)->empty()) {
-    size_t layer = m_skipList.size() - 1;
-    for (head_reverse_iterator headReverseIterator = topLayer;
-         headReverseIterator != m_skipList.rend(); ++headReverseIterator) {
-      if (!isIterated)
-        head = (*headReverseIterator)->begin();
-
-      updateTable[layer] = head;
-
-      if (head != (*headReverseIterator)->end()) {
-        if (!isIterated && !m_compare(*head, key)) {
-          --updateTable[layer];
-          insertInFront = true;
-        }
-        else {
-          layer_iterator layerIterator = head;
-
-          while (m_compare(*layerIterator , key)) {
-            head = layerIterator;
-            updateTable[layer] = layerIterator;
-            isIterated = true;
-
-            ++layerIterator;
-            if (layerIterator == (*headReverseIterator)->end())
-              break;
-          }
-
-        }
-      }
-
-      if (layer > 0)
-        head = m_layerToEntry[layer - 1][*head]; // move HEAD to the lower layer
-
-      layer--;
-    }
-  }
-  else {
-    updateTable[0] = (*topLayer)->begin(); //initialization
-  }
-
-  head = updateTable[0];
-  ++head;
-
-  bool isInBoundaries = (head != (*m_skipList.begin())->end());
-  bool isKeyIdentical = false;
-  if (isInBoundaries) {
-    isKeyIdentical = (!m_compare(*head, key) && !m_compare(key, *head));
-  }
-  if (isKeyIdentical) {
-    return std::make_pair(head, false);
-  }
-
-  size_t randomLayer = pickRandomLayer();
-
-  while (m_skipList.size() < randomLayer + 1) {
-     boost::shared_ptr<SkipListLayer> newLayer = make_shared<SkipListLayer>();
-    m_skipList.push_back(newLayer);
-
-    updateTable[(m_skipList.size() - 1)] = newLayer->begin();
-  }
-
-  size_t layer = 0;
-  layer_iterator result;
-
-  for (head_iterator headIterator = m_skipList.begin();
-       headIterator != m_skipList.end() && layer <= randomLayer; ++headIterator) {
-    if (updateTable[layer] == (*headIterator)->end() && !insertInFront) {
-      (*headIterator)->push_back(key);
-      layer_iterator last = (*headIterator)->end();
-      --last;
-      m_layerToEntry[layer][key] = last;
-
-    }
-    else if (updateTable[layer] == (*headIterator)->end() && insertInFront) {
-      (*headIterator)->push_front(key);
-      m_layerToEntry[layer][key] = (*headIterator)->begin();
-    }
-    else {
-      ++updateTable[layer]; // insert after
-      iterator position = (*headIterator)->insert(updateTable[layer], key);
-      m_layerToEntry[layer][key] = position;  // save iterator where item was inserted
-    }
-    if (layer == 0)
-      result = m_layerToEntry[layer][key];
-    layer++;
-  }
-  return make_pair(result, true);
-}
-
-template<typename T, typename Compare, typename Traits>
-inline typename SkipList<T, Compare, Traits>::iterator
-SkipList<T, Compare, Traits>::erase(typename SkipList<T, Compare, Traits>::iterator it)
-{
-  if (it != end()) {
-    int layer = 1;
-    head_iterator headIterator = m_skipList.begin();
-    headIterator++;
-    for (; headIterator != m_skipList.end();) {
-      const std::map<T, layer_iterator, Compare>& layerIterators = m_layerToEntry[layer];
-      if(!layerIterators.empty()) {
-        typename std::map<T, layer_iterator, Compare>::const_iterator eraseIterator =
-          layerIterators.find(*it);
-        if (eraseIterator != layerIterators.end()) {
-          (*headIterator)->erase(eraseIterator->second);
-          m_layerToEntry[layer].erase(*it);
-          //remove layers that do not contain any elements (starting from the second layer)
-          if ((*headIterator)->empty()) {
-            // delete headIterator;
-            headIterator = m_skipList.erase(headIterator);
-          }
-          else {
-            ++headIterator;
-          }
-          layer++;
-        }
-        else {
+  size_t nLevels = m_head->nexts.size();
+  // 1. find insert position
+  std::vector<NodePointer> insertPositions(nLevels);
+  NodePointer p = m_head;
+  NodePointer q = p->nexts[nLevels - 1];
+  for (int i = nLevels - 1; i >= 0; --i) {
+    q = p->nexts[i];
+    if (q != m_head) {
+      while (m_compare(q->data, x)) {
+        p = p->nexts[i];
+        q = p->nexts[i];
+        if (q == m_head) {
           break;
         }
       }
     }
+    insertPositions[i] = p;
+  }
+  // 2. whether q->data == x?
+  if (q != m_head)
+    if (!m_compare(q->data, x) && !m_compare(x, q->data)) {
+      return std::pair<const_iterator, bool>(const_iterator(q), false);
+    }
+  // 3. construct new node;
+  NodePointer newNode = createNode(x);
+  // 4. pick random nLevels
+  size_t newLevel = pickRandomLevel();
+  // 5. insert the new node
+  newNode->nexts.resize(newLevel + 1);
+  newNode->prevs.resize(newLevel + 1);
+  if (newLevel > nLevels - 1) {
+    m_head->nexts.resize(newLevel + 1, m_head);
+    m_head->prevs.resize(newLevel + 1, m_head);
+    insertPositions.resize(newLevel + 1, m_head);
+  }
+  for (int i = 0; i <= static_cast<int>(newLevel); i++) {
+    newNode->nexts[i] = insertPositions[i]->nexts[i];
+    newNode->prevs[i] = insertPositions[i];
+    insertPositions[i]->nexts[i] = newNode;
+    newNode->nexts[i]->prevs[i] = newNode;
+  }
 
-    m_layerToEntry[0].erase(*it);
-    m_skipList.end();
-    typename SkipList<T, Compare, Traits>::iterator returnIterator =
-      (*m_skipList.begin())->erase(it);
+  ++m_size;
+  return std::pair<const_iterator, bool>(const_iterator(newNode), true);
+}
 
-    return returnIterator;
+template<typename T, typename Compare, typename Traits>
+typename SkipList<T, Compare, Traits>::const_iterator
+SkipList<T, Compare, Traits>::erase(typename SkipList<T, Compare, Traits>::const_iterator it)
+{
+  NodePointer eraseNode = it.node;
+  if (!empty() && eraseNode != m_head) {
+    NodePointer returnNode = eraseNode->nexts[0];
+    size_t nLevels = eraseNode->nexts.size();
+    for (int i = nLevels - 1; i >= 0; --i) {
+      eraseNode->nexts[i]->prevs[i] = eraseNode->prevs[i];
+      eraseNode->prevs[i]->nexts[i] = eraseNode->nexts[i];
+      // clear empty nLevels
+      if ((eraseNode->nexts[i] == eraseNode->prevs[i]) && i > 0) {
+        m_head->nexts.pop_back();
+        m_head->prevs.pop_back();
+      }
+    }
+    destroyNode(eraseNode);
+    --m_size;
+    return const_iterator(returnNode);
   }
   else {
     return end();

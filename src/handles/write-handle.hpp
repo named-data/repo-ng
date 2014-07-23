@@ -21,9 +21,9 @@
 #define REPO_HANDLES_WRITE_HANDLE_HPP
 
 #include "base-handle.hpp"
-//#include <ndn-cxx/security/signature-sha256.hpp>
-#include <ndn-cxx/security/signature-sha256-with-rsa.hpp>
+
 #include <ndn-cxx/security/validator-config.hpp>
+
 #include <queue>
 
 namespace repo {

@@ -303,7 +303,13 @@ Fixture<T>::scheduleDeleteEvent()
   }
 }
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, DatasetFixtures, Fixture<T>)
+typedef boost::mpl::vector< BasicDataset,
+                            FetchByPrefixDataset,
+                            BasicChildSelectorDataset,
+                            ExtendedChildSelectorDataset,
+                            SamePrefixDataset<10> > Datasets;
+
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 {
   this->generateDefaultCertificateFile();
   this->validator.load("tests/integrated/insert-delete-validator-config.conf");

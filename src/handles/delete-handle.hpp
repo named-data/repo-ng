@@ -22,6 +22,7 @@
 
 #include "base-handle.hpp"
 #include <ndn-cxx/security/validator-config.hpp>
+
 namespace repo {
 
 using std::vector;
@@ -61,8 +62,8 @@ private:
   onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
 
   /**
-  * @todo delete check has not been realized due to the while loop of segmented data deletion.
-  */
+   * @todo delete check has not been realized due to the while loop of segmented data deletion.
+   */
   void
   onCheckInterest(const Name& prefix, const Interest& interest);
 

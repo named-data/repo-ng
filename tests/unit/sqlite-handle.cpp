@@ -32,42 +32,45 @@ BOOST_AUTO_TEST_SUITE(SqliteStorage)
 template<class Dataset>
 class Fixture : public SqliteFixture, public Dataset
 {
+public:
+  std::map<int64_t, shared_ptr<Data> > idToDataMap;
 };
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, DatasetFixtures_Sqlite, Fixture<T>)
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, CommonDatasets, Fixture<T>)
 {
   BOOST_TEST_MESSAGE(T::getName());
 
-  // Insert
-  for (typename T::IdContainer::iterator i = this->ids.begin();
-       i != this->ids.end(); ++i) {
-    BOOST_CHECK_EQUAL(this->handle->insert(*i->second), i->first);
-  }
+  std::vector<int64_t> ids;
 
+  // Insert
+  for (typename T::DataContainer::iterator i = this->data.begin();
+       i != this->data.end(); ++i)
+    {
+      int64_t id = -1;
+      BOOST_REQUIRE_NO_THROW(id = this->handle->insert(**i));
+
+      this->idToDataMap.insert(std::make_pair(id, *i));
+      ids.push_back(id);
+    }
   BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
 
+  std::random_shuffle(ids.begin(), ids.end());
+
   // Read (all items should exist)
-  for (typename T::IdContainer::iterator i = this->ids.begin();
-       i != this->ids.end(); ++i) {
-    shared_ptr<Data> retrievedData = this->handle->read(i->first);
-    BOOST_CHECK_EQUAL(*retrievedData, *i->second);
+  for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {
+    shared_ptr<Data> retrievedData = this->handle->read(*i);
+
+    BOOST_REQUIRE(this->idToDataMap.count(*i) > 0);
+    BOOST_CHECK_EQUAL(*this->idToDataMap[*i], *retrievedData);
   }
+  BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
 
   // Delete
-  for (typename T::IdContainer::iterator i = this->ids.begin();
-       i != this->ids.end(); ++i) {
-      //std::cout<<"remove name = "<<i->second->getName()<<std::endl;
-    BOOST_CHECK_EQUAL(this->handle->erase(i->first), true);
+  for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {
+    BOOST_CHECK_EQUAL(this->handle->erase(*i), true);
   }
 
-  /*
-  // Read (none of the items should exist)
-  for (typename T::InterestContainer::iterator i = this->interests.begin();
-       i != this->interests.end(); ++i) {
-    ndn::Data retrievedData;
-    BOOST_REQUIRE_EQUAL(this->handle->readData(i->first, retrievedData), false);
-  }*/
-
+  BOOST_CHECK_EQUAL(this->handle->size(), 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

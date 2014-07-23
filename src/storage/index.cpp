@@ -100,7 +100,7 @@ Index::find(const Interest& interest) const
     }
   else
     {
-      return std::pair<int64_t,Name>();
+      return std::make_pair(0, Name());
     }
 }
 
@@ -114,7 +114,7 @@ Index::find(const Name& name) const
     }
   else
     {
-      return std::pair<int64_t,Name>();
+      return std::make_pair(0, Name());
     }
 }
 
@@ -138,7 +138,7 @@ Index::findFirstEntry(const Name& prefix,
     }
   else
     {
-      return std::pair<int64_t,Name>();
+      return std::make_pair(0, Name());
     }
 }
 
@@ -185,7 +185,7 @@ Index::selectChild(const Interest& interest,
            it != m_skipList.end(); ++it)
         {
           if (!interest.getName().isPrefixOf(it->getName()))
-            return std::pair<int64_t,Name>();
+            return std::make_pair(0, Name());
           if (matchesSimpleSelectors(interest, hash, (*it)))
             return std::make_pair(it->getId(), it->getName());
         }
@@ -194,7 +194,7 @@ Index::selectChild(const Interest& interest,
     {
       IndexSkipList::const_iterator boundary = m_skipList.lower_bound(interest.getName());
       if (boundary == m_skipList.end() || !interest.getName().isPrefixOf(boundary->getName()))
-        return std::pair<int64_t,Name>();
+        return std::make_pair(0, Name());
       Name successor = interest.getName().getSuccessor();
       IndexSkipList::const_iterator last = interest.getName().size() == 0 ?
                     m_skipList.end() : m_skipList.lower_bound(interest.getName().getSuccessor());
@@ -210,7 +210,7 @@ Index::selectChild(const Interest& interest,
                   return std::make_pair(prev->getId(), prev->getName());
                 }
               else
-                return std::pair<int64_t,Name>();
+                return std::make_pair(0, Name());
             }
           IndexSkipList::const_iterator first =
             m_skipList.lower_bound(prev->getName().getPrefix(interest.getName().size() + 1));
@@ -223,7 +223,7 @@ Index::selectChild(const Interest& interest,
           last = first;
         }
     }
-  return std::pair<int64_t,Name>();
+  return std::make_pair(0, Name());
 }
 
 Index::Entry::Entry(const Data& data, const int64_t id)

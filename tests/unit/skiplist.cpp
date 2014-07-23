@@ -36,27 +36,7 @@ class Fixture : public Dataset
 {
 };
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(NdnNameSkipList, T, DatasetFixtures, Fixture<T>)
-{
-  repo::SkipList<ndn::Name, typename T::DataSetNameCompare> skipList;
-  //Insert
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) {
-    skipList.insert((*i)->getName());
-  }
-
-  //find and erase
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) {
-    typename repo::SkipList<ndn::Name, typename T::DataSetNameCompare>::iterator findIterator =
-      skipList.find((*i)->getName());
-    skipList.erase(findIterator);
-  }
-
-  //@todo test lower_bound
-}
-
-BOOST_AUTO_TEST_CASE(IntGtSkipList)
+BOOST_AUTO_TEST_CASE(Correctness)
 {
   typedef repo::SkipList<int, std::greater<int> > IntGtSkipList;
   IntGtSkipList sl;
@@ -151,6 +131,56 @@ BOOST_AUTO_TEST_CASE(IntGtSkipList)
   BOOST_CHECK_EQUAL(*it1, 30);
   ++it3;
   BOOST_CHECK(it3 == sl.end());
+}
+
+class Item : public ndn::Name
+{
+public:
+  explicit
+  Item(const ndn::Name& name = "")
+    : ndn::Name(name)
+    , randomValue(ndn::random::generateWord64())
+  {
+  }
+
+public:
+  uint64_t randomValue;
+};
+
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, CommonDatasets, Fixture<T>)
+{
+  BOOST_TEST_MESSAGE(T::getName());
+  typedef repo::SkipList<Item, std::less<Item> > SkipList;
+  SkipList skipList;
+
+  std::vector<Item> items;
+  std::set<ndn::Name> names;
+  for (typename T::DataContainer::iterator i = this->data.begin();
+       i != this->data.end(); ++i) {
+    std::pair<std::set<ndn::Name>::iterator, bool> ret = names.insert((*i)->getName());
+    if (ret.second) {
+      items.push_back(Item((*i)->getName()));
+    }
+  }
+
+  // Insert
+  for (std::vector<Item>::iterator i = items.begin(); i != items.end(); ++i) {
+    skipList.insert(*i);
+  }
+
+  BOOST_CHECK_EQUAL(items.size(), skipList.size());
+
+  // Randomize items
+  std::random_shuffle(items.begin(), items.end());
+
+  // Find items and check if the right item is found
+  for (std::vector<Item>::iterator i = items.begin(); i != items.end(); ++i) {
+    SkipList::iterator item = skipList.find(*i);
+    BOOST_CHECK(item != skipList.end());
+
+    BOOST_CHECK_EQUAL(static_cast<const Name&>(*item), static_cast<const Name&>(*i));
+    BOOST_CHECK_EQUAL(item->randomValue, i->randomValue);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

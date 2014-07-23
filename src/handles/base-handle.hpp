@@ -74,13 +74,13 @@ protected:
   {
     return m_scheduler;
   }
-/*
-  inline RepoStorage&
-  getStoreIndex()
-  {
-    return m_storeindex;
-  }
-*/
+
+  // inline RepoStorage&
+  // getStoreIndex()
+  // {
+  //   return m_storeindex;
+  // }
+
   uint64_t
   generateProcessId();
 

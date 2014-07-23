@@ -30,67 +30,47 @@ namespace repo {
 namespace tests {
 
 BOOST_AUTO_TEST_SUITE(RepoStorage)
+
 template<class Dataset>
 class Fixture : public Dataset, public RepoStorageFixture
 {
 };
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(NdnNameSkipList, T, DatasetFixtures_Storage, Fixture<T>)
+// Combine CommonDatasets with ComplexSelectorDataset
+typedef boost::mpl::push_back<CommonDatasets,
+                              ComplexSelectorsDataset>::type Datasets;
+
+
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, Datasets, Fixture<T>)
 {
-  //Insert
+  BOOST_TEST_MESSAGE(T::getName());
+
+  // Insert data into repo
   for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) 
+       i != this->data.end(); ++i)
     {
       BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
     }
-  
-  //Read
+
+  // check size directly with the storage (repo doesn't have interface yet)
+  BOOST_CHECK_EQUAL(this->store->size(), this->data.size());
+
+  // Read
   for (typename T::InterestContainer::iterator i = this->interests.begin();
-       i != this->interests.end(); ++i) 
+       i != this->interests.end(); ++i)
   {
       shared_ptr<ndn::Data> dataTest = this->handle->readData(i->first);
       BOOST_CHECK_EQUAL(*this->handle->readData(i->first), *i->second);
-     // int rc = memcmp(dataTest->getContent().value(),
-      //                i->second->getContent().value(), sizeof(i->second->getContent().value()));
-      //BOOST_CHECK_EQUAL(rc, 0);
-      BOOST_CHECK_EQUAL(this->handle->deleteData(i->first.getName()), 1);
     }
- 
-  //Insert
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) 
+
+  // Remove items
+  for (typename T::RemovalsContainer::iterator i = this->removals.begin();
+       i != this->removals.end(); ++i)
     {
-      BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
+      size_t nRemoved = 0;
+      BOOST_REQUIRE_NO_THROW(nRemoved = this->handle->deleteData(i->first));
+      BOOST_CHECK_EQUAL(nRemoved, i->second);
     }
-
-  //Erase
-  for (typename T::InterestIdContainer::iterator i = this->interestDeleteCount.begin();
-       i != this->interestDeleteCount.end(); ++i)
-    {
-      BOOST_CHECK_EQUAL(this->handle->deleteData(i->first), i->second);
-    }
-}
-
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(Index, T, DatasetFixtures_Storage, Fixture<T>)
-{
-
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i)
-    {
-      BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
-    }
-  ndn::Interest interest("/a");
-  ndn::Interest interest1("/a/b/d/1");
-
-  BOOST_CHECK_EQUAL(this->handle->deleteData(interest), 7);
-
-
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i)
-    {
-      BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
-    }
-  BOOST_CHECK_EQUAL(this->handle->deleteData(interest.getName()), 7);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -153,11 +153,9 @@ public:
 };
 
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, DatasetFixtures_Storage,
-                                 TcpBulkInsertFixture<T>)
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkInsertFixture<T>)
 {
   BOOST_TEST_MESSAGE(T::getName());
-  // BOOST_CHECK_EQUAL(this->handle->size(), 1);
 
   // start bulk inserter
   this->bulkInserter.listen("localhost", "17376");
@@ -168,16 +166,10 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, DatasetFixtures_Storage,
   // actually run the test
   this->ioService.run();
 
-//  BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
-
   // Read (all items should exist)
   for (typename T::InterestContainer::iterator i = this->interests.begin();
        i != this->interests.end(); ++i) {
       BOOST_CHECK_EQUAL(*this->handle->readData(i->first), *i->second);
-   // int rc = memcmp(retrievedData->getContent().value(),
-   //                 i->second->getContent().value(), sizeof(i->second->getContent().value()));
-    //BOOST_CHECK_EQUAL(rc, 0);
-
   }
 }
 

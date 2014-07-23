@@ -28,60 +28,7 @@
 namespace repo {
 namespace tests {
 
-BOOST_AUTO_TEST_SUITE(TestIndex)
-
-template<class Dataset>
-class Fixture : public Dataset
-{
-};
-
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(IndexGeneralTest, T, DatasetFixtures_Storage, Fixture<T>)
-{
-   Index index(65535);
-   for (typename T::IdContainer::iterator i = this->insert.begin();
-        i != this->insert.end(); ++i)
-   {
-     BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
-   }
-   BOOST_CHECK_EQUAL(index.size(), 7);
-
-   typename T::IdContainer::iterator id = this->ids.begin();
-   for (typename T::InterestContainer::iterator i = this->interests.begin();
-        i != this->interests.end(); ++i)
-   {
-     vector<std::pair<int, ndn::Name> > id_names;
-     BOOST_CHECK_EQUAL(index.find(i->first.getName()).first, id->first);
-     BOOST_CHECK_EQUAL(index.hasData(*i->second), true);
-     ++id;
-   }
-
-   for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
-        i != this->interestsSelectors.end(); ++i)
-   {
-
-     BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
-     ndn::Name name = index.find(i->first).second;
-     BOOST_CHECK_EQUAL(index.erase(name), true);
-   }
-   BOOST_CHECK_EQUAL(index.size(), 2);
-}
-
-
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(IndexTestSelector, T, DatasetFixtures_Selector, Fixture<T>)
-{
-   Index index(65535);
-   for (typename T::IdContainer::iterator i = this->insert.begin();
-        i != this->insert.end(); ++i)
-     BOOST_CHECK_EQUAL(index.insert(*i->second, i->first), true);
-   for (typename T::InterestIdContainer::iterator i = this->interestsSelectors.begin();
-        i != this->interestsSelectors.end(); ++i)
-   {
-     BOOST_CHECK_EQUAL(index.find(i->first).first, i->second);
-   }
-
-
-}
-
+BOOST_AUTO_TEST_SUITE(Index)
 
 class FindFixture
 {
@@ -116,7 +63,7 @@ protected:
   }
 
 protected:
-  Index m_index;
+  repo::Index m_index;
   KeyChain m_keyChain;
   shared_ptr<Interest> m_interest;
 };
@@ -417,6 +364,64 @@ BOOST_AUTO_TEST_CASE(MaxSuffixComponents32)
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Find
+
+
+template<class Dataset>
+class Fixture : public Dataset
+{
+public:
+  Fixture()
+    : index(65535)
+  {
+  }
+
+public:
+  std::map<int64_t, shared_ptr<Data> > idToDataMap;
+  repo::Index index;
+};
+
+// Combine CommonDatasets with ComplexSelectorDataset
+typedef boost::mpl::push_back<CommonDatasets,
+                              ComplexSelectorsDataset>::type Datasets;
+
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, Datasets, Fixture<T>)
+{
+  BOOST_TEST_MESSAGE(T::getName());
+
+  for (typename T::DataContainer::iterator i = this->data.begin();
+       i != this->data.end(); ++i)
+    {
+      int64_t id = std::abs(static_cast<int64_t>(ndn::random::generateWord64()));
+      this->idToDataMap.insert(std::make_pair(id, *i));
+
+      BOOST_CHECK_EQUAL(this->index.insert(**i, id), true);
+    }
+
+  BOOST_CHECK_EQUAL(this->index.size(), this->data.size());
+
+  for (typename T::InterestContainer::iterator i = this->interests.begin();
+       i != this->interests.end(); ++i)
+    {
+      std::pair<int64_t, Name> item = this->index.find(i->first);
+
+      BOOST_REQUIRE_GT(item.first, 0);
+      BOOST_REQUIRE(this->idToDataMap.count(item.first) > 0);
+
+      BOOST_TEST_MESSAGE(i->first);
+      BOOST_CHECK_EQUAL(*this->idToDataMap[item.first], *i->second);
+
+      BOOST_CHECK_EQUAL(this->index.hasData(*i->second), true);
+    }
+
+  // Need support for selector-based removal
+  // for (typename T::RemovalsContainer::iterator i = this->removals.begin();
+  //      i != this->removals.end(); ++i)
+  //   {
+  //     size_t nRemoved = 0;
+  //     BOOST_REQUIRE_NO_THROW(this->index.erase(*i));
+  //     BOOST_CHECK_EQUAL(nRemoved, i->seconds);
+  //   }
+}
 
 BOOST_AUTO_TEST_SUITE_END()
 

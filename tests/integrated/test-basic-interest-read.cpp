@@ -116,15 +116,21 @@ public:
 };
 
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, DatasetFixtures, BasicInterestReadFixture<T>)
+typedef boost::mpl::vector< BasicDataset,
+                            FetchByPrefixDataset,
+                            BasicChildSelectorDataset,
+                            ExtendedChildSelectorDataset,
+                            SamePrefixDataset<10> > Datasets;
+
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 {
   // Insert dataset
- // for (typename T::DataContainer::iterator i = this->data.begin();
- //      i != this->data.end(); ++i) {
- //   BOOST_CHECK_EQUAL(this->handle.insertData(**i), true);
- // }
+  // for (typename T::DataContainer::iterator i = this->data.begin();
+  //      i != this->data.end(); ++i) {
+  //   BOOST_CHECK_EQUAL(this->handle.insertData(**i), true);
+  // }
 
-//  BOOST_CHECK_EQUAL(this->handle.size(), this->data.size());
+  // BOOST_CHECK_EQUAL(this->handle.size(), this->data.size());
 
   this->startListen();
   this->scheduler.scheduleEvent(ndn::time::seconds(0),

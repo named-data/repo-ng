@@ -20,11 +20,13 @@
 #include "write-handle.hpp"
 
 namespace repo {
+using namespace ndn::time;
 
 static const int RETRY_TIMEOUT = 3;
 static const int DEFAULT_CREDIT = 12;
-static const ndn::time::milliseconds NOEND_TIMEOUT(10000);
-static const ndn::time::milliseconds PROCESS_DELETE_TIME(10000);
+static const milliseconds NOEND_TIMEOUT(10000);
+static const milliseconds PROCESS_DELETE_TIME(10000);
+static const milliseconds DEFAULT_INTEREST_LIFETIME(4000);
 
 WriteHandle::WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
                          Scheduler& scheduler,// RepoStorage& storeindex,
@@ -34,6 +36,7 @@ WriteHandle::WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyCh
   , m_retryTime(RETRY_TIMEOUT)
   , m_credit(DEFAULT_CREDIT)
   , m_noEndTimeout(NOEND_TIMEOUT)
+  , m_interestLifetime(DEFAULT_INTEREST_LIFETIME)
 {
 }
 
@@ -91,7 +94,8 @@ WriteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name&
   else {
     processSingleInsertCommand(*interest, parameter);
   }
-
+  if (parameter.hasInterestLifetime())
+    m_interestLifetime = parameter.getInterestLifetime();
 }
 
 void
@@ -233,10 +237,12 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
   }
   process.credit = initialCredit;
   SegmentNo segment = startBlockId;
+
   for (; segment < startBlockId + initialCredit; ++segment) {
     Name fetchName = name;
     fetchName.appendSegment(segment);
     Interest interest(fetchName);
+    interest.setInterestLifetime(m_interestLifetime);
     getFace().expressInterest(interest,
                               bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
                               bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
@@ -330,6 +336,7 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
   Name fetchName(interest.getName().getPrefix(-1));
   fetchName.appendSegment(sendingSegment);
   Interest fetchInterest(fetchName);
+  fetchInterest.setInterestLifetime(m_interestLifetime);
   getFace().expressInterest(fetchInterest,
                             bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
                             bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
@@ -380,6 +387,7 @@ WriteHandle::onSegmentTimeoutControl(ProcessId processId, const Interest& intere
     //Reput it in the queue, retryTime++
     retryTime++;
     Interest retryInterest(interest.getName());
+    retryInterest.setInterestLifetime(m_interestLifetime);
     getFace().expressInterest(retryInterest,
                               bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
                               bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
@@ -475,6 +483,7 @@ WriteHandle::processSingleInsertCommand(const Interest& interest,
   response.setStatusCode(300);
 
   Interest fetchInterest(parameter.getName());
+  fetchInterest.setInterestLifetime(m_interestLifetime);
   if (parameter.hasSelectors()) {
     fetchInterest.setSelectors(parameter.getSelectors());
   }

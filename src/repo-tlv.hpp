@@ -35,7 +35,9 @@ enum {
   RepoCommandResponse  = 207,
   StatusCode           = 208,
   InsertNum            = 209,
-  DeleteNum            = 210
+  DeleteNum            = 210,
+  MaxInterestNum       = 211,
+  WatchTimeout         = 212
 };
 
 } // tlv

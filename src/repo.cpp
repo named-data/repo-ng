@@ -119,6 +119,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_validator(m_face)
   , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler)
   , m_writeHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
+  , m_watchHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_deleteHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_tcpBulkInsertHandle(ioService, m_storageHandle)
 
@@ -143,6 +144,7 @@ Repo::enableListening()
        ++it)
     {
       m_writeHandle.listen(*it);
+      m_watchHandle.listen(*it);
       m_deleteHandle.listen(*it);
     }
 

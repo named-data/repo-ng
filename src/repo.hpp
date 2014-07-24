@@ -26,6 +26,7 @@
 
 #include "handles/read-handle.hpp"
 #include "handles/write-handle.hpp"
+#include "handles/watch-handle.hpp"
 #include "handles/delete-handle.hpp"
 #include "handles/tcp-bulk-insert-handle.hpp"
 
@@ -87,6 +88,7 @@ private:
   ValidatorConfig m_validator;
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;
+  WatchHandle m_watchHandle;
   DeleteHandle m_deleteHandle;
   TcpBulkInsertHandle m_tcpBulkInsertHandle;
 };

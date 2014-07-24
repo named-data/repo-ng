@@ -235,6 +235,7 @@ private:
   int m_retryTime;
   int m_credit;
   ndn::time::milliseconds m_noEndTimeout;
+  ndn::time::milliseconds m_interestLifetime;
 };
 
 } // namespace repo

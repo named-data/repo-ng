@@ -110,10 +110,10 @@ private:
 inline void
 BaseHandle::reply(const Interest& commandInterest, const RepoCommandResponse& response)
 {
-  Data rdata(commandInterest.getName());
-  rdata.setContent(response.wireEncode());
-  m_keyChain.sign(rdata);
-  m_face.put(rdata);
+  shared_ptr<Data> rdata = make_shared<Data>(commandInterest.getName());
+  rdata->setContent(response.wireEncode());
+  m_keyChain.sign(*rdata);
+  m_face.put(*rdata);
 }
 
 inline void

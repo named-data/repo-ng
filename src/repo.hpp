@@ -72,6 +72,10 @@ public:
 public:
   Repo(boost::asio::io_service& ioService, const RepoConfig& config);
 
+  //@brief rebuild index from storage file when repo starts.
+  void
+  initializeStorage();
+
   void
   enableListening();
 

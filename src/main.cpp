@@ -82,6 +82,8 @@ main(int argc, char** argv)
     signalSet.async_wait(bind(&terminate, boost::ref(ioService), _1, _2,
                               boost::ref(signalSet)));
 
+    repoInstance.initializeStorage();
+
     repoInstance.enableValidation();
 
     repoInstance.enableListening();

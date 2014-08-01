@@ -128,6 +128,17 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
 }
 
 void
+Repo::initializeStorage()
+{
+  // Rebuild storage if storage checkpoin exists
+  ndn::time::steady_clock::TimePoint start = ndn::time::steady_clock::now();
+  m_storageHandle.initialize();
+  ndn::time::steady_clock::TimePoint end = ndn::time::steady_clock::now();
+  ndn::time::milliseconds cost = ndn::time::duration_cast<ndn::time::milliseconds>(end - start);
+  std::cerr << "initialize storage cost: " << cost << "ms" << std::endl;
+}
+
+void
 Repo::enableListening()
 {
   // Enable "listening" on Data prefixes

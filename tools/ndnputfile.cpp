@@ -42,7 +42,7 @@ static const uint64_t DEFAULT_BLOCK_SIZE = 1000;
 static const uint64_t DEFAULT_INTEREST_LIFETIME = 4000;
 static const uint64_t DEFAULT_FRESHNESS_PERIOD = 10000;
 static const uint64_t DEFAULT_CHECK_PERIOD = 1000;
-static const size_t PRE_SIGN_DATA_COUNT = 10;
+static const size_t PRE_SIGN_DATA_COUNT = 11;
 
 class NdnPutFile : ndn::noncopyable
 {
@@ -190,7 +190,7 @@ NdnPutFile::prepareNextData(uint64_t referenceSegmentNo)
                                     .appendSegment(m_currentSegmentNo));
 
     if (insertStream->peek() == std::istream::traits_type::eof()) {
-      data->setFinalBlockId(ndn::name::Component::fromNumber(m_currentSegmentNo));
+      data->setFinalBlockId(ndn::name::Component::fromSegment(m_currentSegmentNo));
       m_isFinished = true;
     }
 
@@ -220,6 +220,7 @@ NdnPutFile::run()
                              ndn::bind(&NdnPutFile::onInterest, this, _1, _2),
                            ndn::bind(&NdnPutFile::onRegisterSuccess, this, _1),
                            ndn::bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
+
 
   if (hasTimeout)
     m_scheduler.scheduleEvent(timeout, ndn::bind(&NdnPutFile::stopProcess, this));
@@ -303,6 +304,11 @@ NdnPutFile::onInterest(const ndn::Name& prefix, const ndn::Interest& interest)
     return;
   }
 
+  if (m_isFinished) {
+    uint64_t final = m_currentSegmentNo - 1;
+    item->second->setFinalBlockId(ndn::name::Component::fromSegment(final));
+
+  }
   m_face.put(*item->second);
 }
 
@@ -330,11 +336,11 @@ NdnPutFile::onSingleInterest(const ndn::Name& prefix, const ndn::Interest& inter
     throw Error("Input data does not fit into one Data packet");
   }
 
-  ndn::Data data(m_dataPrefix);
-  data.setContent(buffer, readSize);
-  data.setFreshnessPeriod(freshnessPeriod);
-  signData(data);
-  m_face.put(data);
+  ndn::shared_ptr<ndn::Data> data = ndn::make_shared<ndn::Data>(m_dataPrefix);
+  data->setContent(buffer, readSize);
+  data->setFreshnessPeriod(freshnessPeriod);
+  signData(*data);
+  m_face.put(*data);
 
   m_isFinished = true;
 }

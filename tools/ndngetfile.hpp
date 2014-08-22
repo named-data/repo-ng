@@ -28,13 +28,16 @@ class Consumer : boost::noncopyable
 {
 public:
   Consumer(const std::string& dataName, std::ostream& os,
-           bool verbose, bool unversioned,
+           bool verbose, bool versioned, bool single,
            int interestLifetime, int timeout,
            bool mustBeFresh = false)
     : m_dataName(dataName)
     , m_os(os)
     , m_verbose(verbose)
-    , m_hasVersion(unversioned)
+    , m_hasVersion(versioned)
+    , m_isSingle(single)
+    , m_isFinished(false)
+    , m_isFirst(true)
     , m_interestLifetime(interestLifetime)
     , m_timeout(timeout)
     , m_nextSegment(0)
@@ -52,19 +55,30 @@ private:
   fetchData(const ndn::Name& name);
 
   void
-  onData(const ndn::Interest& interest, ndn::Data& data);
+  onVersionedData(const ndn::Interest& interest, ndn::Data& data);
+
+  void
+  onUnversionedData(const ndn::Interest& interest, ndn::Data& data);
 
   void
   onTimeout(const ndn::Interest& interest);
+  
+  void
+  readData(const ndn::Data& data);
+
+  void
+  fetchNextData(const ndn::Name& name, const ndn::Data& data);
 
 private:
-  static const int MAX_RETRY;
 
   ndn::Face m_face;
   ndn::Name m_dataName;
   std::ostream& m_os;
   bool m_verbose;
   bool m_hasVersion;
+  bool m_isSingle;
+  bool m_isFinished;
+  bool m_isFirst;
   ndn::time::milliseconds m_interestLifetime;
   ndn::time::milliseconds m_timeout;
   uint64_t m_nextSegment;

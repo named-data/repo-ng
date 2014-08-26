@@ -15,6 +15,8 @@ def options(opt):
 
     ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
                     help='''Do not build tools''')
+    ropt.add_option('--with-examples', action='store_true', default=False, dest='with_examples',
+                    help='''Build examples''')
 
 def configure(conf):
     conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags sqlite3")
@@ -28,6 +30,7 @@ def configure(conf):
         conf.env['WITH_TESTS'] = True
 
     conf.env['WITH_TOOLS'] = conf.options.with_tools
+    conf.env['WITH_EXAMPLES'] = conf.options.with_examples
 
     USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'random']
     if conf.env['WITH_TESTS']:
@@ -68,5 +71,7 @@ def build(bld):
 
     # Tools
     bld.recurse('tools')
+
+    bld.recurse("examples")
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')

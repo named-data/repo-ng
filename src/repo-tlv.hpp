@@ -25,7 +25,7 @@
 namespace repo {
 namespace tlv {
 
-using namespace ndn::Tlv;
+using namespace ndn::tlv;
 
 enum {
   RepoCommandParameter = 201,

@@ -43,12 +43,12 @@ using namespace ndn::time;
 class RepoCommandParameter
 {
 public:
-  class Error : public ndn::Tlv::Error
+  class Error : public ndn::tlv::Error
   {
   public:
     explicit
     Error(const std::string& what)
-      : ndn::Tlv::Error(what)
+      : ndn::tlv::Error(what)
     {
     }
   };

@@ -171,7 +171,7 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
       offset += element.size();
       BOOST_ASSERT(offset <= m_inputBufferSize);
 
-      if (element.type() == ndn::Tlv::Data)
+      if (element.type() == ndn::tlv::Data)
         {
           try {
             Data data(element);

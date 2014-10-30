@@ -23,7 +23,14 @@
 
 namespace repo {
 
-using namespace ndn;
+using ndn::Name;
+using ndn::Interest;
+using ndn::Data;
+using ndn::Block;
+
+using std::bind;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 static const int MAX_RETRY = 3;
 
@@ -45,9 +52,9 @@ Consumer::fetchData(const Name& name)
 
   m_face.expressInterest(interest,
                          m_hasVersion ?
-                           bind(&Consumer::onVersionedData, this, _1, _2)
-                           :
-                           bind(&Consumer::onUnversionedData, this, _1, _2),
+                         bind(&Consumer::onVersionedData, this, _1, _2)
+                         :
+                         bind(&Consumer::onUnversionedData, this, _1, _2),
                          bind(&Consumer::onTimeout, this, _1));
 }
 
@@ -161,7 +168,7 @@ Consumer::fetchNextData(const Name& name, const Data& data)
 {
   uint64_t segment = name[-1].toSegment();
   BOOST_ASSERT(segment == (m_nextSegment - 1));
-  const name::Component& finalBlockId = data.getMetaInfo().getFinalBlockId();
+  const ndn::name::Component& finalBlockId = data.getMetaInfo().getFinalBlockId();
   if (finalBlockId == name[-1]) {
     m_isFinished = true;
   }

@@ -26,7 +26,7 @@
 
 namespace repo {
 
-using namespace ndn::time;
+using std::string;
 
 void
 printUsage(const char* programName)

@@ -84,15 +84,14 @@ public:
   /**
    *  @brief  read data from repo
    *  @param   interest  used to request data
-   *  @return  std::pair<bool,shared_ptr<Data> >
+   *  @return  std::shared_ptr<Data>
    */
-  shared_ptr<Data>
+  std::shared_ptr<Data>
   readData(const Interest& interest) const;
 
 private:
   Index m_index;
   Storage& m_storage;
-
 };
 
 } // namespace repo

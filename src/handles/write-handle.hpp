@@ -109,10 +109,10 @@ private: // insert command
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
+  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
   /**
    * @brief insert command prefix register failed
@@ -128,7 +128,7 @@ private: // single data fetching
   onData(const Interest& interest, Data& data, ProcessId processId);
 
   void
-  onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+  onDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
                   ProcessId processId);
 
   /**
@@ -148,7 +148,7 @@ private:  // segmented data fetching
   onSegmentData(const Interest& interest, Data& data, ProcessId processId);
 
   void
-  onSegmentDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+  onSegmentDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
                          ProcessId processId);
 
   /**
@@ -183,7 +183,7 @@ private:
    * @brief failure of validation for both one or segmented data
    */
   void
-  onDataValidationFailed(const shared_ptr<const Data>& data, const std::string& reason);
+  onDataValidationFailed(const std::shared_ptr<const Data>& data, const std::string& reason);
 
   /**
    * @brief extends noEndTime of process if not noEndTimeout, set StatusCode 405
@@ -208,10 +208,11 @@ private: // insert state check command
   onCheckRegisterFailed(const Name& prefix, const std::string& reason);
 
   void
-  onCheckValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onCheckValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onCheckValidationFailed(const shared_ptr<const Interest>& interest, const std::string& reason);
+  onCheckValidationFailed(const std::shared_ptr<const Interest>& interest,
+                          const std::string& reason);
 
 private:
   void

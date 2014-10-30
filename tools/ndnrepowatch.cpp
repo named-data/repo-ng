@@ -34,6 +34,11 @@ namespace repo {
 
 using namespace ndn::time;
 
+using std::shared_ptr;
+using std::bind;
+using std::placeholders::_1;
+using std::placeholders::_2;
+
 static const uint64_t DEFAULT_INTEREST_LIFETIME = 4000;
 static const uint64_t DEFAULT_FRESHNESS_PERIOD = 10000;
 static const uint64_t DEFAULT_CHECK_PERIOD = 1000;
@@ -130,7 +135,7 @@ private:
 
   ndn::Name m_dataPrefix;
   ndn::KeyChain m_keyChain;
-  typedef std::map<uint64_t, ndn::shared_ptr<ndn::Data> > DataContainer;
+  typedef std::map<uint64_t, shared_ptr<ndn::Data> > DataContainer;
 };
 
 void
@@ -140,7 +145,7 @@ NdnRepoWatch::run()
   startWatchCommand();
 
   if (hasTimeout)
-    m_scheduler.scheduleEvent(watchTimeout, ndn::bind(&NdnRepoWatch::stopProcess, this));
+    m_scheduler.scheduleEvent(watchTimeout, bind(&NdnRepoWatch::stopProcess, this));
 
   m_face.processEvents();
 }
@@ -161,20 +166,23 @@ NdnRepoWatch::startWatchCommand()
     }
     ndn::Interest commandInterest = generateCommandInterest(repoPrefix, "start", parameters);
     m_face.expressInterest(commandInterest,
-                           ndn::bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
-                           ndn::bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
+                           bind(&NdnRepoWatch::onWatchCommandResponse, this,
+                                     _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
   else if (status == STOP){
     ndn::Interest commandInterest = generateCommandInterest(repoPrefix, "stop", parameters);
     m_face.expressInterest(commandInterest,
-                           ndn::bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
-                           ndn::bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
+                           bind(&NdnRepoWatch::onWatchCommandResponse, this,
+                                     _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
   else if (status == CHECK){
     ndn::Interest commandInterest = generateCommandInterest(repoPrefix, "check", parameters);
     m_face.expressInterest(commandInterest,
-                           ndn::bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
-                           ndn::bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
+                           bind(&NdnRepoWatch::onWatchCommandResponse, this,
+                                     _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
 
 }
@@ -196,13 +204,13 @@ NdnRepoWatch::onWatchCommandResponse(const ndn::Interest& interest, ndn::Data& d
   else if (statusCode == 300) {
     std::cerr << "Watching prefix is running!" <<std::endl;
     m_scheduler.scheduleEvent(m_checkPeriod,
-                              ndn::bind(&NdnRepoWatch::startCheckCommand, this));
+                              bind(&NdnRepoWatch::startCheckCommand, this));
     return;
   }
   else if (statusCode == 100) {
     std::cerr << "Watching prefix starts!" <<std::endl;
     m_scheduler.scheduleEvent(m_checkPeriod,
-                              ndn::bind(&NdnRepoWatch::startCheckCommand, this));
+                              bind(&NdnRepoWatch::startCheckCommand, this));
     return;
   }
   else {
@@ -231,8 +239,8 @@ NdnRepoWatch::startCheckCommand()
                                                         RepoCommandParameter()
                                                           .setName(m_dataPrefix));
   m_face.expressInterest(checkInterest,
-                         ndn::bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
-                         ndn::bind(&NdnRepoWatch::onCheckCommandTimeout, this, _1));
+                         bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
+                         bind(&NdnRepoWatch::onCheckCommandTimeout, this, _1));
 }
 
 void

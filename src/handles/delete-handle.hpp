@@ -25,8 +25,6 @@
 
 namespace repo {
 
-using std::vector;
-
 class DeleteHandle : public BaseHandle
 {
 
@@ -56,10 +54,10 @@ private:
   onRegisterFailed(const Name& prefix, const std::string& reason);
 
   void
-  onValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
+  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
   /**
    * @todo delete check has not been realized due to the while loop of segmented data deletion.

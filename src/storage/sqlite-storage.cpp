@@ -25,6 +25,8 @@
 
 namespace repo {
 
+using std::string;
+
 SqliteStorage::SqliteStorage(const string& dbPath)
   : m_size(0)
 {

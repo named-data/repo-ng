@@ -38,6 +38,12 @@ namespace repo {
 
 using namespace ndn::time;
 
+using std::shared_ptr;
+using std::make_shared;
+using std::bind;
+using std::placeholders::_1;
+using std::placeholders::_2;
+
 static const uint64_t DEFAULT_BLOCK_SIZE = 1000;
 static const uint64_t DEFAULT_INTEREST_LIFETIME = 4000;
 static const uint64_t DEFAULT_FRESHNESS_PERIOD = 10000;
@@ -151,7 +157,7 @@ private:
   bool m_isFinished;
   ndn::Name m_dataPrefix;
 
-  typedef std::map<uint64_t, ndn::shared_ptr<ndn::Data> > DataContainer;
+  typedef std::map<uint64_t, shared_ptr<ndn::Data> > DataContainer;
   DataContainer m_data;
 };
 
@@ -185,8 +191,8 @@ NdnPutFile::prepareNextData(uint64_t referenceSegmentNo)
       throw Error("Error reading from the input stream");
     }
 
-    ndn::shared_ptr<ndn::Data> data =
-      ndn::make_shared<ndn::Data>(Name(m_dataPrefix)
+    shared_ptr<ndn::Data> data =
+      make_shared<ndn::Data>(Name(m_dataPrefix)
                                     .appendSegment(m_currentSegmentNo));
 
     if (insertStream->peek() == std::istream::traits_type::eof()) {
@@ -215,15 +221,15 @@ NdnPutFile::run()
     std::cerr << "setInterestFilter for " << m_dataPrefix << std::endl;
   m_face.setInterestFilter(m_dataPrefix,
                            isSingle ?
-                             ndn::bind(&NdnPutFile::onSingleInterest, this, _1, _2)
-                             :
-                             ndn::bind(&NdnPutFile::onInterest, this, _1, _2),
-                           ndn::bind(&NdnPutFile::onRegisterSuccess, this, _1),
-                           ndn::bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
+                           bind(&NdnPutFile::onSingleInterest, this, _1, _2)
+                           :
+                           bind(&NdnPutFile::onInterest, this, _1, _2),
+                           bind(&NdnPutFile::onRegisterSuccess, this, _1),
+                           bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
 
 
   if (hasTimeout)
-    m_scheduler.scheduleEvent(timeout, ndn::bind(&NdnPutFile::stopProcess, this));
+    m_scheduler.scheduleEvent(timeout, bind(&NdnPutFile::stopProcess, this));
 
   m_face.processEvents();
 }
@@ -245,8 +251,8 @@ NdnPutFile::startInsertCommand()
 
   ndn::Interest commandInterest = generateCommandInterest(repoPrefix, "insert", parameters);
   m_face.expressInterest(commandInterest,
-                         ndn::bind(&NdnPutFile::onInsertCommandResponse, this, _1, _2),
-                         ndn::bind(&NdnPutFile::onInsertCommandTimeout, this, _1));
+                         bind(&NdnPutFile::onInsertCommandResponse, this, _1, _2),
+                         bind(&NdnPutFile::onInsertCommandTimeout, this, _1));
 }
 
 void
@@ -261,7 +267,7 @@ NdnPutFile::onInsertCommandResponse(const ndn::Interest& interest, ndn::Data& da
   m_processId = response.getProcessId();
 
   m_scheduler.scheduleEvent(m_checkPeriod,
-                            ndn::bind(&NdnPutFile::startCheckCommand, this));
+                            bind(&NdnPutFile::startCheckCommand, this));
 }
 
 void
@@ -336,7 +342,7 @@ NdnPutFile::onSingleInterest(const ndn::Name& prefix, const ndn::Interest& inter
     throw Error("Input data does not fit into one Data packet");
   }
 
-  ndn::shared_ptr<ndn::Data> data = ndn::make_shared<ndn::Data>(m_dataPrefix);
+  shared_ptr<ndn::Data> data = make_shared<ndn::Data>(m_dataPrefix);
   data->setContent(buffer, readSize);
   data->setFreshnessPeriod(freshnessPeriod);
   signData(*data);
@@ -381,8 +387,8 @@ NdnPutFile::startCheckCommand()
                                                         RepoCommandParameter()
                                                           .setProcessId(m_processId));
   m_face.expressInterest(checkInterest,
-                         ndn::bind(&NdnPutFile::onCheckCommandResponse, this, _1, _2),
-                         ndn::bind(&NdnPutFile::onCheckCommandTimeout, this, _1));
+                         bind(&NdnPutFile::onCheckCommandResponse, this, _1, _2),
+                         bind(&NdnPutFile::onCheckCommandTimeout, this, _1));
 }
 
 void
@@ -414,7 +420,7 @@ NdnPutFile::onCheckCommandResponse(const ndn::Interest& interest, ndn::Data& dat
   }
 
   m_scheduler.scheduleEvent(m_checkPeriod,
-                            ndn::bind(&NdnPutFile::startCheckCommand, this));
+                            bind(&NdnPutFile::startCheckCommand, this));
 }
 
 void

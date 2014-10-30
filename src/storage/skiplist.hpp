@@ -397,7 +397,7 @@ SkipList<T, Compare, Traits>::insert(const T& x)
     m_head->prevs.resize(newLevel + 1, m_head);
     insertPositions.resize(newLevel + 1, m_head);
   }
-  for (int i = 0; i <= newLevel; i++) {
+  for (size_t i = 0; i <= newLevel; i++) {
     newNode->nexts[i] = insertPositions[i]->nexts[i];
     newNode->prevs[i] = insertPositions[i];
     insertPositions[i]->nexts[i] = newNode;

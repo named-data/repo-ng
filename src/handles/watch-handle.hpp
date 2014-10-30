@@ -71,10 +71,10 @@ private: // watch-insert command
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason);
+  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
   void
   onRegistered(const Name& prefix);
@@ -96,14 +96,14 @@ private: // data fetching
   onTimeout(const Interest& interest, const Name& name);
 
   void
-  onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+  onDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
                   const Name& name);
 
   /**
    * @brief failure of validation
    */
   void
-  onDataValidationFailed(const Interest& interest, const shared_ptr<const Data>& data,
+  onDataValidationFailed(const Interest& interest, const std::shared_ptr<const Data>& data,
                          const std::string& reason, const Name& name);
 
 
@@ -121,10 +121,11 @@ private: // watch state check command
   onCheckInterest(const Name& prefix, const Interest& interest);
 
   void
-  onCheckValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onCheckValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onCheckValidationFailed(const shared_ptr<const Interest>& interest, const std::string& reason);
+  onCheckValidationFailed(const std::shared_ptr<const Interest>& interest,
+                          const std::string& reason);
 
 private: // watch stop command
   /**
@@ -134,10 +135,11 @@ private: // watch stop command
   onStopInterest(const Name& prefix, const Interest& interest);
 
   void
-  onStopValidated(const shared_ptr<const Interest>& interest, const Name& prefix);
+  onStopValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
-  onStopValidationFailed(const shared_ptr<const Interest>& interest, const std::string& reason);
+  onStopValidationFailed(const std::shared_ptr<const Interest>& interest,
+                         const std::string& reason);
 
 private:
   void

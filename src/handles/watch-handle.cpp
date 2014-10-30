@@ -98,7 +98,8 @@ void WatchHandle::watchStop(const Name& name)
 }
 
 void
-WatchHandle::onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason)
+WatchHandle::onValidationFailed(const shared_ptr<const Interest>& interest,
+                                const std::string& reason)
 {
   std::cerr << reason << std::endl;
   negativeReply(*interest, 401);

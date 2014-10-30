@@ -37,18 +37,14 @@
 
 namespace repo {
 
-using std::string;
-using std::vector;
-using std::pair;
-
 struct RepoConfig
 {
-  string repoConfigPath;
+  std::string repoConfigPath;
   //StorageMethod storageMethod; This will be implemtented if there is other method.
   std::string dbPath;
-  vector<ndn::Name> dataPrefixes;
-  vector<ndn::Name> repoPrefixes;
-  vector<pair<string, string> > tcpBulkInsertEndpoints;
+  std::vector<ndn::Name> dataPrefixes;
+  std::vector<ndn::Name> repoPrefixes;
+  std::vector<std::pair<std::string, std::string> > tcpBulkInsertEndpoints;
   int64_t nMaxPackets;
   boost::property_tree::ptree validatorNode;
 };
@@ -86,7 +82,7 @@ private:
   RepoConfig m_config;
   ndn::Scheduler m_scheduler;
   ndn::Face m_face;
-  shared_ptr<Storage> m_store;
+  std::shared_ptr<Storage> m_store;
   RepoStorage m_storageHandle;
   KeyChain m_keyChain;
   ValidatorConfig m_validator;

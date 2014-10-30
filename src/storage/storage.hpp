@@ -76,7 +76,7 @@ public :
    *  @brief  get the data from database
    *  @param  id   id number of each entry in the database, used to find the data
    */
-  virtual shared_ptr<Data>
+  virtual std::shared_ptr<Data>
   read(const int64_t id) = 0;
 
   /**
@@ -90,7 +90,7 @@ public :
    *         insertItemToIndex to reubuild index from database
    */
   virtual void
-  fullEnumerate(const ndn::function<void(const Storage::ItemMeta)>& f) = 0;
+  fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f) = 0;
 
 };
 

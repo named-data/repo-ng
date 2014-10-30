@@ -20,9 +20,7 @@
 #include "config.hpp"
 #include "repo.hpp"
 
-using namespace repo;
-
-static const string ndnRepoUsageMessage =
+static const std::string ndnRepoUsageMessage =
   /* argv[0] */ " - Next generation of NDN repository\n"
   "-h: show help message\n"
   "-c: set config file path\n"
@@ -46,15 +44,16 @@ terminate(boost::asio::io_service& ioService,
   else
     {
       /// \todo May be try to reload config file
-      signalSet.async_wait(bind(&terminate, boost::ref(ioService), _1, _2,
-                                boost::ref(signalSet)));
+      signalSet.async_wait(std::bind(&terminate, std::ref(ioService),
+                                     std::placeholders::_1, std::placeholders::_2,
+                                     std::ref(signalSet)));
     }
 }
 
 int
 main(int argc, char** argv)
 {
-  string configPath = DEFAULT_CONFIG_FILE;
+  std::string configPath = DEFAULT_CONFIG_FILE;
   int opt;
   while ((opt = getopt(argc, argv, "hc:")) != -1) {
     switch (opt) {
@@ -62,7 +61,7 @@ main(int argc, char** argv)
       std::cout << argv[0] << ndnRepoUsageMessage << std::endl;
       return 1;
     case 'c':
-      configPath = string(optarg);
+      configPath = std::string(optarg);
       break;
     default:
       break;
@@ -71,7 +70,7 @@ main(int argc, char** argv)
 
   try {
     boost::asio::io_service ioService;
-    Repo repoInstance(ioService, parseConfig(configPath));
+    repo::Repo repoInstance(ioService, repo::parseConfig(configPath));
 
     boost::asio::signal_set signalSet(ioService);
     signalSet.add(SIGINT);
@@ -79,8 +78,9 @@ main(int argc, char** argv)
     signalSet.add(SIGHUP);
     signalSet.add(SIGUSR1);
     signalSet.add(SIGUSR2);
-    signalSet.async_wait(bind(&terminate, boost::ref(ioService), _1, _2,
-                              boost::ref(signalSet)));
+    signalSet.async_wait(std::bind(&terminate, std::ref(ioService),
+                                   std::placeholders::_1, std::placeholders::_2,
+                                   std::ref(signalSet)));
 
     repoInstance.initializeStorage();
 

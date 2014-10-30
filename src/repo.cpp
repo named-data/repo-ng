@@ -19,6 +19,7 @@
 
 #include "repo.hpp"
 #include "storage/sqlite-storage.hpp"
+
 namespace repo {
 
 RepoConfig
@@ -114,7 +115,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   : m_config(config)
   , m_scheduler(ioService)
   , m_face(ioService)
-  , m_store(make_shared<SqliteStorage>(config.dbPath))
+  , m_store(std::make_shared<SqliteStorage>(config.dbPath))
   , m_storageHandle(config.nMaxPackets, *m_store)
   , m_validator(m_face)
   , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler)
@@ -142,7 +143,7 @@ void
 Repo::enableListening()
 {
   // Enable "listening" on Data prefixes
-  for (vector<ndn::Name>::iterator it = m_config.dataPrefixes.begin();
+  for (auto it = m_config.dataPrefixes.begin();
        it != m_config.dataPrefixes.end();
        ++it)
     {
@@ -150,7 +151,7 @@ Repo::enableListening()
     }
 
   // Enable "listening" on control prefixes
-  for (vector<ndn::Name>::iterator it = m_config.repoPrefixes.begin();
+  for (auto it = m_config.repoPrefixes.begin();
        it != m_config.repoPrefixes.end();
        ++it)
     {
@@ -160,7 +161,7 @@ Repo::enableListening()
     }
 
   // Enable listening on TCP bulk insert addresses
-  for (vector<pair<string, string> >::iterator it = m_config.tcpBulkInsertEndpoints.begin();
+  for (auto it = m_config.tcpBulkInsertEndpoints.begin();
        it != m_config.tcpBulkInsertEndpoints.end();
        ++it)
     {

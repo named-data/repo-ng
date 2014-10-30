@@ -48,7 +48,7 @@ public:
   };
 
   explicit
-  SqliteStorage(const string& dbPath);
+  SqliteStorage(const std::string& dbPath);
 
   virtual
   ~SqliteStorage();
@@ -72,7 +72,7 @@ public:
    *  @brief  get the data from database
    *  @para   id   id number of each entry in the database, used to find the data
    */
-  virtual shared_ptr<Data>
+  virtual std::shared_ptr<Data>
   read(const int64_t id);
 
   /**
@@ -86,7 +86,7 @@ public:
    *         insertItemToIndex to reubuild index from database
    */
   void
-  fullEnumerate(const ndn::function<void(const Storage::ItemMeta)>& f);
+  fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f);
 
 private:
   void
@@ -94,7 +94,7 @@ private:
 
 private:
   sqlite3* m_db;
-  string m_dbPath;
+  std::string m_dbPath;
   int64_t m_size;
 };
 

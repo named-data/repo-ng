@@ -59,7 +59,7 @@ public:
 private:
   void
   handleAccept(const boost::system::error_code& error,
-               const shared_ptr<boost::asio::ip::tcp::socket>& socket);
+               const std::shared_ptr<boost::asio::ip::tcp::socket>& socket);
 
 private:
   boost::asio::ip::tcp::acceptor m_acceptor;

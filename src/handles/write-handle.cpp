@@ -20,7 +20,6 @@
 #include "write-handle.hpp"
 
 namespace repo {
-using namespace ndn::time;
 
 static const int RETRY_TIMEOUT = 3;
 static const int DEFAULT_CREDIT = 12;
@@ -72,7 +71,7 @@ WriteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason
 }
 
 void
-WriteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+WriteHandle::onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix)
 {
   //m_validResult = 1;
   RepoCommandParameter parameter;
@@ -99,14 +98,15 @@ WriteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name&
 }
 
 void
-WriteHandle::onValidationFailed(const shared_ptr<const Interest>& interest, const string& reason)
+WriteHandle::onValidationFailed(const std::shared_ptr<const Interest>& interest,
+                                const std::string& reason)
 {
   std::cerr << reason << std::endl;
   negativeReply(*interest, 401);
 }
 
 void
-WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId processId)
+WriteHandle::onData(const Interest& interest, Data& data, ProcessId processId)
 {
   m_validator.validate(data,
                        bind(&WriteHandle::onDataValidated, this, interest, _1, processId),
@@ -114,7 +114,8 @@ WriteHandle::onData(const Interest& interest, ndn::Data& data, ProcessId process
 }
 
 void
-WriteHandle::onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
+WriteHandle::onDataValidated(const Interest& interest,
+                             const std::shared_ptr<const Data>& data,
                              ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
@@ -135,7 +136,8 @@ WriteHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
 }
 
 void
-WriteHandle::onDataValidationFailed(const shared_ptr<const Data>& data, const std::string& reason)
+WriteHandle::onDataValidationFailed(const std::shared_ptr<const Data>& data,
+                                    const std::string& reason)
 {
   std::cerr << reason << std::endl;
 }
@@ -150,7 +152,7 @@ WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId proce
 
 void
 WriteHandle::onSegmentDataValidated(const Interest& interest,
-                                    const shared_ptr<const Data>& data,
+                                    const std::shared_ptr<const Data>& data,
                                     ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
@@ -182,7 +184,7 @@ WriteHandle::onSegmentDataValidated(const Interest& interest,
 }
 
 void
-WriteHandle::onTimeout(const ndn::Interest& interest, ProcessId processId)
+WriteHandle::onTimeout(const Interest& interest, ProcessId processId)
 {
   std::cerr << "Timeout" << std::endl;
   m_processes.erase(processId);

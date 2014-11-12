@@ -15,12 +15,4 @@ if [ $IS_OSX = "yes" ]; then
     security unlock-keychain -p "named-data"
 fi
 
-sudo killall nrd || true
-sudo killall nfd || true
-
-/usr/local/bin/nfd-start
-
 ./build/unit-tests -l test_suite
-
-sudo killall nrd || true
-sudo killall nfd || true

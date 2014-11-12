@@ -21,6 +21,7 @@
 #define REPO_REPO_COMMAND_PARAMETER_HPP
 
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
+#include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/name.hpp>
 #include <ndn-cxx/selectors.hpp>
 #include "repo-tlv.hpp"

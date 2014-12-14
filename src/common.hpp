@@ -51,6 +51,7 @@ namespace repo {
 using ndn::Face;
 using ndn::Block;
 using ndn::Name;
+namespace name = ndn::name;
 using ndn::Interest;
 using ndn::Selectors;
 using ndn::Exclude;

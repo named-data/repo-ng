@@ -126,9 +126,9 @@ public:
     this->data.push_back(createData("/a/b/c"));
     this->data.push_back(createData("/a/b/c/d"));
 
-    this->interests.push_back(std::make_pair(Interest("/a"),       getData("/a/b/c/d")));
-    this->interests.push_back(std::make_pair(Interest("/a/b"),     getData("/a/b/c/d")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/c"),   getData("/a/b/c/d")));
+    this->interests.push_back(std::make_pair(Interest("/a"),       getData("/a")));
+    this->interests.push_back(std::make_pair(Interest("/a/b"),     getData("/a/b")));
+    this->interests.push_back(std::make_pair(Interest("/a/b/c"),   getData("/a/b/c")));
     this->interests.push_back(std::make_pair(Interest("/a/b/c/d"), getData("/a/b/c/d")));
   }
 };
@@ -300,13 +300,13 @@ public:
 
     // Basic selects
     this->interests.push_back(std::make_pair(Interest("/a/b/c"),     this->getData("/a/b/c")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d"),     this->getData("/a/b/d/1")));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d"),     this->getData("/a/b/d")));
     this->interests.push_back(std::make_pair(Interest("/a/b/d/1"),   this->getData("/a/b/d/1")));
     this->interests.push_back(std::make_pair(Interest("/a/b/d/2"),   this->getData("/a/b/d/2")));
     this->interests.push_back(std::make_pair(Interest("/a/b/d/3"),   this->getData("/a/b/d/3")));
     this->interests.push_back(std::make_pair(Interest("/a/b/d/4/I"), this->getData("/a/b/d/4/I")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/4"),   this->getData("/a/b/d/4/I")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/e"),     this->getData("/a/b/e/1")));
+    this->interests.push_back(std::make_pair(Interest("/a/b/d/4"),   this->getData("/a/b/d/4")));
+    this->interests.push_back(std::make_pair(Interest("/a/b/e"),     this->getData("/a/b/e")));
     this->interests.push_back(std::make_pair(Interest("/a/b/e/1"),   this->getData("/a/b/e/1")));
 
     // Complex selects
@@ -320,7 +320,7 @@ public:
                                              .setSelectors(Selectors()
                                                            .setMinSuffixComponents(-1)
                                                            .setChildSelector(0)),
-                                             this->getData("/a/b/d/1")));
+                                             this->getData("/a/b/d")));
 
     this->interests.push_back(std::make_pair(Interest("/a/b/d")
                                              .setSelectors(Selectors()
@@ -349,13 +349,13 @@ public:
                                              .setSelectors(Selectors()
                                                            .setMinSuffixComponents(2)
                                                            .setChildSelector(1)),
-                                             this->getData("/a/b/d/4/I")));
+                                             this->getData("/a/b/d/4")));
 
     // because of the digest component, /a/b/d will be to the right of /a/b/d/4
     this->interests.push_back(std::make_pair(Interest("/a/b/d")
                                              .setSelectors(Selectors()
                                                            .setChildSelector(1)),
-                                             this->getData("/a/b/d")));
+                                             this->getData("/a/b/d/4")));
 
     // Alex: this interest doesn't make sense, as all Data packets will have the same selector
     this->interests.push_back(std::make_pair(Interest("/a/b/e")
@@ -363,7 +363,7 @@ public:
                                                            .setPublisherPublicKeyLocator(
                                                              this->data.back()
                                                                ->getSignature().getKeyLocator())),
-                                             this->getData("/a/b/e/1")));
+                                             this->getData("/a/b/e")));
 
     // Removals
     this->removals.push_back(std::make_pair(Interest("/a/b/d/2"), 1));

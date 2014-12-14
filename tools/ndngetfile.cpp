@@ -290,12 +290,11 @@ main(int argc, char** argv)
 
   if (outputFile != 0)
     {
-      of.open(outputFile);
-      if (!of)
-        {
-          std::cerr << "ERROR: output file is invalid" << std::endl;
-          return 1;
-        }
+      of.open(outputFile, std::ios::out | std::ios::binary | std::ios::trunc);
+      if (!of || !of.is_open()) {
+        std::cerr << "ERROR: cannot open " << outputFile << std::endl;
+        return 1;
+      }
       buf = of.rdbuf();
     }
   else

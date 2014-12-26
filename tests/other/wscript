@@ -1,0 +1,10 @@
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+
+top = '../..'
+
+def build(bld):
+    bld.program(target="../../skiplist-smoketest",
+                source="skiplist-smoketest.cpp",
+                use='ndn-repo-objects',
+                install_path=None,
+                )

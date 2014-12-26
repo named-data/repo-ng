@@ -68,6 +68,7 @@ def build(bld):
 
     # Tests
     bld.recurse('tests')
+    bld.recurse("tests/other")
 
     # Tools
     bld.recurse('tools')

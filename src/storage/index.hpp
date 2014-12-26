@@ -21,8 +21,7 @@
 #define REPO_STORAGE_INDEX_HPP
 
 #include "common.hpp"
-#include "skiplist.hpp"
-#include <queue>
+#include <set>
 
 namespace repo {
 
@@ -55,7 +54,7 @@ public:
   public:
 
     /**
-     * @brief used by skiplist to construct node
+     * @brief used by set to construct node
      */
     Entry()
     {
@@ -82,7 +81,7 @@ public:
     /**
      *  @brief implicit construct Entry by full name
      *
-     *  Allow implicit conversion from Name for SkipList lookups by Name
+     *  Allow implicit conversion from Name for set lookups by Name
      */
     Entry(const Name& name);
 
@@ -145,7 +144,7 @@ public:
 
 private:
 
-  typedef SkipList<Entry> IndexSkipList;
+  typedef std::set<Entry> IndexContainer;
 
 public:
   explicit
@@ -214,7 +213,7 @@ private:
    */
   std::pair<int64_t, Name>
   selectChild(const Interest& interest,
-              IndexSkipList::const_iterator startingPoint) const;
+              IndexContainer::const_iterator startingPoint) const;
 
   /**
    *  @brief check whether the index is full
@@ -234,10 +233,10 @@ private:
    */
   std::pair<int64_t, Name>
   findFirstEntry(const Name& prefix,
-                 IndexSkipList::const_iterator startingPoint) const;
+                 IndexContainer::const_iterator startingPoint) const;
 
 private:
-  IndexSkipList m_skipList;
+  IndexContainer m_indexContainer;
   size_t m_maxPackets;
   size_t m_size;
 };

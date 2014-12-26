@@ -17,12 +17,12 @@
 * repo-ng, e.g., in COPYING.md file. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef REPO_STORAGE_SKIPLIST_HPP
-#define REPO_STORAGE_SKIPLIST_HPP
+#ifndef REPO_TESTS_OTHER_SKIPLIST_PREV_HPP
+#define REPO_TESTS_OTHER_SKIPLIST_PREV_HPP
 
 #include "common.hpp"
 
-namespace repo {
+namespace prev {
 
 class SkipList32Levels25Probabilty
 {
@@ -434,6 +434,6 @@ SkipList<T, Compare, Traits>::erase(typename SkipList<T, Compare, Traits>::const
   }
 }
 
-} // namespace repo
+} // namespace prev
 
-#endif // REPO_STORAGE_SKIPLIST_HPP
+#endif // REPO_TESTS_OTHER_SKIPLIST_PREV_HPP

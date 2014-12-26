@@ -18,7 +18,6 @@
  */
 
 #include "index.hpp"
-#include "skiplist.hpp"
 
 #include <ndn-cxx/util/crypto.hpp>
 #include "ndn-cxx/security/signature-sha256-with-rsa.hpp"
@@ -70,7 +69,7 @@ Index::insert(const Data& data, const int64_t id)
   if (isFull())
     throw Error("The Index is Full. Cannot Insert Any Data!");
   Entry entry(data, id);
-  bool isInserted = m_skipList.insert(entry).second;
+  bool isInserted = m_indexContainer.insert(entry).second;
   if (isInserted)
     ++m_size;
   return isInserted;
@@ -83,7 +82,7 @@ Index::insert(const Name& fullName, const int64_t id,
   if (isFull())
     throw Error("The Index is Full. Cannot Insert Any Data!");
   Entry entry(fullName, keyLocatorHash, id);
-  bool isInserted = m_skipList.insert(entry).second;
+  bool isInserted = m_indexContainer.insert(entry).second;
   if (isInserted)
     ++m_size;
   return isInserted;
@@ -93,8 +92,8 @@ std::pair<int64_t,Name>
 Index::find(const Interest& interest) const
 {
   Name name = interest.getName();
-  IndexSkipList::const_iterator result = m_skipList.lower_bound(name);
-  if (result != m_skipList.end())
+  IndexContainer::const_iterator result = m_indexContainer.lower_bound(name);
+  if (result != m_indexContainer.end())
     {
       return selectChild(interest, result);
     }
@@ -107,8 +106,8 @@ Index::find(const Interest& interest) const
 std::pair<int64_t,Name>
 Index::find(const Name& name) const
 {
-  IndexSkipList::const_iterator result = m_skipList.lower_bound(name);
-  if (result != m_skipList.end())
+  IndexContainer::const_iterator result = m_indexContainer.lower_bound(name);
+  if (result != m_indexContainer.end())
     {
       return findFirstEntry(name, result);
     }
@@ -122,16 +121,16 @@ bool
 Index::hasData(const Data& data) const
 {
   Index::Entry entry(data, -1); // the id number is useless
-  IndexSkipList::const_iterator result = m_skipList.find(entry);
-  return result != m_skipList.end();
+  IndexContainer::const_iterator result = m_indexContainer.find(entry);
+  return result != m_indexContainer.end();
 
 }
 
 std::pair<int64_t,Name>
 Index::findFirstEntry(const Name& prefix,
-                      IndexSkipList::const_iterator startingPoint) const
+                      IndexContainer::const_iterator startingPoint) const
 {
-  BOOST_ASSERT(startingPoint != m_skipList.end());
+  BOOST_ASSERT(startingPoint != m_indexContainer.end());
   if (prefix.isPrefixOf(startingPoint->getName()))
     {
       return std::make_pair(startingPoint->getId(), startingPoint->getName());
@@ -146,10 +145,10 @@ bool
 Index::erase(const Name& fullName)
 {
   Entry entry(fullName);
-  IndexSkipList::const_iterator findIterator = m_skipList.find(entry);
-  if (findIterator != m_skipList.end())
+  IndexContainer::const_iterator findIterator = m_indexContainer.find(entry);
+  if (findIterator != m_indexContainer.end())
     {
-      m_skipList.erase(findIterator);
+      m_indexContainer.erase(findIterator);
       m_size--;
       return true;
     }
@@ -167,9 +166,9 @@ Index::computeKeyLocatorHash(const KeyLocator& keyLocator)
 
 std::pair<int64_t,Name>
 Index::selectChild(const Interest& interest,
-                   IndexSkipList::const_iterator startingPoint) const
+                   IndexContainer::const_iterator startingPoint) const
 {
-  BOOST_ASSERT(startingPoint != m_skipList.end());
+  BOOST_ASSERT(startingPoint != m_indexContainer.end());
   bool isLeftmost = (interest.getChildSelector() <= 0);
   ndn::ConstBufferPtr hash;
   if (!interest.getPublisherPublicKeyLocator().empty())
@@ -181,8 +180,8 @@ Index::selectChild(const Interest& interest,
 
   if (isLeftmost)
     {
-      for (IndexSkipList::const_iterator it = startingPoint;
-           it != m_skipList.end(); ++it)
+      for (IndexContainer::const_iterator it = startingPoint;
+           it != m_indexContainer.end(); ++it)
         {
           if (!interest.getName().isPrefixOf(it->getName()))
             return std::make_pair(0, Name());
@@ -192,15 +191,15 @@ Index::selectChild(const Interest& interest,
     }
   else
     {
-      IndexSkipList::const_iterator boundary = m_skipList.lower_bound(interest.getName());
-      if (boundary == m_skipList.end() || !interest.getName().isPrefixOf(boundary->getName()))
+      IndexContainer::const_iterator boundary = m_indexContainer.lower_bound(interest.getName());
+      if (boundary == m_indexContainer.end() || !interest.getName().isPrefixOf(boundary->getName()))
         return std::make_pair(0, Name());
       Name successor = interest.getName().getSuccessor();
-      IndexSkipList::const_iterator last = interest.getName().size() == 0 ?
-                    m_skipList.end() : m_skipList.lower_bound(interest.getName().getSuccessor());
+      IndexContainer::const_iterator last = interest.getName().size() == 0 ?
+                    m_indexContainer.end() : m_indexContainer.lower_bound(interest.getName().getSuccessor());
       while (true)
         {
-          IndexSkipList::const_iterator prev = last;
+          IndexContainer::const_iterator prev = last;
           --prev;
           if (prev == boundary)
             {
@@ -212,9 +211,9 @@ Index::selectChild(const Interest& interest,
               else
                 return std::make_pair(0, Name());
             }
-          IndexSkipList::const_iterator first =
-            m_skipList.lower_bound(prev->getName().getPrefix(interest.getName().size() + 1));
-          IndexSkipList::const_iterator match =
+          IndexContainer::const_iterator first =
+            m_indexContainer.lower_bound(prev->getName().getPrefix(interest.getName().size() + 1));
+          IndexContainer::const_iterator match =
                      std::find_if(first, last, bind(&matchesSimpleSelectors, interest, hash, _1));
           if (match != last)
             {

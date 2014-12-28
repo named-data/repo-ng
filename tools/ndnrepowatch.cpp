@@ -295,7 +295,7 @@ usage()
   fprintf(stderr,
           "NdnRepoWatch [-I identity]"
           "  [-x freshness] [-l lifetime] [-w watchtimeout]"
-          "  [-n maxinterestnum][-s stop] [-c check]repo-prefix ndn-name\n"
+          "  [-n maxinterestnum][-s] [-c check]repo-prefix ndn-name\n"
           "\n"
           " Write a file into a repo.\n"
           "  -I: specify identity used for signing commands\n"

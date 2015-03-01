@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2015,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -162,31 +162,30 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
 
   bool isOk = true;
   Block element;
-  while (m_inputBufferSize - offset > 0)
-    {
-      isOk = Block::fromBuffer(m_inputBuffer + offset, m_inputBufferSize - offset, element);
-      if (!isOk)
-        break;
+  while (m_inputBufferSize - offset > 0) {
+    std::tie(isOk, element) = Block::fromBuffer(m_inputBuffer + offset, m_inputBufferSize - offset);
+    if (!isOk)
+      break;
 
-      offset += element.size();
-      BOOST_ASSERT(offset <= m_inputBufferSize);
+    offset += element.size();
+    BOOST_ASSERT(offset <= m_inputBufferSize);
 
-      if (element.type() == ndn::tlv::Data)
-        {
-          try {
-            Data data(element);
-            bool isOk = m_writer.getStorageHandle().insertData(data);
-            if (isOk)
-              std::cerr << "Successfully injected " << data.getName() << std::endl;
-            else
-              std::cerr << "FAILED to inject " << data.getName() << std::endl;
-          }
-          catch (std::runtime_error& error) {
-            /// \todo Catch specific error after determining what wireDecode() can throw
-            std::cerr << "Error decoding received Data packet" << std::endl;
-          }
-        }
+    if (element.type() == ndn::tlv::Data) {
+      try {
+        Data data(element);
+        bool isInserted = m_writer.getStorageHandle().insertData(data);
+        if (isInserted)
+          std::cerr << "Successfully injected " << data.getName() << std::endl;
+        else
+          std::cerr << "FAILED to inject " << data.getName() << std::endl;
+      }
+      catch (std::runtime_error& error) {
+        /// \todo Catch specific error after determining what wireDecode() can throw
+        std::cerr << "Error decoding received Data packet" << std::endl;
+      }
     }
+  }
+
   if (!isOk && m_inputBufferSize == MAX_NDN_PACKET_SIZE && offset == 0)
     {
       boost::system::error_code error;

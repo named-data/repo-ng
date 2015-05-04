@@ -45,7 +45,7 @@ struct RepoConfig
   std::vector<ndn::Name> dataPrefixes;
   std::vector<ndn::Name> repoPrefixes;
   std::vector<std::pair<std::string, std::string> > tcpBulkInsertEndpoints;
-  int64_t nMaxPackets;
+  uint64_t nMaxPackets;
   boost::property_tree::ptree validatorNode;
 };
 

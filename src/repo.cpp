@@ -106,7 +106,7 @@ parseConfig(const std::string& configPath)
 
   repoConfig.validatorNode = repoConf.get_child("validator");
 
-  repoConfig.nMaxPackets = repoConf.get<int>("storage.max-packets");
+  repoConfig.nMaxPackets = repoConf.get<uint64_t>("storage.max-packets");
 
   return repoConfig;
 }

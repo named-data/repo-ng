@@ -63,12 +63,12 @@ public:
     /**
      * @brief construct Entry by data and id number
      */
-    Entry(const Data& data, const int64_t id);
+    Entry(const Data& data, int64_t id);
 
     /**
      * @brief construct Entry by fullName, keyLocator and id number
      */
-    Entry(const Name& fullName, const KeyLocator& keyLocator, const int64_t id);
+    Entry(const Name& fullName, const KeyLocator& keyLocator, int64_t id);
 
     /**
      * @brief construct Entry by fullName, keyLocatorHash and id number
@@ -76,7 +76,7 @@ public:
      * @param  keyLocatorHash  keyLocator hashed by sha256
      * @param  id              record ID from database
      */
-    Entry(const Name& fullName, const ndn::ConstBufferPtr& keyLocatorHash, const int64_t id);
+    Entry(const Name& fullName, const ndn::ConstBufferPtr& keyLocatorHash, int64_t id);
 
     /**
      *  @brief implicit construct Entry by full name
@@ -106,7 +106,7 @@ public:
     /**
      *  @brief get record ID from database
      */
-    const int64_t
+    int64_t
     getId() const
     {
       return m_id;
@@ -148,7 +148,7 @@ private:
 
 public:
   explicit
-  Index(const size_t nMaxPackets);
+  Index(size_t nMaxPackets);
 
   /**
    *  @brief insert entries into index
@@ -156,7 +156,7 @@ public:
    *  @param  id      obtained from database
    */
   bool
-  insert(const Data& data, const int64_t id);
+  insert(const Data& data, int64_t id);
 
   /**
    *  @brief insert entries into index
@@ -164,7 +164,7 @@ public:
    *  @param  id      obtained from database
    */
   bool
-  insert(const Name& fullName, const int64_t id,
+  insert(const Name& fullName, int64_t id,
          const ndn::ConstBufferPtr& keyLocatorHash);
 
   /**
@@ -198,7 +198,7 @@ public:
   static const ndn::ConstBufferPtr
   computeKeyLocatorHash(const KeyLocator& keyLocator);
 
-  const size_t
+  size_t
   size() const
   {
     return m_size;

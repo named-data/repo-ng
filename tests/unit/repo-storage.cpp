@@ -53,7 +53,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, Datasets, Fixture<T>)
     }
 
   // check size directly with the storage (repo doesn't have interface yet)
-  BOOST_CHECK_EQUAL(this->store->size(), this->data.size());
+  BOOST_CHECK_EQUAL(this->store->size(), static_cast<int64_t>(this->data.size()));
 
   // Read
   for (typename T::InterestContainer::iterator i = this->interests.begin();

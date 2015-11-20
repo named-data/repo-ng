@@ -56,7 +56,7 @@ matchesSimpleSelectors(const Interest& interest, ndn::ConstBufferPtr& hash,
   return true;
 }
 
-Index::Index(const size_t nMaxPackets)
+Index::Index(size_t nMaxPackets)
   : m_maxPackets(nMaxPackets)
   , m_size(0)
 {
@@ -64,7 +64,7 @@ Index::Index(const size_t nMaxPackets)
 
 
 bool
-Index::insert(const Data& data, const int64_t id)
+Index::insert(const Data& data, int64_t id)
 {
   if (isFull())
     throw Error("The Index is Full. Cannot Insert Any Data!");
@@ -76,7 +76,7 @@ Index::insert(const Data& data, const int64_t id)
 }
 
 bool
-Index::insert(const Name& fullName, const int64_t id,
+Index::insert(const Name& fullName, int64_t id,
               const ndn::ConstBufferPtr& keyLocatorHash)
 {
   if (isFull())
@@ -225,7 +225,7 @@ Index::selectChild(const Interest& interest,
   return std::make_pair(0, Name());
 }
 
-Index::Entry::Entry(const Data& data, const int64_t id)
+Index::Entry::Entry(const Data& data, int64_t id)
   : m_name(data.getFullName())
   , m_id(id)
 {
@@ -234,7 +234,7 @@ Index::Entry::Entry(const Data& data, const int64_t id)
     m_keyLocatorHash = computeKeyLocatorHash(signature.getKeyLocator());
 }
 
-Index::Entry::Entry(const Name& fullName, const KeyLocator& keyLocator, const int64_t id)
+Index::Entry::Entry(const Name& fullName, const KeyLocator& keyLocator, int64_t id)
   : m_name(fullName)
   , m_keyLocatorHash(computeKeyLocatorHash(keyLocator))
   , m_id(id)
@@ -242,7 +242,7 @@ Index::Entry::Entry(const Name& fullName, const KeyLocator& keyLocator, const in
 }
 
 Index::Entry::Entry(const Name& fullName,
-                    const ndn::ConstBufferPtr& keyLocatorHash, const int64_t id)
+                    const ndn::ConstBufferPtr& keyLocatorHash, int64_t id)
   : m_name(fullName)
   , m_keyLocatorHash(keyLocatorHash)
   , m_id(id)

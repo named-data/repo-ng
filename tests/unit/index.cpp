@@ -57,10 +57,10 @@ protected:
     return *m_interest;
   }
 
-  uint64_t
+  int
   find()
   {
-    std::pair<int,Name> found = m_index.find(*m_interest);
+    std::pair<int, Name> found = m_index.find(*m_interest);
     return found.first;
   }
 

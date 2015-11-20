@@ -52,7 +52,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, CommonDatasets, Fixture<T>
       this->idToDataMap.insert(std::make_pair(id, *i));
       ids.push_back(id);
     }
-  BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
+  BOOST_CHECK_EQUAL(this->handle->size(), static_cast<int64_t>(this->data.size()));
 
   std::random_shuffle(ids.begin(), ids.end());
 
@@ -63,7 +63,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, CommonDatasets, Fixture<T>
     BOOST_REQUIRE(this->idToDataMap.count(*i) > 0);
     BOOST_CHECK_EQUAL(*this->idToDataMap[*i], *retrievedData);
   }
-  BOOST_CHECK_EQUAL(this->handle->size(), this->data.size());
+  BOOST_CHECK_EQUAL(this->handle->size(), static_cast<int64_t>(this->data.size()));
 
   // Delete
   for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {

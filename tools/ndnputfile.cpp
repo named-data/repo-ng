@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2016,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,8 +22,8 @@
 
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
+#include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
-#include <ndn-cxx/util/command-interest-generator.hpp>
 #include <fstream>
 #include <string>
 #include <stdlib.h>
@@ -73,7 +73,6 @@ public:
     , timeout(0)
     , insertStream(0)
     , isVerbose(false)
-
     , m_scheduler(m_face.getIoService())
     , m_timestampVersion(toUnixTimestamp(system_clock::now()).count())
     , m_processId(0)
@@ -149,7 +148,6 @@ private:
   ndn::Face m_face;
   ndn::Scheduler m_scheduler;
   ndn::KeyChain m_keyChain;
-  ndn::CommandInterestGenerator m_generator;
   uint64_t m_timestampVersion;
   uint64_t m_processId;
   milliseconds m_checkPeriod;
@@ -439,9 +437,9 @@ NdnPutFile::generateCommandInterest(const ndn::Name& commandPrefix, const std::s
   interest.setInterestLifetime(interestLifetime);
 
   if (identityForCommand.empty())
-    m_generator.generate(interest);
+    m_keyChain.sign(interest);
   else {
-    m_generator.generateWithIdentity(interest, ndn::Name(identityForCommand));
+    m_keyChain.sign(interest, ndn::signingByIdentity(identityForCommand));
   }
 
   return interest;

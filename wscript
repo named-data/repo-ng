@@ -3,6 +3,7 @@ VERSION = '0.1'
 APPNAME = 'ndn-repo'
 
 from waflib import Build, Logs, Utils, Task, TaskGen, Configure
+import os
 
 def options(opt):
     opt.load('compiler_c compiler_cxx gnu_dirs')
@@ -21,6 +22,8 @@ def options(opt):
 def configure(conf):
     conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags sqlite3")
 
+    if 'PKG_CONFIG_PATH' not in os.environ:
+        os.environ['PKG_CONFIG_PATH'] = Utils.subst_vars('${LIBDIR}/pkgconfig', conf.env)
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
                    uselib_store='NDN_CXX', mandatory=True)
 

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -89,10 +89,10 @@ public:
 
 
   void
-  onInsertData(const Interest& interest, Data& data);
+  onInsertData(const Interest& interest, const Data& data);
 
   void
-  onDeleteData(const Interest& interest, Data& data);
+  onDeleteData(const Interest& interest, const Data& data);
 
   void
   onInsertTimeout(const Interest& interest);
@@ -179,7 +179,7 @@ Fixture<T>::stopFaceProcess()
 }
 
 template<class T> void
-Fixture<T>::onInsertData(const Interest& interest, Data& data)
+Fixture<T>::onInsertData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
@@ -189,7 +189,7 @@ Fixture<T>::onInsertData(const Interest& interest, Data& data)
 }
 
 template<class T> void
-Fixture<T>::onDeleteData(const Interest& interest, Data& data)
+Fixture<T>::onDeleteData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
@@ -218,6 +218,7 @@ Fixture<T>::sendInsertInterest(const Interest& insertInterest)
 {
   insertFace.expressInterest(insertInterest,
                              bind(&Fixture<T>::onInsertData, this, _1, _2),
+                             bind(&Fixture<T>::onInsertTimeout, this, _1), // Nack
                              bind(&Fixture<T>::onInsertTimeout, this, _1));
 }
 
@@ -226,6 +227,7 @@ Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
 {
   deleteFace.expressInterest(deleteInterest,
                              bind(&Fixture<T>::onDeleteData, this, _1, _2),
+                             bind(&Fixture<T>::onDeleteTimeout, this, _1), // Nack
                              bind(&Fixture<T>::onDeleteTimeout, this, _1));
 }
 
@@ -328,5 +330,5 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} //namespace tests
-} //namespace repo
+} // namespace tests
+} // namespace repo

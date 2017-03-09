@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -38,7 +38,7 @@ using namespace ndn::time;
 
 /**
 * @brief Class defining abstraction of parameter of command for NDN Repo Protocol
-* @sa link http://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
+* @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
 **/
 
 class RepoCommandParameter
@@ -370,7 +370,7 @@ RepoCommandParameter::wireDecode(const Block& wire)
   m_wire.parse();
 
   if (m_wire.type() != tlv::RepoCommandParameter)
-    throw Error("Requested decoding of RepoCommandParameter, but Block is of different type");
+    BOOST_THROW_EXCEPTION(Error("Requested decoding of RepoCommandParameter, but Block is of different type"));
 
   // Name
   Block::element_const_iterator val = m_wire.find(tlv::Name);

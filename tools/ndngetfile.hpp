@@ -1,6 +1,6 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil -*- */
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -55,14 +55,14 @@ private:
   fetchData(const ndn::Name& name);
 
   void
-  onVersionedData(const ndn::Interest& interest, ndn::Data& data);
+  onVersionedData(const ndn::Interest& interest, const ndn::Data& data);
 
   void
-  onUnversionedData(const ndn::Interest& interest, ndn::Data& data);
+  onUnversionedData(const ndn::Interest& interest, const ndn::Data& data);
 
   void
   onTimeout(const ndn::Interest& interest);
-  
+
   void
   readData(const ndn::Data& data);
 

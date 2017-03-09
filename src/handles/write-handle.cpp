@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -59,7 +59,7 @@ void
 WriteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
   std::cerr << reason << std::endl;
-  throw Error("Insert prefix registration failed");
+  BOOST_THROW_EXCEPTION(Error("Insert prefix registration failed"));
 }
 
 // onRegisterFailed for insert.
@@ -67,7 +67,7 @@ void
 WriteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason)
 {
   std::cerr << reason << std::endl;
-  throw Error("Insert check prefix registration failed");
+  BOOST_THROW_EXCEPTION(Error("Insert check prefix registration failed"));
 }
 
 void
@@ -106,7 +106,7 @@ WriteHandle::onValidationFailed(const std::shared_ptr<const Interest>& interest,
 }
 
 void
-WriteHandle::onData(const Interest& interest, Data& data, ProcessId processId)
+WriteHandle::onData(const Interest& interest, const Data& data, ProcessId processId)
 {
   m_validator.validate(data,
                        bind(&WriteHandle::onDataValidated, this, interest, _1, processId),
@@ -143,7 +143,7 @@ WriteHandle::onDataValidationFailed(const std::shared_ptr<const Data>& data,
 }
 
 void
-WriteHandle::onSegmentData(const Interest& interest, Data& data, ProcessId processId)
+WriteHandle::onSegmentData(const Interest& interest, const Data& data, ProcessId processId)
 {
   m_validator.validate(data,
                        bind(&WriteHandle::onSegmentDataValidated, this, interest, _1, processId),
@@ -247,6 +247,7 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
     interest.setInterestLifetime(m_interestLifetime);
     getFace().expressInterest(interest,
                               bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
+                              bind(&WriteHandle::onSegmentTimeout, this, _1, processId), // Nack
                               bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
     process.credit--;
     processRetry[segment] = 0;
@@ -341,6 +342,7 @@ WriteHandle::onSegmentDataControl(ProcessId processId, const Interest& interest)
   fetchInterest.setInterestLifetime(m_interestLifetime);
   getFace().expressInterest(fetchInterest,
                             bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
+                            bind(&WriteHandle::onSegmentTimeout, this, _1, processId), // Nack
                             bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
   //When an interest is expressed, processCredit--
   processCredit--;
@@ -392,6 +394,7 @@ WriteHandle::onSegmentTimeoutControl(ProcessId processId, const Interest& intere
     retryInterest.setInterestLifetime(m_interestLifetime);
     getFace().expressInterest(retryInterest,
                               bind(&WriteHandle::onSegmentData, this, _1, _2, processId),
+                              bind(&WriteHandle::onSegmentTimeout, this, _1, processId), // Nack
                               bind(&WriteHandle::onSegmentTimeout, this, _1, processId));
   }
 
@@ -464,7 +467,7 @@ void
 WriteHandle::deferredDeleteProcess(ProcessId processId)
 {
   getScheduler().scheduleEvent(PROCESS_DELETE_TIME,
-                               ndn::bind(&WriteHandle::deleteProcess, this, processId));
+                               bind(&WriteHandle::deleteProcess, this, processId));
 }
 
 void
@@ -491,6 +494,7 @@ WriteHandle::processSingleInsertCommand(const Interest& interest,
   }
   getFace().expressInterest(fetchInterest,
                             bind(&WriteHandle::onData, this, _1, _2, processId),
+                            bind(&WriteHandle::onTimeout, this, _1, processId), // Nack
                             bind(&WriteHandle::onTimeout, this, _1, processId));
 }
 
@@ -569,4 +573,4 @@ WriteHandle::negativeReply(const Interest& interest, int statusCode)
   reply(interest, response);
 }
 
-} //namespace repo
+} // namespace repo

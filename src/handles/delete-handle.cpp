@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -40,7 +40,7 @@ DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
 void
 DeleteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
-  throw Error("Delete prefix registration failed");
+  BOOST_THROW_EXCEPTION(Error("Delete prefix registration failed"));
 }
 
 
@@ -54,7 +54,7 @@ DeleteHandle::onCheckInterest(const Name& prefix, const Interest& interest)
 void
 DeleteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason)
 {
-  throw Error("Delete check prefix registration failed");
+  BOOST_THROW_EXCEPTION(Error("Delete check prefix registration failed"));
 }
 
 
@@ -194,4 +194,4 @@ DeleteHandle::processSegmentDeleteCommand(const Interest& interest,
   }
 }
 
-} //namespace repo
+} // namespace repo

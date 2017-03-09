@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -74,7 +74,7 @@ public:
       Interest readInterest((*i)->getName());
       readInterest.setMustBeFresh(true);
       scheduler.scheduleEvent(ndn::time::milliseconds(timeCount * 50),
-                              ndn::bind(&BasicInterestReadFixture<Dataset>::sendInterest, this,
+                              bind(&BasicInterestReadFixture<Dataset>::sendInterest, this,
                                         readInterest));
       timeCount++;
     }
@@ -87,7 +87,7 @@ public:
   }
 
   void
-  onReadData(const ndn::Interest& interest, ndn::Data& data)
+  onReadData(const ndn::Interest& interest, const ndn::Data& data)
   {
     int rc = memcmp(data.getContent().value(), content, sizeof(content));
     BOOST_CHECK_EQUAL(rc, 0);
@@ -104,6 +104,7 @@ public:
   {
     readFace.expressInterest(interest,
                              bind(&BasicInterestReadFixture::onReadData, this, _1, _2),
+                             bind(&BasicInterestReadFixture::onReadTimeout, this, _1), // Nack
                              bind(&BasicInterestReadFixture::onReadTimeout, this, _1));
   }
 
@@ -134,16 +135,16 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 
   this->startListen();
   this->scheduler.scheduleEvent(ndn::time::seconds(0),
-                                ndn::bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
+                                bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
 
   // schedule an event to terminate IO
   this->scheduler.scheduleEvent(ndn::time::seconds(20),
-                                ndn::bind(&BasicInterestReadFixture<T>::stopFaceProcess, this));
+                                bind(&BasicInterestReadFixture<T>::stopFaceProcess, this));
   this->repoFace.getIoService().run();
 
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} //namespace tests
-} //namespace repo
+} // namespace tests
+} // namespace repo

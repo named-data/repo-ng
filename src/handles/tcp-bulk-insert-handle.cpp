@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2015,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -84,7 +84,7 @@ TcpBulkInsertHandle::listen(const std::string& host, const std::string& port)
   ip::tcp::resolver::iterator end;
 
   if (endpoint == end)
-    throw Error("Cannot listen on [" + host + ":" + port + "]");
+    BOOST_THROW_EXCEPTION(Error("Cannot listen on [" + host + ":" + port + "]"));
 
   m_localEndpoint = *endpoint;
   std::cerr << "Start listening on " << m_localEndpoint  << std::endl;
@@ -179,7 +179,7 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
         else
           std::cerr << "FAILED to inject " << data.getName() << std::endl;
       }
-      catch (std::runtime_error& error) {
+      catch (const std::runtime_error& error) {
         /// \todo Catch specific error after determining what wireDecode() can throw
         std::cerr << "Error decoding received Data packet" << std::endl;
       }

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -41,17 +41,17 @@ public:
     }
   };
 
-  typedef std::list<ndn::shared_ptr<ndn::Data> > DataContainer;
+  typedef std::list<std::shared_ptr<ndn::Data> > DataContainer;
   DataContainer data;
 
-  typedef std::list<std::pair<ndn::Interest, ndn::shared_ptr<ndn::Data> > > InterestContainer;
+  typedef std::list<std::pair<ndn::Interest, std::shared_ptr<ndn::Data> > > InterestContainer;
   InterestContainer interests;
 
   typedef std::list<std::pair<ndn::Interest, size_t > > RemovalsContainer;
   RemovalsContainer removals;
 
 protected:
-  ndn::shared_ptr<ndn::Data>
+  std::shared_ptr<ndn::Data>
   createData(const ndn::Name& name)
   {
     if (map.count(name) > 0)
@@ -60,7 +60,7 @@ protected:
     static ndn::KeyChain keyChain;
     static std::vector<uint8_t> content(1500, '-');
 
-    ndn::shared_ptr<ndn::Data> data = ndn::make_shared<ndn::Data>();
+    std::shared_ptr<ndn::Data> data = std::make_shared<ndn::Data>();
     data->setName(name);
     data->setContent(&content[0], content.size());
     keyChain.sign(*data);
@@ -69,13 +69,13 @@ protected:
     return data;
   }
 
-  ndn::shared_ptr<ndn::Data>
+  std::shared_ptr<ndn::Data>
   getData(const ndn::Name& name)
   {
     if (map.count(name) > 0)
       return map[name];
     else
-      throw Error("Data with name " + name.toUri() + " is not found");
+      BOOST_THROW_EXCEPTION(Error("Data with name " + name.toUri() + " is not found"));
   }
 
 private:
@@ -100,7 +100,7 @@ public:
     for (size_t i = 0; i < N; i++) {
       ndn::Name name(baseName);
       name.appendSegment(i);
-      ndn::shared_ptr<Data> data = createData(name);
+      std::shared_ptr<Data> data = createData(name);
       this->data.push_back(data);
 
       this->interests.push_back(std::make_pair(Interest(name), data));

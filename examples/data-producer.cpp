@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -14,15 +14,15 @@
  * PURPOSE.  See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * repo-ng, e.g., in COPYING.md file.  if (not, see <http://www.gnu.org/licenses/>.
+ * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /**
  * This file demonstrates how to generate data to be stored in repo with repo watch
  * protocol and repo insert protocol.
  * The details of the protocols can be find here
- *  <http://redmine.named-data.net/projects/repo-ng/wiki/Watched_Prefix_Insertion_Protocol>
- *  <http://redmine.named-data.net/projects/repo-ng/wiki/Basic_Repo_Insertion_Protocol>
+ *  <https://redmine.named-data.net/projects/repo-ng/wiki/Watched_Prefix_Insertion_Protocol>
+ *  <https://redmine.named-data.net/projects/repo-ng/wiki/Basic_Repo_Insertion_Protocol>
  *
  * This file is used for debugging purpose. There are two modes for users to assign
  * names for the data.
@@ -87,7 +87,7 @@ public:
   void
   generateFromFile();
 
-  ndn::shared_ptr<ndn::Data>
+  std::shared_ptr<ndn::Data>
   createData(const ndn::Name& name);
 public:
   std::ifstream insertStream;
@@ -109,11 +109,11 @@ Publisher::run()
 
   if (mode == AUTO) {
     m_scheduler.scheduleEvent(timeInterval,
-                            ndn::bind(&Publisher::autoGenerate, this));
+                            bind(&Publisher::autoGenerate, this));
   }
   else {
     m_scheduler.scheduleEvent(timeInterval,
-                              ndn::bind(&Publisher::generateFromFile, this));
+                              bind(&Publisher::generateFromFile, this));
   }
   m_face.processEvents(duration);
 }
@@ -123,11 +123,11 @@ Publisher::autoGenerate()
 {
   Name name = dataPrefix;
   name.appendNumber(m_range());
-  ndn::shared_ptr<Data> data = createData(name);
+  std::shared_ptr<Data> data = createData(name);
   // std::cout<<"data name = "<<data->getName()<<std::endl;
   m_face.put(*data);
   m_scheduler.scheduleEvent(timeInterval,
-                            ndn::bind(&Publisher::autoGenerate, this));
+                            bind(&Publisher::autoGenerate, this));
 }
 
 void
@@ -139,19 +139,19 @@ Publisher::generateFromFile()
    }
   std::string name;
   getline(insertStream, name);
-  ndn::shared_ptr<Data> data = createData(Name(name));
+  std::shared_ptr<Data> data = createData(Name(name));
   m_face.put(*data);
   m_scheduler.scheduleEvent(timeInterval,
-                            ndn::bind(&Publisher::generateFromFile, this));
+                            bind(&Publisher::generateFromFile, this));
 }
 
-ndn::shared_ptr<Data>
+std::shared_ptr<Data>
 Publisher::createData(const Name& name)
 {
   static ndn::KeyChain keyChain;
   static std::vector<uint8_t> content(1500, '-');
 
-  ndn::shared_ptr<ndn::Data> data = ndn::make_shared<Data>();
+  std::shared_ptr<ndn::Data> data = std::make_shared<Data>();
   data->setName(name);
   data->setContent(&content[0], content.size());
   keyChain.sign(*data);
@@ -203,7 +203,7 @@ main(int argc, char** argv)
       try {
         generator.duration = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-s option should be an integer.";
         return 1;
       }
@@ -212,7 +212,7 @@ main(int argc, char** argv)
       try {
         generator.timeInterval = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-t option should be an integer.";
         return 1;
       }
@@ -244,7 +244,7 @@ main(int argc, char** argv)
   try {
     return repo::main(argc, argv);
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
     return 2;
   }

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -14,7 +14,7 @@
  * PURPOSE.  See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * repo-ng, e.g., in COPYING.md file.  if (not, see <http://www.gnu.org/licenses/>.
+ * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "../src/repo-command-parameter.hpp"
@@ -50,7 +50,7 @@ enum CommandType
   STOP
 };
 
-class NdnRepoWatch : ndn::noncopyable
+class NdnRepoWatch : boost::noncopyable
 {
 public:
   class Error : public std::runtime_error
@@ -87,7 +87,7 @@ private:
   startWatchCommand();
 
   void
-  onWatchCommandResponse(const ndn::Interest& interest, ndn::Data& data);
+  onWatchCommandResponse(const ndn::Interest& interest, const ndn::Data& data);
 
   void
   onWatchCommandTimeout(const ndn::Interest& interest);
@@ -168,6 +168,7 @@ NdnRepoWatch::startWatchCommand()
     m_face.expressInterest(commandInterest,
                            bind(&NdnRepoWatch::onWatchCommandResponse, this,
                                      _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1), // Nack
                            bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
   else if (status == STOP){
@@ -175,6 +176,7 @@ NdnRepoWatch::startWatchCommand()
     m_face.expressInterest(commandInterest,
                            bind(&NdnRepoWatch::onWatchCommandResponse, this,
                                      _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1), // Nack
                            bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
   else if (status == CHECK){
@@ -182,19 +184,20 @@ NdnRepoWatch::startWatchCommand()
     m_face.expressInterest(commandInterest,
                            bind(&NdnRepoWatch::onWatchCommandResponse, this,
                                      _1, _2),
+                           bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1), // Nack
                            bind(&NdnRepoWatch::onWatchCommandTimeout, this, _1));
   }
 
 }
 
 void
-NdnRepoWatch::onWatchCommandResponse(const ndn::Interest& interest, ndn::Data& data)
+NdnRepoWatch::onWatchCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
   int statusCode = response.getStatusCode();
   if (statusCode >= 400) {
-    throw Error("Watch command failed with code " +
-                boost::lexical_cast<std::string>(statusCode));
+    BOOST_THROW_EXCEPTION(Error("Watch command failed with code " +
+                                boost::lexical_cast<std::string>(statusCode)));
   }
   else if (statusCode == 101) {
     std::cerr << "Watching prefix is stopped!" <<std::endl;
@@ -214,15 +217,15 @@ NdnRepoWatch::onWatchCommandResponse(const ndn::Interest& interest, ndn::Data& d
     return;
   }
   else {
-    throw Error("Unrecognized Status Code " +
-                boost::lexical_cast<std::string>(statusCode));
+    BOOST_THROW_EXCEPTION(Error("Unrecognized Status Code " +
+                                boost::lexical_cast<std::string>(statusCode)));
   }
 }
 
 void
 NdnRepoWatch::onWatchCommandTimeout(const ndn::Interest& interest)
 {
-  throw Error("command response timeout");
+  BOOST_THROW_EXCEPTION(Error("command response timeout"));
 }
 
 void
@@ -240,13 +243,14 @@ NdnRepoWatch::startCheckCommand()
                                                           .setName(m_dataPrefix));
   m_face.expressInterest(checkInterest,
                          bind(&NdnRepoWatch::onWatchCommandResponse, this, _1, _2),
+                         bind(&NdnRepoWatch::onCheckCommandTimeout, this, _1), // Nack
                          bind(&NdnRepoWatch::onCheckCommandTimeout, this, _1));
 }
 
 void
 NdnRepoWatch::onCheckCommandTimeout(const ndn::Interest& interest)
 {
-  throw Error("check response timeout");
+  BOOST_THROW_EXCEPTION(Error("check response timeout"));
 }
 
 void
@@ -255,8 +259,8 @@ NdnRepoWatch::onStopCommandResponse(const ndn::Interest& interest, ndn::Data& da
   RepoCommandResponse response(data.getContent().blockFromValue());
   int statusCode = response.getStatusCode();
   if (statusCode != 101) {
-    throw Error("Watch stop command failed with code: " +
-                boost::lexical_cast<std::string>(statusCode));
+    BOOST_THROW_EXCEPTION(Error("Watch stop command failed with code: " +
+                                boost::lexical_cast<std::string>(statusCode)));
   }
   else {
     std::cerr << "Status code is 101. Watching prefix is stopped successfully!" << std::endl;
@@ -268,7 +272,7 @@ NdnRepoWatch::onStopCommandResponse(const ndn::Interest& interest, ndn::Data& da
 void
 NdnRepoWatch::onStopCommandTimeout(const ndn::Interest& interest)
 {
-  throw Error("stop response timeout");
+  BOOST_THROW_EXCEPTION(Error("stop response timeout"));
 }
 
 ndn::Interest
@@ -322,7 +326,7 @@ main(int argc, char** argv)
       try {
         app.freshnessPeriod = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-x option should be an integer.";
         return 1;
       }
@@ -331,7 +335,7 @@ main(int argc, char** argv)
       try {
         app.interestLifetime = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-l option should be an integer.";
         return 1;
       }
@@ -341,7 +345,7 @@ main(int argc, char** argv)
       try {
         app.watchTimeout = milliseconds(boost::lexical_cast<int64_t>(optarg));
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-w option should be an integer.";
         return 1;
       }
@@ -351,7 +355,7 @@ main(int argc, char** argv)
       try {
         app.maxInterestNum = boost::lexical_cast<int64_t>(optarg);
       }
-      catch (boost::bad_lexical_cast&) {
+      catch (const boost::bad_lexical_cast&) {
         std::cerr << "-n option should be an integer.";
         return 1;
       }
@@ -398,7 +402,7 @@ main(int argc, char** argv)
   try {
     return repo::main(argc, argv);
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
     return 2;
   }

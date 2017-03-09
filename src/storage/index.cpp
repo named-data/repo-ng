@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -67,7 +67,7 @@ bool
 Index::insert(const Data& data, int64_t id)
 {
   if (isFull())
-    throw Error("The Index is Full. Cannot Insert Any Data!");
+    BOOST_THROW_EXCEPTION(Error("The Index is Full. Cannot Insert Any Data!"));
   Entry entry(data, id);
   bool isInserted = m_indexContainer.insert(entry).second;
   if (isInserted)
@@ -80,7 +80,7 @@ Index::insert(const Name& fullName, int64_t id,
               const ndn::ConstBufferPtr& keyLocatorHash)
 {
   if (isFull())
-    throw Error("The Index is Full. Cannot Insert Any Data!");
+    BOOST_THROW_EXCEPTION(Error("The Index is Full. Cannot Insert Any Data!"));
   Entry entry(fullName, keyLocatorHash, id);
   bool isInserted = m_indexContainer.insert(entry).second;
   if (isInserted)
@@ -160,7 +160,7 @@ const ndn::ConstBufferPtr
 Index::computeKeyLocatorHash(const KeyLocator& keyLocator)
 {
   const Block& block = keyLocator.wireEncode();
-  ndn::ConstBufferPtr keyLocatorHash = ndn::crypto::sha256(block.wire(), block.size());
+  ndn::ConstBufferPtr keyLocatorHash = ndn::crypto::computeSha256Digest(block.wire(), block.size());
   return keyLocatorHash;
 }
 
@@ -175,7 +175,7 @@ Index::selectChild(const Interest& interest,
     {
       KeyLocator keyLocator = interest.getPublisherPublicKeyLocator();
       const Block& block = keyLocator.wireEncode();
-      hash = ndn::crypto::sha256(block.wire(), block.size());
+      hash = ndn::crypto::computeSha256Digest(block.wire(), block.size());
     }
 
   if (isLeftmost)

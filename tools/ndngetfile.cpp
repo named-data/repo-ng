@@ -1,6 +1,6 @@
-/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil -*- */
+/* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -55,6 +55,7 @@ Consumer::fetchData(const Name& name)
                          bind(&Consumer::onVersionedData, this, _1, _2)
                          :
                          bind(&Consumer::onUnversionedData, this, _1, _2),
+                         bind(&Consumer::onTimeout, this, _1), // Nack
                          bind(&Consumer::onTimeout, this, _1));
 }
 
@@ -72,7 +73,7 @@ Consumer::run()
 }
 
 void
-Consumer::onVersionedData(const Interest& interest, Data& data)
+Consumer::onVersionedData(const Interest& interest, const Data& data)
 {
   const Name& name = data.getName();
 
@@ -110,7 +111,7 @@ Consumer::onVersionedData(const Interest& interest, Data& data)
 }
 
 void
-Consumer::onUnversionedData(const Interest& interest, Data& data)
+Consumer::onUnversionedData(const Interest& interest, const Data& data)
 {
   const Name& name = data.getName();
   //std::cout<<"recevied data name = "<<name<<std::endl;
@@ -248,7 +249,7 @@ main(int argc, char** argv)
           {
             interestLifetime = boost::lexical_cast<int>(optarg);
           }
-        catch (boost::bad_lexical_cast&)
+        catch (const boost::bad_lexical_cast&)
           {
             std::cerr << "ERROR: -l option should be an integer." << std::endl;
             return 1;
@@ -260,7 +261,7 @@ main(int argc, char** argv)
           {
             timeout = boost::lexical_cast<int>(optarg);
           }
-        catch (boost::bad_lexical_cast&)
+        catch (const boost::bad_lexical_cast&)
           {
             std::cerr << "ERROR: -w option should be an integer." << std::endl;
             return 1;

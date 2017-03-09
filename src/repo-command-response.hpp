@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -35,7 +35,7 @@ using ndn::EncodingBuffer;
 
 /**
 * @brief Class defining abstraction of Response for NDN Repo Protocol
-* @sa link http://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#Repo-Command-Response
+* @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#Repo-Command-Response
 */
 class RepoCommandResponse
 {
@@ -262,8 +262,9 @@ RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
     totalLength += variableLength;
     totalLength += encoder.prependVarNumber(variableLength);
     totalLength += encoder.prependVarNumber(tlv::StatusCode);
-  } else {
-    throw Error("required field StatusCode is missing");
+  }
+  else {
+    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
   }
 
   if (m_hasProcessId) {
@@ -311,7 +312,7 @@ RepoCommandResponse::wireDecode(const Block& wire)
   Block::element_const_iterator val;
 
   if (m_wire.type() != tlv::RepoCommandResponse)
-    throw Error("RepoCommandResponse malformed");
+    BOOST_THROW_EXCEPTION(Error("RepoCommandResponse malformed"));
 
   // StartBlockId
   val = m_wire.find(tlv::StartBlockId);
@@ -344,8 +345,9 @@ RepoCommandResponse::wireDecode(const Block& wire)
     m_hasStatusCode = true;
     m_statusCode = readNonNegativeInteger(*val);
 
-  } else {
-    throw Error("required field StatusCode is missing");
+  }
+  else {
+    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
   }
 
   // InsertNum

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -87,7 +87,7 @@ private: // data fetching
    * @brief fetch data and send next interest
    */
   void
-  onData(const Interest& interest, Data& data, const Name& name);
+  onData(const Interest& interest, const Data& data, const Name& name);
 
   /**
    * @brief handle when fetching one data timeout
@@ -169,4 +169,4 @@ private:
 
 } // namespace repo
 
-#endif // REPO_HANDLES_Watch_HANDLE_HPP
+#endif // REPO_HANDLES_WATCH_HANDLE_HPP

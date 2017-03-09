@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -125,7 +125,7 @@ private: // single data fetching
    * @brief fetch one data
    */
   void
-  onData(const Interest& interest, Data& data, ProcessId processId);
+  onData(const Interest& interest, const Data& data, ProcessId processId);
 
   void
   onDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
@@ -145,7 +145,7 @@ private:  // segmented data fetching
    * @brief fetch segmented data
    */
   void
-  onSegmentData(const Interest& interest, Data& data, ProcessId processId);
+  onSegmentData(const Interest& interest, const Data& data, ProcessId processId);
 
   void
   onSegmentDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,

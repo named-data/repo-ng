@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -31,15 +31,15 @@ parseConfig(const std::string& configPath)
 
   std::ifstream fin(configPath.c_str());
   if (!fin.is_open())
-    throw Repo::Error("failed to open configuration file '"+ configPath +"'");
+    BOOST_THROW_EXCEPTION(Repo::Error("failed to open configuration file '"+ configPath +"'"));
 
   using namespace boost::property_tree;
   ptree propertyTree;
   try {
     read_info(fin, propertyTree);
   }
-  catch (ptree_error& e) {
-    throw Repo::Error("failed to read configuration file '"+ configPath +"'");
+  catch (const ptree_error& e) {
+    BOOST_THROW_EXCEPTION(Repo::Error("failed to read configuration file '"+ configPath +"'"));
   }
 
   ptree repoConf = propertyTree.get_child("repo");
@@ -55,8 +55,8 @@ parseConfig(const std::string& configPath)
     if (it->first == "prefix")
       repoConfig.dataPrefixes.push_back(Name(it->second.get_value<std::string>()));
     else
-      throw Repo::Error("Unrecognized '" + it->first + "' option in 'data' section in "
-                        "configuration file '"+ configPath +"'");
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'data' section in "
+                                        "configuration file '"+ configPath +"'"));
   }
 
   ptree commandConf = repoConf.get_child("command");
@@ -67,8 +67,8 @@ parseConfig(const std::string& configPath)
     if (it->first == "prefix")
       repoConfig.repoPrefixes.push_back(Name(it->second.get_value<std::string>()));
     else
-      throw Repo::Error("Unrecognized '" + it->first + "' option in 'command' section in "
-                        "configuration file '"+ configPath +"'");
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'command' section in "
+                                        "configuration file '"+ configPath +"'"));
   }
 
   ptree tcpBulkInsert = repoConf.get_child("tcp_bulk_insert");
@@ -92,15 +92,16 @@ parseConfig(const std::string& configPath)
       port = it->second.get_value<std::string>();
     }
     else
-      throw Repo::Error("Unrecognized '" + it->first + "' option in 'tcp_bulk_insert' section in "
-                        "configuration file '"+ configPath +"'");
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'tcp_bulk_insert' section in "
+                                        "configuration file '"+ configPath +"'"));
   }
   if (isTcpBulkEnabled) {
     repoConfig.tcpBulkInsertEndpoints.push_back(std::make_pair(host, port));
   }
 
-  if (repoConf.get<std::string>("storage.method") != "sqlite")
-    throw Repo::Error("Only 'sqlite' storage method is supported");
+  if (repoConf.get<std::string>("storage.method") != "sqlite") {
+    BOOST_THROW_EXCEPTION(Repo::Error("Only 'sqlite' storage method is supported"));
+  }
 
   repoConfig.dbPath = repoConf.get<std::string>("storage.path");
 

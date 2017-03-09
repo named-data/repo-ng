@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -40,7 +40,7 @@ SqliteStorage::SqliteStorage(const string& dbPath)
     boost::filesystem::file_status fsPathStatus = boost::filesystem::status(fsPath);
     if (!boost::filesystem::is_directory(fsPathStatus)) {
       if (!boost::filesystem::create_directory(boost::filesystem::path(fsPath))) {
-        throw Error("Folder '" + dbPath + "' does not exists and cannot be created");
+        BOOST_THROW_EXCEPTION(Error("Folder '" + dbPath + "' does not exists and cannot be created"));
       }
     }
 
@@ -75,7 +75,7 @@ SqliteStorage::initializeRepo()
   }
   else {
     std::cerr << "Database file open failure rc:" << rc << std::endl;
-    throw Error("Database file open failure");
+    BOOST_THROW_EXCEPTION(Error("Database file open failure"));
   }
   sqlite3_exec(m_db, "PRAGMA synchronous = OFF", 0, 0, &errMsg);
   sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", 0, 0, &errMsg);
@@ -87,15 +87,14 @@ SqliteStorage::~SqliteStorage()
 }
 
 void
-SqliteStorage::fullEnumerate(const ndn::function
-                             <void(const Storage::ItemMeta)>& f)
+SqliteStorage::fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f)
 {
   sqlite3_stmt* m_stmt = 0;
   int rc = SQLITE_DONE;
   string sql = string("SELECT id, name, keylocatorHash FROM NDN_REPO;");
   rc = sqlite3_prepare_v2(m_db, sql.c_str(), -1, &m_stmt, 0);
   if (rc != SQLITE_OK)
-    throw Error("Initiation Read Entries from Database Prepare error");
+    BOOST_THROW_EXCEPTION(Error("Initiation Read Entries from Database Prepare error"));
   int entryNumber = 0;
   while (true) {
     rc = sqlite3_step(m_stmt);
@@ -124,7 +123,7 @@ SqliteStorage::fullEnumerate(const ndn::function
     else {
       std::cerr << "Initiation Read Entries rc:" << rc << std::endl;
       sqlite3_finalize(m_stmt);
-      throw Error("Initiation Read Entries error");
+      BOOST_THROW_EXCEPTION(Error("Initiation Read Entries error"));
     }
   }
   m_size = entryNumber;
@@ -168,14 +167,14 @@ SqliteStorage::insert(const Data& data)
     if (rc == SQLITE_CONSTRAINT) {
       std::cerr << "Insert  failed" << std::endl;
       sqlite3_finalize(insertStmt);
-      throw Error("Insert failed");
+      BOOST_THROW_EXCEPTION(Error("Insert failed"));
      }
     sqlite3_reset(insertStmt);
      m_size++;
      id = sqlite3_last_insert_rowid(m_db);
   }
   else {
-    throw Error("Some error with insert");
+    BOOST_THROW_EXCEPTION(Error("Some error with insert"));
   }
 
   sqlite3_finalize(insertStmt);
@@ -193,7 +192,7 @@ SqliteStorage::erase(const int64_t id)
   if (sqlite3_prepare_v2(m_db, deleteSql.c_str(), -1, &deleteStmt, 0) != SQLITE_OK) {
     sqlite3_finalize(deleteStmt);
     std::cerr << "delete statement prepared failed" << std::endl;
-    throw Error("delete statement prepared failed");
+    BOOST_THROW_EXCEPTION(Error("delete statement prepared failed"));
   }
 
   if (sqlite3_bind_int64(deleteStmt, 1, id) == SQLITE_OK) {
@@ -201,7 +200,7 @@ SqliteStorage::erase(const int64_t id)
     if (rc != SQLITE_DONE && rc != SQLITE_ROW) {
       std::cerr << " node delete error rc:" << rc << std::endl;
       sqlite3_finalize(deleteStmt);
-      throw Error(" node delete error");
+      BOOST_THROW_EXCEPTION(Error(" node delete error"));
     }
     if (sqlite3_changes(m_db) != 1)
       return false;
@@ -210,7 +209,7 @@ SqliteStorage::erase(const int64_t id)
   else {
     std::cerr << "delete bind error" << std::endl;
     sqlite3_finalize(deleteStmt);
-    throw Error("delete bind error");
+    BOOST_THROW_EXCEPTION(Error("delete bind error"));
   }
   sqlite3_finalize(deleteStmt);
   return true;
@@ -239,20 +238,20 @@ SqliteStorage::read(const int64_t id)
       else {
         std::cerr << "Database query failure rc:" << rc << std::endl;
         sqlite3_finalize(queryStmt);
-        throw Error("Database query failure");
+        BOOST_THROW_EXCEPTION(Error("Database query failure"));
       }
     }
     else {
       std::cerr << "select bind error" << std::endl;
       sqlite3_finalize(queryStmt);
-      throw Error("select bind error");
+      BOOST_THROW_EXCEPTION(Error("select bind error"));
     }
     sqlite3_finalize(queryStmt);
   }
   else {
     sqlite3_finalize(queryStmt);
     std::cerr << "select statement prepared failed" << std::endl;
-    throw Error("select statement prepared failed");
+    BOOST_THROW_EXCEPTION(Error("select statement prepared failed"));
   }
   return shared_ptr<Data>();
 }
@@ -267,7 +266,7 @@ SqliteStorage::size()
     {
       std::cerr << "Database query failure rc:" << rc << std::endl;
       sqlite3_finalize(queryStmt);
-      throw Error("Database query failure");
+      BOOST_THROW_EXCEPTION(Error("Database query failure"));
     }
 
   rc = sqlite3_step(queryStmt);
@@ -275,7 +274,7 @@ SqliteStorage::size()
     {
       std::cerr << "Database query failure rc:" << rc << std::endl;
       sqlite3_finalize(queryStmt);
-      throw Error("Database query failure");
+      BOOST_THROW_EXCEPTION(Error("Database query failure"));
     }
 
   int64_t nDatas = sqlite3_column_int64(queryStmt, 0);
@@ -285,4 +284,4 @@ SqliteStorage::size()
   return nDatas;
 }
 
-} //namespace repo
+} // namespace repo

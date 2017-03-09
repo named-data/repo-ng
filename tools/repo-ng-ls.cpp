@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -14,7 +14,7 @@
  * PURPOSE.  See the GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License along with
- * repo-ng, e.g., in COPYING.md file.  if (not, see <http://www.gnu.org/licenses/>.
+ * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "../src/common.hpp"
@@ -88,7 +88,7 @@ RepoEnumerator::RepoEnumerator(const std::string& configFile)
    #endif
                           );
   if (rc != SQLITE_OK) {
-    throw Error("Database file open failure");
+    BOOST_THROW_EXCEPTION(Error("Database file open failure"));
   }
   sqlite3_exec(m_db, "PRAGMA synchronous = OFF", 0, 0, &errMsg);
   sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", 0, 0, &errMsg);
@@ -98,20 +98,20 @@ void
 RepoEnumerator::readConfig(const std::string& configFile)
 {
   if (configFile.empty()) {
-    throw Error("Invalid configuration file name");
+    BOOST_THROW_EXCEPTION(Error("Invalid configuration file name"));
   }
 
   std::ifstream fin(configFile.c_str());
   if (!fin.is_open())
-    throw Error("failed to open configuration file '" + configFile + "'");
+    BOOST_THROW_EXCEPTION(Error("failed to open configuration file '" + configFile + "'"));
 
   using namespace boost::property_tree;
   ptree propertyTree;
   try {
     read_info(fin, propertyTree);
   }
-  catch (ptree_error& e) {
-    throw Error("failed to read configuration file '" + configFile + "'");
+  catch (const ptree_error& e) {
+    BOOST_THROW_EXCEPTION(Error("failed to read configuration file '" + configFile + "'"));
   }
   ptree repoConf = propertyTree.get_child("repo");
   m_dbPath = repoConf.get<std::string>("storage.path");
@@ -126,7 +126,7 @@ RepoEnumerator::enumerate(bool showImplicitDigest)
   string sql = string("SELECT id, name, keylocatorHash FROM NDN_REPO;");
   rc = sqlite3_prepare_v2(m_db, sql.c_str(), -1, &m_stmt, 0);
   if (rc != SQLITE_OK)
-    throw Error("Initiation Read Entries from Database Prepare error");
+    BOOST_THROW_EXCEPTION(Error("Initiation Read Entries from Database Prepare error"));
   uint64_t entryNumber = 0;
   while (true) {
     rc = sqlite3_step(m_stmt);
@@ -154,7 +154,7 @@ RepoEnumerator::enumerate(bool showImplicitDigest)
     }
     else {
       sqlite3_finalize(m_stmt);
-      throw Error("Initiation Read Entries error");
+      BOOST_THROW_EXCEPTION(Error("Initiation Read Entries error"));
     }
   }
   return entryNumber;
@@ -197,7 +197,7 @@ main(int argc, char** argv)
   try {
     return repo::main(argc, argv);
   }
-  catch (std::exception& e) {
+  catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
     return 2;
   }

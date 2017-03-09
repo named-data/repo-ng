@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -68,7 +68,7 @@ void
 WatchHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
   std::cerr << reason << std::endl;
-  throw Error("watch prefix registration failed");
+  BOOST_THROW_EXCEPTION(Error("watch prefix registration failed"));
 }
 
 void
@@ -106,7 +106,7 @@ WatchHandle::onValidationFailed(const shared_ptr<const Interest>& interest,
 }
 
 void
-WatchHandle::onData(const Interest& interest, ndn::Data& data, const Name& name)
+WatchHandle::onData(const Interest& interest, const ndn::Data& data, const Name& name)
 {
   m_validator.validate(data,
                        bind(&WatchHandle::onDataValidated, this, interest, _1, name),
@@ -148,10 +148,11 @@ WatchHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
     ++m_interestNum;
     getFace().expressInterest(fetchInterest,
                               bind(&WatchHandle::onData, this, _1, _2, name),
+                              bind(&WatchHandle::onTimeout, this, _1, name), // Nack
                               bind(&WatchHandle::onTimeout, this, _1, name));
   }
   else {
-    throw Error("Insert into Repo Failed");
+    BOOST_THROW_EXCEPTION(Error("Insert into Repo Failed"));
   }
   m_processes[name].first.setInsertNum(m_size);
 }
@@ -190,6 +191,7 @@ WatchHandle::onDataValidationFailed(const Interest& interest, const shared_ptr<c
   ++m_interestNum;
   getFace().expressInterest(fetchInterest,
                             bind(&WatchHandle::onData, this, _1, _2, name),
+                            bind(&WatchHandle::onTimeout, this, _1, name), // Nack
                             bind(&WatchHandle::onTimeout, this, _1, name));
 }
 
@@ -211,6 +213,7 @@ WatchHandle::onTimeout(const ndn::Interest& interest, const Name& name)
   ++m_interestNum;
   getFace().expressInterest(fetchInterest,
                             bind(&WatchHandle::onData, this, _1, _2, name),
+                            bind(&WatchHandle::onTimeout, this, _1, name), // Nack
                             bind(&WatchHandle::onTimeout, this, _1, name));
 
 }
@@ -310,7 +313,7 @@ void
 WatchHandle::deferredDeleteProcess(const Name& name)
 {
   getScheduler().scheduleEvent(PROCESS_DELETE_TIME,
-                               ndn::bind(&WatchHandle::deleteProcess, this, name));
+                               bind(&WatchHandle::deleteProcess, this, name));
 }
 
 void
@@ -351,6 +354,7 @@ WatchHandle::processWatchCommand(const Interest& interest,
   m_interestNum++;
   getFace().expressInterest(fetchInterest,
                             bind(&WatchHandle::onData, this, _1, _2, parameter.getName()),
+                            bind(&WatchHandle::onTimeout, this, _1, parameter.getName()), // Nack
                             bind(&WatchHandle::onTimeout, this, _1, parameter.getName()));
 }
 
@@ -377,4 +381,4 @@ WatchHandle::onRunning(const Name& name)
   return true;
 }
 
-} //namespace repo
+} // namespace repo

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -36,7 +36,7 @@ namespace tests {
 using ndn::time::milliseconds;
 using ndn::time::seconds;
 using ndn::EventId;
-namespace random=ndn::random;
+namespace random = ndn::random;
 
 //All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandWatchDelete)
@@ -80,10 +80,10 @@ public:
   stopFaceProcess();
 
   void
-  onWatchData(const Interest& interest, Data& data);
+  onWatchData(const Interest& interest, const Data& data);
 
   void
-  onWatchStopData(const Interest& interest, Data& data);
+  onWatchStopData(const Interest& interest, const Data& data);
 
   void
   onWatchTimeout(const Interest& interest);
@@ -158,7 +158,7 @@ Fixture<T>::stopFaceProcess()
 }
 
 template<class T> void
-Fixture<T>::onWatchData(const Interest& interest, Data& data)
+Fixture<T>::onWatchData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
@@ -168,7 +168,7 @@ Fixture<T>::onWatchData(const Interest& interest, Data& data)
 }
 
 template<class T> void
-Fixture<T>::onWatchStopData(const Interest& interest, Data& data)
+Fixture<T>::onWatchStopData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
@@ -188,6 +188,7 @@ Fixture<T>::sendWatchStartInterest(const Interest& watchInterest)
 {
   watchFace.expressInterest(watchInterest,
                             bind(&Fixture<T>::onWatchData, this, _1, _2),
+                            bind(&Fixture<T>::onWatchTimeout, this, _1), // Nack
                             bind(&Fixture<T>::onWatchTimeout, this, _1));
 }
 
@@ -196,6 +197,7 @@ Fixture<T>::sendWatchStopInterest(const Interest& watchInterest)
 {
   watchFace.expressInterest(watchInterest,
                             bind(&Fixture<T>::onWatchStopData, this, _1, _2),
+                            bind(&Fixture<T>::onWatchTimeout, this, _1), // Nack
                             bind(&Fixture<T>::onWatchTimeout, this, _1));
 }
 
@@ -263,5 +265,5 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(WatchDelete, T, Dataset, Fixture<T>)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} //namespace tests
-} //namespace repo
+} // namespace tests
+} // namespace repo

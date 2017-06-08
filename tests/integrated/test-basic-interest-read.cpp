@@ -81,12 +81,6 @@ public:
   }
 
   void
-  stopFaceProcess()
-  {
-    repoFace.getIoService().stop();
-  }
-
-  void
   onReadData(const ndn::Interest& interest, const ndn::Data& data)
   {
     int rc = memcmp(data.getContent().value(), content, sizeof(content));
@@ -137,10 +131,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
   this->scheduler.scheduleEvent(ndn::time::seconds(0),
                                 bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
 
-  // schedule an event to terminate IO
-  this->scheduler.scheduleEvent(ndn::time::seconds(20),
-                                bind(&BasicInterestReadFixture<T>::stopFaceProcess, this));
-  this->repoFace.getIoService().run();
+  this->repoFace.processEvents(ndn::time::seconds(20));
 
 }
 

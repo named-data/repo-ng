@@ -22,6 +22,7 @@
 
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
+#include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 #include <fstream>
 #include <string>
@@ -287,7 +288,7 @@ NdnRepoWatch::generateCommandInterest(const ndn::Name& commandPrefix, const std:
   if (identityForCommand.empty())
     m_keyChain.sign(interest);
   else {
-    m_keyChain.signByIdentity(interest, ndn::Name(identityForCommand));
+    m_keyChain.sign(interest, ndn::signingByIdentity(identityForCommand));
   }
 
   return interest;

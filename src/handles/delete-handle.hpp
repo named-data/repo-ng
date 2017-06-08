@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,7 +21,6 @@
 #define REPO_HANDLES_DELETE_HANDLE_HPP
 
 #include "base-handle.hpp"
-#include <ndn-cxx/security/validator-config.hpp>
 
 namespace repo {
 
@@ -41,7 +40,7 @@ public:
 
 public:
   DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-               Scheduler& scheduler, ValidatorConfig& validator);
+               Scheduler& scheduler, Validator& validator);
 
   virtual void
   listen(const Name& prefix);
@@ -85,7 +84,7 @@ private:
   processSegmentDeleteCommand(const Interest& interest, RepoCommandParameter& parameter);
 
 private:
-  ValidatorConfig& m_validator;
+  Validator& m_validator;
 
 };
 

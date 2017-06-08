@@ -366,16 +366,12 @@ void
 NdnPutFile::signData(ndn::Data& data)
 {
   if (useDigestSha256) {
-    m_keyChain.signWithSha256(data);
+    m_keyChain.sign(data, ndn::signingWithSha256());
   }
+  else if (identityForData.empty())
+    m_keyChain.sign(data);
   else {
-    if (identityForData.empty())
-      m_keyChain.sign(data);
-    else {
-      ndn::Name keyName = m_keyChain.getDefaultKeyNameForIdentity(ndn::Name(identityForData));
-      ndn::Name certName = m_keyChain.getDefaultCertificateNameForKey(keyName);
-      m_keyChain.sign(data, certName);
-    }
+    m_keyChain.sign(data, ndn::signingByIdentity(identityForData));
   }
 }
 

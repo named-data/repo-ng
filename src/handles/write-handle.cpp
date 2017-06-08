@@ -28,8 +28,8 @@ static const milliseconds PROCESS_DELETE_TIME(10000);
 static const milliseconds DEFAULT_INTEREST_LIFETIME(4000);
 
 WriteHandle::WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-                         Scheduler& scheduler,// RepoStorage& storeindex,
-                         ValidatorConfig& validator)
+                         Scheduler& scheduler,
+                         Validator& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
   , m_retryTime(RETRY_TIMEOUT)

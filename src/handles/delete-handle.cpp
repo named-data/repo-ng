@@ -22,8 +22,8 @@
 namespace repo {
 
 DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-                           Scheduler& scheduler,// RepoStorage& storeindex,
-                           ValidatorConfig& validator)
+                           Scheduler& scheduler,
+                           Validator& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
 {

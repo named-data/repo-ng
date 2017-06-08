@@ -20,15 +20,14 @@
 #ifndef REPO_TESTS_DATASET_FIXTURES_HPP
 #define REPO_TESTS_DATASET_FIXTURES_HPP
 
-#include <ndn-cxx/security/key-chain.hpp>
+#include "identity-management-fixture.hpp"
 #include <vector>
 #include <boost/mpl/vector.hpp>
 
 namespace repo {
 namespace tests {
 
-
-class DatasetBase
+class DatasetBase : public virtual IdentityManagementFixture
 {
 public:
   class Error : public std::runtime_error
@@ -57,13 +56,12 @@ protected:
     if (map.count(name) > 0)
       return map[name];
 
-    static ndn::KeyChain keyChain;
     static std::vector<uint8_t> content(1500, '-');
 
     std::shared_ptr<ndn::Data> data = std::make_shared<ndn::Data>();
     data->setName(name);
     data->setContent(&content[0], content.size());
-    keyChain.sign(*data);
+    m_keyChain.sign(*data);
 
     map.insert(std::make_pair(name, data));
     return data;

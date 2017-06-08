@@ -20,6 +20,7 @@
 #include "../../build/src/config.hpp"
 #include "sqlite-storage.hpp"
 #include "index.hpp"
+#include <ndn-cxx/util/crypto.hpp>
 #include <boost/filesystem.hpp>
 #include <istream>
 

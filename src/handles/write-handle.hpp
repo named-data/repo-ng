@@ -22,8 +22,6 @@
 
 #include "base-handle.hpp"
 
-#include <ndn-cxx/security/validator-config.hpp>
-
 #include <queue>
 
 namespace repo {
@@ -70,7 +68,7 @@ public:
 
 public:
   WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-              Scheduler& scheduler, ValidatorConfig& validator);
+              Scheduler& scheduler, Validator& validator);
 
   virtual void
   listen(const Name& prefix);
@@ -228,8 +226,7 @@ private:
   negativeReply(const Interest& interest, int statusCode);
 
 private:
-
-  ValidatorConfig& m_validator;
+  Validator& m_validator;
 
   map<ProcessId, ProcessInfo> m_processes;
 

@@ -34,11 +34,8 @@ using namespace ndn::time;
  * @brief WatchHandle provides a different way for repo to insert data.
  *
  * Repo keeps sending interest to request the data with same prefix,
- *
  * but with different exclude selectors(updated every time). Repo will stop
- *
  * watching the prefix until a command interest tell it to stop, the total
- *
  * amount of sent interests reaches a specific number or time out.
  */
 class WatchHandle : public BaseHandle
@@ -58,7 +55,7 @@ public:
 
 public:
   WatchHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-              Scheduler& scheduler, ValidatorConfig& validator);
+              Scheduler& scheduler, Validator& validator);
 
   virtual void
   listen(const Name& prefix);
@@ -155,8 +152,7 @@ private:
   onRunning(const Name& name);
 
 private:
-
-  ValidatorConfig& m_validator;
+  Validator& m_validator;
 
   map<Name, std::pair<RepoCommandResponse, bool> > m_processes;
   int64_t m_interestNum;

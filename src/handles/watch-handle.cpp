@@ -25,7 +25,7 @@ static const milliseconds PROCESS_DELETE_TIME(10000);
 static const milliseconds DEFAULT_INTEREST_LIFETIME(4000);
 
 WatchHandle::WatchHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-                         Scheduler& scheduler, ValidatorConfig& validator)
+                         Scheduler& scheduler, Validator& validator)
   : BaseHandle(face, storageHandle, keyChain, scheduler)
   , m_validator(validator)
   , m_interestNum(0)

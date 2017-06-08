@@ -99,7 +99,7 @@ TcpBulkInsertHandle::listen(const std::string& host, const std::string& port)
   m_acceptor.listen(255);
 
   shared_ptr<ip::tcp::socket> clientSocket =
-    make_shared<ip::tcp::socket>(boost::ref(m_acceptor.get_io_service()));
+    make_shared<ip::tcp::socket>(std::ref(m_acceptor.get_io_service()));
   m_acceptor.async_accept(*clientSocket,
                           bind(&TcpBulkInsertHandle::handleAccept, this, _1,
                                clientSocket));
@@ -127,12 +127,12 @@ TcpBulkInsertHandle::handleAccept(const boost::system::error_code& error,
   std::cerr << "New connection from " << socket->remote_endpoint() << std::endl;
 
   shared_ptr<detail::TcpBulkInsertClient> client =
-    make_shared<detail::TcpBulkInsertClient>(boost::ref(*this), socket);
+    make_shared<detail::TcpBulkInsertClient>(std::ref(*this), socket);
   detail::TcpBulkInsertClient::startReceive(client);
 
   // prepare accepting the next connection
   shared_ptr<ip::tcp::socket> clientSocket =
-    make_shared<ip::tcp::socket>(boost::ref(m_acceptor.get_io_service()));
+    make_shared<ip::tcp::socket>(std::ref(m_acceptor.get_io_service()));
   m_acceptor.async_accept(*clientSocket,
                           bind(&TcpBulkInsertHandle::handleAccept, this, _1,
                                clientSocket));

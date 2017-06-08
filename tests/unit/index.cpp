@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,10 +18,14 @@
  */
 
 #include "storage/index.hpp"
+#include <ndn-cxx/security/signing-helpers.hpp>
+#include <ndn-cxx/util/crypto.hpp>
+#include <ndn-cxx/util/random.hpp>
 
 #include "../sqlite-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
+#include <boost/mpl/push_back.hpp>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 
@@ -43,7 +47,7 @@ protected:
   {
     shared_ptr<Data> data = make_shared<Data>(name);
     data->setContent(reinterpret_cast<const uint8_t*>(&id), sizeof(id));
-    m_keyChain.signWithSha256(*data);
+    m_keyChain.sign(*data, ndn::signingWithSha256());
     data->wireEncode();
     m_index.insert(*data, id);
 

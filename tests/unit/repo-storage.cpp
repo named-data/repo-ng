@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,6 +22,7 @@
 #include "../dataset-fixtures.hpp"
 #include "../repo-storage-fixture.hpp"
 
+#include <boost/mpl/push_back.hpp>
 #include <boost/test/unit_test.hpp>
 #include <iostream>
 #include <string.h>

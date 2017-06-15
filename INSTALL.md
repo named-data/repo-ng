@@ -13,37 +13,37 @@ Required:
 Build
 -----
 
-To build in a terminal, change directory to the ndn_repo root.  Enter:
+To build in a terminal, change directory to repo-ng repository.  Enter:
 
     ./waf configure
     ./waf
     sudo ./waf install
 
-This makes and installs the following items:
+This builds and installs `ndn-repo-ng` and related tools.
 
 If configured with tests: `./waf configure --with-tests`), the above commands will
 also generate unit tests in `./built/unit-tests`
 
-Config
-------
+Configuration
+-------------
 
-The default path of the configuration file is in `/usr/local/etc/ndn/repo-ng.conf`.
-
-The config file sample is repo-ng.conf.sample. Users should copy this file to the specific path and rename it to repo-ng.conf.
+The default configuration file path is `/usr/local/etc/ndn/repo-ng.conf`.
+Users may copy `repo-ng.conf.sample` config sample to the specific path.
 
 Database
 --------
 
-Users do not need to manually generate a database for repo since when a repo is running, it will generate a database by itself.
+The database path is set in "storage.path" key of the config file.
+The default database path is `/var/db/ndn-repo-ng`.
 
-The default database path is `/var/db/ndn-repo-ng`, which can be changed in repo-ng.conf "storage.path".
+`ndn-repo-ng` automatically creates a database if one does not exist.
 
-If the default database path is used, user should use root permission when running a repo.
+Users should make sure the `ndn-repo-ng` process has write privilege to the database path.
+If the default `/var/db/ndn-repo-ng` is used, repo-ng needs to be started with `sudo`.
 
 Tools
 -----
 
-Currently, three tools are supported : ndnputfile, ndngetfile and ndnrepowatch.
+Currently, three tools are supported: ndnputfile, ndngetfile, and ndnrepowatch.
 
-Users can find the detail information about these tool in http://redmine.named-data.net/projects/repo-ng/wiki/Tools.
-
+Users can find detailed information about these tools in <https://redmine.named-data.net/projects/repo-ng/wiki/Tools>.

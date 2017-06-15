@@ -4,7 +4,7 @@ Notes for repo-ng developers
 Code style
 ----------
 
-repo-ng code is subject to [ndn-cxx code style](http://named-data.net/doc/ndn-cxx/current/code-style.html).
+repo-ng code is subject to [ndn-cxx code style](https://named-data.net/doc/ndn-cxx/current/code-style.html).
 
 Licensing
 ---------
@@ -15,7 +15,7 @@ boilerplate to be put into all `.hpp` and `.cpp` files:
 
     /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
     /**
-     * Copyright (c) 2014,  Copyright Holder(s)
+     * Copyright (c) 2014-2017,  Copyright Holder(s)
      *
      * This file is part of NDN repo-ng (Next generation of NDN repository).
      * See AUTHORS.md for complete list of repo-ng authors and contributors.

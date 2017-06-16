@@ -54,22 +54,6 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
                        bind(&WriteHandle::onValidationFailed, this, _1, _2));
 }
 
-// onRegisterFailed.
-void
-WriteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
-{
-  std::cerr << reason << std::endl;
-  BOOST_THROW_EXCEPTION(Error("Insert prefix registration failed"));
-}
-
-// onRegisterFailed for insert.
-void
-WriteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason)
-{
-  std::cerr << reason << std::endl;
-  BOOST_THROW_EXCEPTION(Error("Insert check prefix registration failed"));
-}
-
 void
 WriteHandle::onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix)
 {
@@ -201,18 +185,10 @@ WriteHandle::onSegmentTimeout(const Interest& interest, ProcessId processId)
 void
 WriteHandle::listen(const Name& prefix)
 {
-  Name insertPrefix;
-  insertPrefix.append(prefix).append("insert");
-  ndn::InterestFilter filter_insert(insertPrefix);
-  getFace().setInterestFilter(filter_insert,
-                              bind(&WriteHandle::onInterest, this, _1, _2),
-                              bind(&WriteHandle::onRegisterFailed, this, _1, _2));
-  Name insertCheckPrefix;
-  insertCheckPrefix.append(prefix).append("insert check");
-  ndn::InterestFilter filter_insertCheck(insertCheckPrefix);
-  getFace().setInterestFilter(filter_insertCheck,
-                              bind(&WriteHandle::onCheckInterest, this, _1, _2),
-                              bind(&WriteHandle::onRegisterFailed, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("insert"),
+                              bind(&WriteHandle::onInterest, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("insert check"),
+                              bind(&WriteHandle::onCheckInterest, this, _1, _2));
 }
 
 void

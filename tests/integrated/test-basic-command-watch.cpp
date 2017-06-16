@@ -50,7 +50,12 @@ public:
     : watchHandle(repoFace, *handle, keyChain, scheduler, validator)
     , watchFace(repoFace.getIoService())
   {
-    watchHandle.listen(Name("/repo/command"));
+    Name cmdPrefix("/repo/command");
+    repoFace.registerPrefix(cmdPrefix, nullptr,
+      [] (const Name& cmdPrefix, const std::string& reason) {
+        BOOST_FAIL("Command prefix registration error: " << reason);
+      });
+    watchHandle.listen(cmdPrefix);
   }
 
   void

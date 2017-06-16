@@ -112,12 +112,6 @@ private: // insert command
   void
   onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
-  /**
-   * @brief insert command prefix register failed
-   */
-  void
-  onRegisterFailed(const Name& prefix, const std::string& reason);
-
 private: // single data fetching
   /**
    * @brief fetch one data
@@ -198,12 +192,6 @@ private: // insert state check command
    */
   void
   onCheckInterest(const Name& prefix, const Interest& interest);
-
-  /**
-   * @brief insert check command prefix register failed
-   */
-  void
-  onCheckRegisterFailed(const Name& prefix, const std::string& reason);
 
   void
   onCheckValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);

@@ -36,28 +36,6 @@ DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
                        bind(&DeleteHandle::onValidationFailed, this, _1, _2));
 }
 
-
-void
-DeleteHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
-{
-  BOOST_THROW_EXCEPTION(Error("Delete prefix registration failed"));
-}
-
-
-void
-DeleteHandle::onCheckInterest(const Name& prefix, const Interest& interest)
-{
-  BOOST_ASSERT(false); // Deletion progress check, not implemented
-}
-
-
-void
-DeleteHandle::onCheckRegisterFailed(const Name& prefix, const std::string& reason)
-{
-  BOOST_THROW_EXCEPTION(Error("Delete check prefix registration failed"));
-}
-
-
 void
 DeleteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
 {
@@ -102,11 +80,8 @@ DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest,
 void
 DeleteHandle::listen(const Name& prefix)
 {
-  ndn::Name deleteprefix = Name(prefix).append("delete");
-  ndn::InterestFilter filter(deleteprefix);
-  getFace().setInterestFilter(filter,
-                              bind(&DeleteHandle::onInterest, this, _1, _2),
-                              bind(&DeleteHandle::onRegisterFailed, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("delete"),
+                              bind(&DeleteHandle::onInterest, this, _1, _2));
 }
 
 void

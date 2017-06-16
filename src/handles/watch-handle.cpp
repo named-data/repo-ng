@@ -53,25 +53,6 @@ WatchHandle::onInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WatchHandle::onRegistered(const Name& prefix)
-{
-  getFace().setInterestFilter(Name().append(prefix).append("start"),
-                              bind(&WatchHandle::onInterest, this, _1, _2));
-  getFace().setInterestFilter(Name().append(prefix).append("check"),
-                              bind(&WatchHandle::onCheckInterest, this, _1, _2));
-  getFace().setInterestFilter(Name().append(prefix).append("stop"),
-                              bind(&WatchHandle::onStopInterest, this, _1, _2));
-}
-
-// onRegisterFailed for watch start.
-void
-WatchHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
-{
-  std::cerr << reason << std::endl;
-  BOOST_THROW_EXCEPTION(Error("watch prefix registration failed"));
-}
-
-void
 WatchHandle::onValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
@@ -221,11 +202,12 @@ WatchHandle::onTimeout(const ndn::Interest& interest, const Name& name)
 void
 WatchHandle::listen(const Name& prefix)
 {
-  Name baseWatchPrefix(prefix);
-  baseWatchPrefix.append("watch");
-  getFace().registerPrefix(baseWatchPrefix,
-                           bind(&WatchHandle::onRegistered, this, _1),
-                           bind(&WatchHandle::onRegisterFailed, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("watch").append("start"),
+                              bind(&WatchHandle::onInterest, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("watch").append("check"),
+                              bind(&WatchHandle::onCheckInterest, this, _1, _2));
+  getFace().setInterestFilter(Name(prefix).append("watch").append("stop"),
+                              bind(&WatchHandle::onStopInterest, this, _1, _2));
 }
 
 void

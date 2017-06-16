@@ -142,31 +142,26 @@ Repo::initializeStorage()
 void
 Repo::enableListening()
 {
-  // Enable "listening" on Data prefixes
-  for (auto it = m_config.dataPrefixes.begin();
-       it != m_config.dataPrefixes.end();
-       ++it)
-    {
-      m_readHandle.listen(*it);
-    }
+  for (const ndn::Name& dataPrefix : m_config.dataPrefixes) {
+    // ReadHandle performs prefix registration internally.
+    m_readHandle.listen(dataPrefix);
+  }
 
-  // Enable "listening" on control prefixes
-  for (auto it = m_config.repoPrefixes.begin();
-       it != m_config.repoPrefixes.end();
-       ++it)
-    {
-      m_writeHandle.listen(*it);
-      m_watchHandle.listen(*it);
-      m_deleteHandle.listen(*it);
-    }
+  for (const ndn::Name& cmdPrefix : m_config.repoPrefixes) {
+    m_face.registerPrefix(cmdPrefix, nullptr,
+      [] (const Name& cmdPrefix, const std::string& reason) {
+        std::cerr << "Command prefix " << cmdPrefix << " registration error: " << reason << std::endl;
+        BOOST_THROW_EXCEPTION(Error("Command prefix registration failed"));
+      });
 
-  // Enable listening on TCP bulk insert addresses
-  for (auto it = m_config.tcpBulkInsertEndpoints.begin();
-       it != m_config.tcpBulkInsertEndpoints.end();
-       ++it)
-    {
-      m_tcpBulkInsertHandle.listen(it->first, it->second);
-    }
+    m_writeHandle.listen(cmdPrefix);
+    m_watchHandle.listen(cmdPrefix);
+    m_deleteHandle.listen(cmdPrefix);
+  }
+
+  for (const auto& ep : m_config.tcpBulkInsertEndpoints) {
+    m_tcpBulkInsertHandle.listen(ep.first, ep.second);
+  }
 }
 
 void

@@ -54,8 +54,13 @@ public:
     , insertFace(repoFace.getIoService())
     , deleteFace(repoFace.getIoService())
   {
-    writeHandle.listen(Name("/repo/command"));
-    deleteHandle.listen(Name("/repo/command"));
+    Name cmdPrefix("/repo/command");
+    repoFace.registerPrefix(cmdPrefix, nullptr,
+      [] (const Name& cmdPrefix, const std::string& reason) {
+        BOOST_FAIL("Command prefix registration error: " << reason);
+      });
+    writeHandle.listen(cmdPrefix);
+    deleteHandle.listen(cmdPrefix);
   }
 
   void
@@ -163,13 +168,13 @@ Fixture<T>::onDeleteData(const Interest& interest, const Data& data)
 template<class T> void
 Fixture<T>::onInsertTimeout(const Interest& interest)
 {
-  BOOST_ERROR("Inserert command timeout");
+  BOOST_ERROR("Insert command timeout");
 }
 
 template<class T> void
 Fixture<T>::onDeleteTimeout(const Interest& interest)
 {
-  BOOST_ERROR("delete command timeout");
+  BOOST_ERROR("Delete command timeout");
 }
 
 template<class T> void

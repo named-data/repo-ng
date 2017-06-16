@@ -50,9 +50,6 @@ private:
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onRegisterFailed(const Name& prefix, const std::string& reason);
-
-  void
   onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
 
   void
@@ -63,9 +60,6 @@ private:
    */
   void
   onCheckInterest(const Name& prefix, const Interest& interest);
-
-  void
-  onCheckRegisterFailed(const Name& prefix, const std::string& reason);
 
   void
   positiveReply(const Interest& interest, const RepoCommandParameter& parameter,

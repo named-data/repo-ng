@@ -73,12 +73,6 @@ private: // watch-insert command
   void
   onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
-  void
-  onRegistered(const Name& prefix);
-
-  void
-  onRegisterFailed(const Name& prefix, const std::string& reason);
-
 private: // data fetching
   /**
    * @brief fetch data and send next interest

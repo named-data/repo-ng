@@ -52,6 +52,9 @@ public:
   {
   }
 
+  virtual
+  ~BaseHandle() = default;
+
   virtual void
   listen(const Name& prefix) = 0;
 

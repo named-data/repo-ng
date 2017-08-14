@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -24,10 +24,14 @@
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
-#include <fstream>
-#include <string>
-#include <stdlib.h>
+
 #include <stdint.h>
+#include <stdlib.h>
+
+#include <fstream>
+#include <iostream>
+#include <string>
+
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/asio.hpp>

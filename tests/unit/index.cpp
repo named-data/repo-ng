@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -18,16 +18,18 @@
  */
 
 #include "storage/index.hpp"
-#include <ndn-cxx/security/signing-helpers.hpp>
-#include <ndn-cxx/util/crypto.hpp>
-#include <ndn-cxx/util/random.hpp>
 
 #include "../sqlite-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
+#include <iostream>
+
+#include <ndn-cxx/security/signing-helpers.hpp>
+#include <ndn-cxx/util/sha256.hpp>
+#include <ndn-cxx/util/random.hpp>
+
 #include <boost/mpl/push_back.hpp>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
 
 namespace repo {
 namespace tests {
@@ -256,9 +258,9 @@ BOOST_AUTO_TEST_CASE(DigestExclude)
   Name n2 = insert(2, "ndn:/A");
   insert(3, "ndn:/A/B");
 
-  uint8_t digest00[ndn::crypto::SHA256_DIGEST_SIZE];
+  uint8_t digest00[ndn::util::Sha256::DIGEST_SIZE];
   std::fill_n(digest00, sizeof(digest00), 0x00);
-  uint8_t digestFF[ndn::crypto::SHA256_DIGEST_SIZE];
+  uint8_t digestFF[ndn::util::Sha256::DIGEST_SIZE];
   std::fill_n(digestFF, sizeof(digestFF), 0xFF);
 
   Exclude excludeDigest;

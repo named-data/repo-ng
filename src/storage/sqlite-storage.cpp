@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -17,10 +17,11 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../build/src/config.hpp"
 #include "sqlite-storage.hpp"
+#include "../../build/src/config.hpp"
 #include "index.hpp"
-#include <ndn-cxx/util/crypto.hpp>
+
+#include <ndn-cxx/util/sha256.hpp>
 #include <boost/filesystem.hpp>
 #include <istream>
 
@@ -163,7 +164,7 @@ SqliteStorage::insert(const Data& data)
                         data.wireEncode().size(),0 ) == SQLITE_OK &&
       sqlite3_bind_blob(insertStmt, 4,
                         (const void*)&(*entry.getKeyLocatorHash()),
-                        ndn::crypto::SHA256_DIGEST_SIZE,0) == SQLITE_OK) {
+                        ndn::util::Sha256::DIGEST_SIZE, 0) == SQLITE_OK) {
     rc = sqlite3_step(insertStmt);
     if (rc == SQLITE_CONSTRAINT) {
       std::cerr << "Insert  failed" << std::endl;

@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -25,9 +25,11 @@ namespace tests {
 CommandFixture::CommandFixture()
   : scheduler(repoFace.getIoService())
   , keyChain(m_keyChain)
+  , validator(repoFace)
 {
   this->saveIdentityCertificate(keyChain.getPib().getDefaultIdentity().getName(),
                                 "tests/integrated/insert-delete-test.cert");
+  validator.load("tests/integrated/insert-delete-validator-config.conf");
 }
 
 } // namespace tests

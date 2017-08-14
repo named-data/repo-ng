@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -20,11 +20,12 @@
 #ifndef REPO_REPO_COMMAND_RESPONSE_HPP
 #define REPO_REPO_COMMAND_RESPONSE_HPP
 
+#include "repo-tlv.hpp"
+
 #include <ndn-cxx/encoding/block.hpp>
 #include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
 #include <ndn-cxx/encoding/tlv-nfd.hpp>
-#include "repo-tlv.hpp"
 
 namespace repo {
 
@@ -194,7 +195,7 @@ public:
     return m_hasDeleteNum;
   }
 
-  template<bool T>
+  template<ndn::encoding::Tag T>
   size_t
   wireEncode(EncodingImpl<T>& block) const;
 
@@ -222,7 +223,7 @@ private:
   mutable Block m_wire;
 };
 
-template<bool T>
+template<ndn::encoding::Tag T>
 inline size_t
 RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
 {

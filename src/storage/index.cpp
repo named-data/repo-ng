@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -19,8 +19,8 @@
 
 #include "index.hpp"
 
-#include <ndn-cxx/util/crypto.hpp>
-#include "ndn-cxx/security/signature-sha256-with-rsa.hpp"
+#include <ndn-cxx/util/sha256.hpp>
+#include <ndn-cxx/security/signature-sha256-with-rsa.hpp>
 
 namespace repo {
 
@@ -160,7 +160,7 @@ const ndn::ConstBufferPtr
 Index::computeKeyLocatorHash(const KeyLocator& keyLocator)
 {
   const Block& block = keyLocator.wireEncode();
-  ndn::ConstBufferPtr keyLocatorHash = ndn::crypto::computeSha256Digest(block.wire(), block.size());
+  ndn::ConstBufferPtr keyLocatorHash = ndn::util::Sha256::computeDigest(block.wire(), block.size());
   return keyLocatorHash;
 }
 
@@ -175,7 +175,7 @@ Index::selectChild(const Interest& interest,
     {
       KeyLocator keyLocator = interest.getPublisherPublicKeyLocator();
       const Block& block = keyLocator.wireEncode();
-      hash = ndn::crypto::computeSha256Digest(block.wire(), block.size());
+      hash = ndn::util::Sha256::computeDigest(block.wire(), block.size());
     }
 
   if (isLeftmost)

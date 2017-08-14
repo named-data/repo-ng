@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -107,10 +107,10 @@ private: // insert command
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const Interest& interest, const Name& prefix);
 
   void
-  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
+  onValidationFailed(const Interest& interest, const ValidationError& error);
 
 private: // single data fetching
   /**
@@ -120,8 +120,7 @@ private: // single data fetching
   onData(const Interest& interest, const Data& data, ProcessId processId);
 
   void
-  onDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
-                  ProcessId processId);
+  onDataValidated(const Interest& interest, const Data& data, ProcessId processId);
 
   /**
    * @brief handle when fetching one data timeout
@@ -140,8 +139,7 @@ private:  // segmented data fetching
   onSegmentData(const Interest& interest, const Data& data, ProcessId processId);
 
   void
-  onSegmentDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
-                         ProcessId processId);
+  onSegmentDataValidated(const Interest& interest, const Data& data, ProcessId processId);
 
   /**
    * @brief Timeout when fetching segmented data. Data can be fetched RETRY_TIMEOUT times.
@@ -175,7 +173,7 @@ private:
    * @brief failure of validation for both one or segmented data
    */
   void
-  onDataValidationFailed(const std::shared_ptr<const Data>& data, const std::string& reason);
+  onDataValidationFailed(const Data& data, const ValidationError& error);
 
   /**
    * @brief extends noEndTime of process if not noEndTimeout, set StatusCode 405
@@ -194,11 +192,10 @@ private: // insert state check command
   onCheckInterest(const Name& prefix, const Interest& interest);
 
   void
-  onCheckValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onCheckValidated(const Interest& interest, const Name& prefix);
 
   void
-  onCheckValidationFailed(const std::shared_ptr<const Interest>& interest,
-                          const std::string& reason);
+  onCheckValidationFailed(const Interest& interest, const ValidationError& error);
 
 private:
   void

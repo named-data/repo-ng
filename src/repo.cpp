@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -118,6 +118,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_face(ioService)
   , m_store(std::make_shared<SqliteStorage>(config.dbPath))
   , m_storageHandle(config.nMaxPackets, *m_store)
+  , m_validator(m_face)
   , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler)
   , m_writeHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_watchHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
@@ -167,9 +168,7 @@ Repo::enableListening()
 void
 Repo::enableValidation()
 {
-  std::cerr << "Validation is temporarily disabled. All commands will be authorized.\n";
-  /// \todo #4091 restore with ValidatorPolicyConf
-  // m_validator.load(m_config.validatorNode, m_config.repoConfigPath);
+  m_validator.load(m_config.validatorNode, m_config.repoConfigPath);
 }
 
 } // namespace repo

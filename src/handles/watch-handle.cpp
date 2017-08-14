@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -53,18 +53,18 @@ WatchHandle::onInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WatchHandle::onValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+WatchHandle::onValidated(const Interest& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
-  processWatchCommand(*interest, parameter);
+  processWatchCommand(interest, parameter);
 }
 
 void WatchHandle::watchStop(const Name& name)
@@ -79,11 +79,10 @@ void WatchHandle::watchStop(const Name& name)
 }
 
 void
-WatchHandle::onValidationFailed(const shared_ptr<const Interest>& interest,
-                                const std::string& reason)
+WatchHandle::onValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 
 void
@@ -95,13 +94,12 @@ WatchHandle::onData(const Interest& interest, const ndn::Data& data, const Name&
 }
 
 void
-WatchHandle::onDataValidated(const Interest& interest, const shared_ptr<const Data>& data,
-                             const Name& name)
+WatchHandle::onDataValidated(const Interest& interest, const Data& data, const Name& name)
 {
   if (!m_processes[name].second) {
     return;
   }
-  if (getStorageHandle().insertData(*data)) {
+  if (getStorageHandle().insertData(data)) {
     m_size++;
     if (!onRunning(name))
       return;
@@ -113,7 +111,7 @@ WatchHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
 
     // update selectors
     // if data name is equal to interest name, use MinSuffixComponents selecor to exclude this data
-    if (data->getName().size() == interest.getName().size()) {
+    if (data.getName().size() == interest.getName().size()) {
       fetchInterest.setMinSuffixComponents(2);
     }
     else {
@@ -122,7 +120,7 @@ WatchHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
         exclude = interest.getExclude();
       }
 
-      exclude.excludeBefore(data->getName()[interest.getName().size()]);
+      exclude.excludeBefore(data.getName()[interest.getName().size()]);
       fetchInterest.setExclude(exclude);
     }
 
@@ -139,10 +137,10 @@ WatchHandle::onDataValidated(const Interest& interest, const shared_ptr<const Da
 }
 
 void
-WatchHandle::onDataValidationFailed(const Interest& interest, const shared_ptr<const Data>& data,
-                                    const std::string& reason, const Name& name)
+WatchHandle::onDataValidationFailed(const Interest& interest, const Data& data,
+                                    const ValidationError& error, const Name& name)
 {
-  std::cerr << reason << std::endl;
+  std::cerr << error << std::endl;
   if (!m_processes[name].second) {
     return;
   }
@@ -156,7 +154,7 @@ WatchHandle::onDataValidationFailed(const Interest& interest, const shared_ptr<c
 
   // update selectors
   // if data name is equal to interest name, use MinSuffixComponents selecor to exclude this data
-  if (data->getName().size() == interest.getName().size()) {
+  if (data.getName().size() == interest.getName().size()) {
     fetchInterest.setMinSuffixComponents(2);
   }
   else {
@@ -165,7 +163,7 @@ WatchHandle::onDataValidationFailed(const Interest& interest, const shared_ptr<c
       exclude = interest.getExclude();
     }
     // Only exclude this data since other data whose names are smaller may be validated and satisfied
-    exclude.excludeBefore(data->getName()[interest.getName().size()]);
+    exclude.excludeBefore(data.getName()[interest.getName().size()]);
     fetchInterest.setExclude(exclude);
   }
 
@@ -219,27 +217,26 @@ WatchHandle::onStopInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WatchHandle::onStopValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+WatchHandle::onStopValidated(const Interest& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
   watchStop(parameter.getName());
-  negativeReply(*interest, 101);
+  negativeReply(interest, 101);
 }
 
 void
-WatchHandle::onStopValidationFailed(const shared_ptr<const Interest>& interest,
-                                    const std::string& reason)
+WatchHandle::onStopValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 
 void
@@ -251,26 +248,26 @@ WatchHandle::onCheckInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WatchHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+WatchHandle::onCheckValidated(const Interest& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
   if (!parameter.hasName()) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
   //check whether this process exists
   Name name = parameter.getName();
   if (m_processes.count(name) == 0) {
     std::cerr << "no such process name: " << name << std::endl;
-    negativeReply(*interest, 404);
+    negativeReply(interest, 404);
     return;
   }
 
@@ -279,16 +276,15 @@ WatchHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const 
     response.setStatusCode(101);
   }
 
-  reply(*interest, response);
+  reply(interest, response);
 
 }
 
 void
-WatchHandle::onCheckValidationFailed(const shared_ptr<const Interest>& interest,
-                                     const std::string& reason)
+WatchHandle::onCheckValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 
 void

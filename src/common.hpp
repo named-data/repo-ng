@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -26,8 +26,9 @@
 #include <ndn-cxx/data.hpp>
 #include <ndn-cxx/selectors.hpp>
 #include <ndn-cxx/key-locator.hpp>
-#include <ndn-cxx/security/key-chain.hpp>
-#include <ndn-cxx/security/validator.hpp>
+#include <ndn-cxx/security/v2/key-chain.hpp>
+#include <ndn-cxx/security/v2/validator.hpp>
+#include <ndn-cxx/security/validator-config.hpp>
 #include <ndn-cxx/util/time.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 
@@ -57,9 +58,11 @@ using ndn::Selectors;
 using ndn::Exclude;
 using ndn::Data;
 using ndn::KeyLocator;
-using ndn::KeyChain;
 using ndn::Scheduler;
-using ndn::Validator;
+using ndn::security::v2::KeyChain;
+using ndn::security::v2::Validator;
+using ndn::security::v2::ValidationError;
+using ndn::security::ValidatorConfig;
 
 using std::shared_ptr;
 using std::make_shared;

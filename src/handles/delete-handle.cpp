@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -33,48 +33,47 @@ void
 DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
 {
   m_validator.validate(interest, bind(&DeleteHandle::onValidated, this, _1, prefix),
-                       bind(&DeleteHandle::onValidationFailed, this, _1, _2));
+                                 bind(&DeleteHandle::onValidationFailed, this, _1, _2));
 }
 
 void
-DeleteHandle::onValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+DeleteHandle::onValidated(const Interest& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
 
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
   if (parameter.hasSelectors()) {
 
     if (parameter.hasStartBlockId() || parameter.hasEndBlockId()) {
-      negativeReply(*interest, 402);
+      negativeReply(interest, 402);
       return;
     }
 
     //choose data with selector and delete it
-    processSelectorDeleteCommand(*interest, parameter);
+    processSelectorDeleteCommand(interest, parameter);
     return;
   }
 
   if (!parameter.hasStartBlockId() && !parameter.hasEndBlockId()) {
-    processSingleDeleteCommand(*interest, parameter);
+    processSingleDeleteCommand(interest, parameter);
     return;
   }
 
-  processSegmentDeleteCommand(*interest, parameter);
+  processSegmentDeleteCommand(interest, parameter);
 }
 
 void
-DeleteHandle::onValidationFailed(const shared_ptr<const Interest>& interest,
-                                 const std::string& reason)
+DeleteHandle::onValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 //listen change the setinterestfilter
 void

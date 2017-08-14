@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -68,10 +68,10 @@ private: // watch-insert command
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const Interest& interest, const Name& prefix);
 
   void
-  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
+  onValidationFailed(const Interest& interest, const ValidationError& error);
 
 private: // data fetching
   /**
@@ -87,15 +87,14 @@ private: // data fetching
   onTimeout(const Interest& interest, const Name& name);
 
   void
-  onDataValidated(const Interest& interest, const std::shared_ptr<const Data>& data,
-                  const Name& name);
+  onDataValidated(const Interest& interest, const Data& data, const Name& name);
 
   /**
    * @brief failure of validation
    */
   void
-  onDataValidationFailed(const Interest& interest, const std::shared_ptr<const Data>& data,
-                         const std::string& reason, const Name& name);
+  onDataValidationFailed(const Interest& interest, const Data& data,
+                         const ValidationError& error, const Name& name);
 
 
   void
@@ -112,11 +111,10 @@ private: // watch state check command
   onCheckInterest(const Name& prefix, const Interest& interest);
 
   void
-  onCheckValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onCheckValidated(const Interest& interest, const Name& prefix);
 
   void
-  onCheckValidationFailed(const std::shared_ptr<const Interest>& interest,
-                          const std::string& reason);
+  onCheckValidationFailed(const Interest& interest, const ValidationError& error);
 
 private: // watch stop command
   /**
@@ -126,11 +124,10 @@ private: // watch stop command
   onStopInterest(const Name& prefix, const Interest& interest);
 
   void
-  onStopValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onStopValidated(const Interest& interest, const Name& prefix);
 
   void
-  onStopValidationFailed(const std::shared_ptr<const Interest>& interest,
-                         const std::string& reason);
+  onStopValidationFailed(const Interest& interest, const ValidationError& error);
 
 private:
   void

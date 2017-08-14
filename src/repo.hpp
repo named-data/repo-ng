@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -32,7 +32,7 @@
 
 #include "common.hpp"
 
-#include <ndn-cxx/security/validator-null.hpp>
+#include <ndn-cxx/security/validator-config.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/info_parser.hpp>
 
@@ -86,7 +86,7 @@ private:
   std::shared_ptr<Storage> m_store;
   RepoStorage m_storageHandle;
   KeyChain m_keyChain;
-  ndn::ValidatorNull m_validator;
+  ValidatorConfig m_validator;
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;
   WatchHandle m_watchHandle;

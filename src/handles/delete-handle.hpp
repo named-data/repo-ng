@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -50,10 +50,10 @@ private:
   onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix);
+  onValidated(const Interest& interest, const Name& prefix);
 
   void
-  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
+  onValidationFailed(const Interest& interest, const ValidationError& error);
 
   /**
    * @todo delete check has not been realized due to the while loop of segmented data deletion.

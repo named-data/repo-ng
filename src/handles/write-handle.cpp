@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -55,38 +55,37 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WriteHandle::onValidated(const std::shared_ptr<const Interest>& interest, const Name& prefix)
+WriteHandle::onValidated(const Interest& interest, const Name& prefix)
 {
   //m_validResult = 1;
   RepoCommandParameter parameter;
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
   if (parameter.hasStartBlockId() || parameter.hasEndBlockId()) {
     if (parameter.hasSelectors()) {
-      negativeReply(*interest, 402);
+      negativeReply(interest, 402);
       return;
     }
-    processSegmentedInsertCommand(*interest, parameter);
+    processSegmentedInsertCommand(interest, parameter);
   }
   else {
-    processSingleInsertCommand(*interest, parameter);
+    processSingleInsertCommand(interest, parameter);
   }
   if (parameter.hasInterestLifetime())
     m_interestLifetime = parameter.getInterestLifetime();
 }
 
 void
-WriteHandle::onValidationFailed(const std::shared_ptr<const Interest>& interest,
-                                const std::string& reason)
+WriteHandle::onValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 
 void
@@ -98,9 +97,7 @@ WriteHandle::onData(const Interest& interest, const Data& data, ProcessId proces
 }
 
 void
-WriteHandle::onDataValidated(const Interest& interest,
-                             const std::shared_ptr<const Data>& data,
-                             ProcessId processId)
+WriteHandle::onDataValidated(const Interest& interest, const Data& data, ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
     return;
@@ -110,9 +107,9 @@ WriteHandle::onDataValidated(const Interest& interest,
   RepoCommandResponse& response = process.response;
 
   if (response.getInsertNum() == 0) {
-    getStorageHandle().insertData(*data);
-   // getStorageHandle().insertEntry(*data);
-   // getStoreIndex().insert(*data);
+    getStorageHandle().insertData(data);
+   // getStorageHandle().insertEntry(data);
+   // getStoreIndex().insert(data);
     response.setInsertNum(1);
   }
 
@@ -120,10 +117,9 @@ WriteHandle::onDataValidated(const Interest& interest,
 }
 
 void
-WriteHandle::onDataValidationFailed(const std::shared_ptr<const Data>& data,
-                                    const std::string& reason)
+WriteHandle::onDataValidationFailed(const Data& data, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
+  std::cerr << error << std::endl;
 }
 
 void
@@ -135,9 +131,7 @@ WriteHandle::onSegmentData(const Interest& interest, const Data& data, ProcessId
 }
 
 void
-WriteHandle::onSegmentDataValidated(const Interest& interest,
-                                    const std::shared_ptr<const Data>& data,
-                                    ProcessId processId)
+WriteHandle::onSegmentDataValidated(const Interest& interest, const Data& data, ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
     return;
@@ -145,7 +139,7 @@ WriteHandle::onSegmentDataValidated(const Interest& interest,
   RepoCommandResponse& response = m_processes[processId].response;
 
   //refresh endBlockId
-  Name::Component finalBlockId = data->getFinalBlockId();
+  Name::Component finalBlockId = data.getFinalBlockId();
 
   if (!finalBlockId.empty()) {
     SegmentNo final = finalBlockId.toSegment();
@@ -160,7 +154,7 @@ WriteHandle::onSegmentDataValidated(const Interest& interest,
   }
 
   //insert data
-  if (getStorageHandle().insertData(*data)) {
+  if (getStorageHandle().insertData(data)) {
     response.setInsertNum(response.getInsertNum() + 1);
   }
 
@@ -386,26 +380,26 @@ WriteHandle::onCheckInterest(const Name& prefix, const Interest& interest)
 }
 
 void
-WriteHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const Name& prefix)
+WriteHandle::onCheckValidated(const Interest& interest, const Name& prefix)
 {
   RepoCommandParameter parameter;
   try {
-    extractParameter(*interest, prefix, parameter);
+    extractParameter(interest, prefix, parameter);
   }
   catch (RepoCommandParameter::Error) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
 
   if (!parameter.hasProcessId()) {
-    negativeReply(*interest, 403);
+    negativeReply(interest, 403);
     return;
   }
   //check whether this process exists
   ProcessId processId = parameter.getProcessId();
   if (m_processes.count(processId) == 0) {
     std::cerr << "no such processId: " << processId << std::endl;
-    negativeReply(*interest, 404);
+    negativeReply(interest, 404);
     return;
   }
 
@@ -416,27 +410,26 @@ WriteHandle::onCheckValidated(const shared_ptr<const Interest>& interest, const 
   //Check whether it is single data fetching
   if (!response.hasStartBlockId() &&
       !response.hasEndBlockId()) {
-    reply(*interest, response);
+    reply(interest, response);
     return;
   }
 
   //read if noEndtimeout
   if (!response.hasEndBlockId()) {
     extendNoEndTime(process);
-    reply(*interest, response);
+    reply(interest, response);
     return;
   }
   else {
-    reply(*interest, response);
+    reply(interest, response);
   }
 }
 
 void
-WriteHandle::onCheckValidationFailed(const shared_ptr<const Interest>& interest,
-                                     const std::string& reason)
+WriteHandle::onCheckValidationFailed(const Interest& interest, const ValidationError& error)
 {
-  std::cerr << reason << std::endl;
-  negativeReply(*interest, 401);
+  std::cerr << error << std::endl;
+  negativeReply(interest, 401);
 }
 
 void

@@ -6,7 +6,7 @@ from waflib import Build, Logs, Utils, Task, TaskGen, Configure
 
 def options(opt):
     opt.load('compiler_c compiler_cxx gnu_dirs')
-    opt.load('boost default-compiler-flags doxygen sqlite3', tooldir=['.waf-tools'])
+    opt.load('boost default-compiler-flags doxygen sqlite3 coverage sanitizers', tooldir=['.waf-tools'])
 
     ropt = opt.add_option_group('ndn-repo-ng Options')
 
@@ -41,6 +41,10 @@ def configure(conf):
         conf.load("doxygen")
     except:
         pass
+
+    conf.load('coverage')
+
+    conf.load('sanitizers')
 
     conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env['SYSCONFDIR'])
 

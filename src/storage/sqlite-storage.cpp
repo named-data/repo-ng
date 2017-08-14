@@ -155,16 +155,25 @@ SqliteStorage::insert(const Data& data)
     std::cerr << "insert sql not prepared" << std::endl;
   }
   //Insert
-  if (sqlite3_bind_null(insertStmt, 1) == SQLITE_OK &&
-      sqlite3_bind_blob(insertStmt, 2,
-                        entry.getName().wireEncode().wire(),
-                        entry.getName().wireEncode().size(), 0) == SQLITE_OK &&
-      sqlite3_bind_blob(insertStmt, 3,
-                        data.wireEncode().wire(),
-                        data.wireEncode().size(),0 ) == SQLITE_OK &&
-      sqlite3_bind_blob(insertStmt, 4,
-                        (const void*)&(*entry.getKeyLocatorHash()),
-                        ndn::util::Sha256::DIGEST_SIZE, 0) == SQLITE_OK) {
+  auto result = sqlite3_bind_null(insertStmt, 1);
+  if (result == SQLITE_OK) {
+    result = sqlite3_bind_blob(insertStmt, 2,
+                               entry.getName().wireEncode().wire(),
+                               entry.getName().wireEncode().size(), SQLITE_STATIC);
+  }
+  if (result == SQLITE_OK) {
+    result = sqlite3_bind_blob(insertStmt, 3,
+                               data.wireEncode().wire(),
+                               data.wireEncode().size(), SQLITE_STATIC);
+  }
+  if (result == SQLITE_OK) {
+    BOOST_ASSERT(entry.getKeyLocatorHash()->size() == ndn::util::Sha256::DIGEST_SIZE);
+    result = sqlite3_bind_blob(insertStmt, 4,
+                               entry.getKeyLocatorHash()->data(),
+                               entry.getKeyLocatorHash()->size(), SQLITE_STATIC);
+  }
+
+  if (result == SQLITE_OK) {
     rc = sqlite3_step(insertStmt);
     if (rc == SQLITE_CONSTRAINT) {
       std::cerr << "Insert  failed" << std::endl;

@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -26,8 +26,8 @@
 
 #include <ndn-cxx/util/random.hpp>
 
+#include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
-#include <fstream>
 
 namespace repo {
 namespace tests {
@@ -35,9 +35,8 @@ namespace tests {
 using ndn::time::milliseconds;
 using ndn::time::seconds;
 using ndn::EventId;
-namespace random = ndn::random;
 
-//All the test cases in this test suite should be run at once.
+// All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandWatchDelete)
 
 const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
@@ -97,7 +96,8 @@ public:
 template<class T> void
 Fixture<T>::onWatchInterest(const Interest& interest)
 {
-  shared_ptr<Data> data = make_shared<Data>(Name(interest.getName()).appendNumber(random::generateWord64()+100));
+  auto data = make_shared<Data>(Name(interest.getName())
+                                .appendNumber(ndn::random::generateWord64() + 100));
   data->setContent(content, sizeof(content));
   data->setFreshnessPeriod(milliseconds(0));
   keyChain.sign(*data);

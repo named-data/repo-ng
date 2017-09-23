@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -34,21 +34,20 @@
  */
 
 #include "../src/common.hpp"
-#include <fstream>
-#include <boost/filesystem.hpp>
+
 #include <boost/lexical_cast.hpp>
-#include <string>
-#include <boost/random.hpp>
+#include <fstream>
 #include <iostream>
+#include <random>
+#include <string>
 
 namespace repo {
 
-using namespace ndn::time;
+using ndn::time::milliseconds;
 
 static const milliseconds DEFAULT_TIME_INTERVAL(2000);
 
-enum Mode
-{
+enum Mode {
   AUTO,
   READFILE
 };
@@ -73,8 +72,9 @@ public:
     , timeInterval(DEFAULT_TIME_INTERVAL)
     , duration(0)
     , m_scheduler(m_face.getIoService())
-    , m_randomGenerator(static_cast<unsigned int> (0))
-    , m_range(m_randomGenerator, boost::uniform_int<> (200,1000))
+    , m_randomEngine(std::random_device{}())
+    , m_randomDist(200, 1000)
+    , m_range([this] { return m_randomDist(m_randomEngine); })
   {
   }
 
@@ -89,6 +89,7 @@ public:
 
   std::shared_ptr<ndn::Data>
   createData(const ndn::Name& name);
+
 public:
   std::ifstream insertStream;
   Mode mode;
@@ -99,14 +100,14 @@ public:
 private:
   ndn::Face m_face;
   ndn::Scheduler m_scheduler;
-  boost::mt19937 m_randomGenerator;
-  boost::variate_generator<boost::mt19937&, boost::uniform_int<> > m_range;
+  std::mt19937 m_randomEngine;
+  std::uniform_int_distribution<unsigned int> m_randomDist;
+  std::function<unsigned int(void)> m_range;
 };
 
 void
 Publisher::run()
 {
-
   if (mode == AUTO) {
     m_scheduler.scheduleEvent(timeInterval,
                             bind(&Publisher::autoGenerate, this));
@@ -171,7 +172,7 @@ usage()
   exit(1);
 }
 
-int
+static int
 main(int argc, char** argv)
 {
   Publisher generator;

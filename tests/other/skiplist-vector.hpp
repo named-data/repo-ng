@@ -1,25 +1,28 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
-* Copyright (c) 2014, Regents of the University of California.
-*
-* This file is part of NDN repo-ng (Next generation of NDN repository).
-* See AUTHORS.md for complete list of repo-ng authors and contributors.
-*
-* repo-ng is free software: you can redistribute it and/or modify it under the terms
-* of the GNU General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* repo-ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with
-* repo-ng, e.g., in COPYING.md file. If not, see <http://www.gnu.org/licenses/>.
-*/
+/*
+ * Copyright (c) 2014-2017, Regents of the University of California.
+ *
+ * This file is part of NDN repo-ng (Next generation of NDN repository).
+ * See AUTHORS.md for complete list of repo-ng authors and contributors.
+ *
+ * repo-ng is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * repo-ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef REPO_TESTS_OTHER_SKIPLIST_VECTOR_HPP
 #define REPO_TESTS_OTHER_SKIPLIST_VECTOR_HPP
+
 #include "common.hpp"
+
+#include <random>
 
 namespace update2 {
 
@@ -290,8 +293,8 @@ protected:
   size_t
   pickRandomLevel() const
   {
-    static boost::random::mt19937 gen;
-    static boost::random::geometric_distribution<size_t> dist(Traits::getProbability());
+    static std::mt19937 gen(std::random_device{}());
+    static std::geometric_distribution<size_t> dist(Traits::getProbability());
     return std::min(dist(gen), Traits::getMaxLevels());
   }
 
@@ -412,6 +415,6 @@ SkipList<T, Compare, Traits>::erase(typename SkipList<T, Compare, Traits>::const
 
 }
 
-} //end namespace update2
+} // namespace update2
 
 #endif // REPO_TESTS_OTHER_SKIPLIST_VECTOR_HPP

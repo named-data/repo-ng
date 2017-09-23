@@ -33,19 +33,15 @@
 #include <ndn-cxx/util/scheduler.hpp>
 
 #include <boost/utility.hpp>
-#include <boost/random/mersenne_twister.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/geometric_distribution.hpp>
 
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <queue>
-#include <list>
-#include <algorithm>
-#include <iostream>
-#include <functional>
-#include <memory>
 
 namespace repo {
 

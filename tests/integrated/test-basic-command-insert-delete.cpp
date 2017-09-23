@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -27,9 +27,9 @@
 #include "../dataset-fixtures.hpp"
 
 #include <ndn-cxx/util/random.hpp>
-#include <boost/preprocessor/comparison/not_equal.hpp>
+
+#include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
-#include <fstream>
 
 namespace repo {
 namespace tests {
@@ -37,9 +37,8 @@ namespace tests {
 using ndn::time::milliseconds;
 using ndn::time::seconds;
 using ndn::EventId;
-namespace random=ndn::random;
 
-//All the test cases in this test suite should be run at once.
+// All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandInsertDelete)
 
 const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
@@ -225,7 +224,7 @@ Fixture<T>::scheduleInsertEvent()
     Name insertCommandName("/repo/command/insert");
     RepoCommandParameter insertParameter;
     insertParameter.setName(Name((*i)->getName())
-                              .appendNumber(random::generateWord64()));
+                            .appendNumber(ndn::random::generateWord64()));
 
     insertCommandName.append(insertParameter.wireEncode());
     Interest insertInterest(insertCommandName);
@@ -256,9 +255,7 @@ Fixture<T>::scheduleDeleteEvent()
        i != this->data.end(); ++i) {
     Name deleteCommandName("/repo/command/delete");
     RepoCommandParameter deleteParameter;
-    static boost::random::mt19937_64 gen;
-    static boost::random::uniform_int_distribution<uint64_t> dist(0, 0xFFFFFFFFFFFFFFFFLL);
-    deleteParameter.setProcessId(dist(gen));
+    deleteParameter.setProcessId(ndn::random::generateWord64());
     deleteParameter.setName((*i)->getName());
     deleteCommandName.append(deleteParameter.wireEncode());
     Interest deleteInterest(deleteCommandName);

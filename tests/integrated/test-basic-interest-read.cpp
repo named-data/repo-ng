@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -24,14 +24,12 @@
 #include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
-#include <ndn-cxx/util/random.hpp>
-
 #include <boost/test/unit_test.hpp>
 
 namespace repo {
 namespace tests {
 
-//All the test cases in this test suite should be run at once.
+// All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicInerestRead)
 
 const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};

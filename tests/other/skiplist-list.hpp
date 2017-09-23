@@ -1,25 +1,28 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
-* Copyright (c) 2014, Regents of the University of California.
-*
-* This file is part of NDN repo-ng (Next generation of NDN repository).
-* See AUTHORS.md for complete list of repo-ng authors and contributors.
-*
-* repo-ng is free software: you can redistribute it and/or modify it under the terms
-* of the GNU General Public License as published by the Free Software Foundation,
-* either version 3 of the License, or (at your option) any later version.
-*
-* repo-ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
-* without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-* PURPOSE. See the GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with
-* repo-ng, e.g., in COPYING.md file. If not, see <http://www.gnu.org/licenses/>.
-*/
+/*
+ * Copyright (c) 2014-2017, Regents of the University of California.
+ *
+ * This file is part of NDN repo-ng (Next generation of NDN repository).
+ * See AUTHORS.md for complete list of repo-ng authors and contributors.
+ *
+ * repo-ng is free software: you can redistribute it and/or modify it under the terms
+ * of the GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * repo-ng is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+ * PURPOSE.  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with
+ * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef REPO_TESTS_OTHER_SKIPLIST_LIST_HPP
 #define REPO_TESTS_OTHER_SKIPLIST_LIST_HPP
+
 #include "common.hpp"
+
+#include <random>
 
 namespace update1 {
 
@@ -136,7 +139,7 @@ public:
   }
 };
 
-/*
+/**
  * @brief SkipList
  *
  * Examples of internal structure:
@@ -224,7 +227,7 @@ public:
 
 protected:
 
-  /*
+  /**
    * @brief initialize the node
    */
   NodePointer
@@ -234,9 +237,9 @@ protected:
     return p;
   }
 
-  /*
+  /**
    * @brief initialize the node with given value
-   * @para to be set to the value of node
+   * @param x to be set to the value of node
    */
   NodePointer
   createNode(const T& x)
@@ -246,9 +249,9 @@ protected:
     return p;
   }
 
-  /*
-   * @brief destructror of the node
-   * @para given pointer of node to be destructed
+  /**
+   * @brief destructor of the node
+   * @param p pointer to the node to be destructed
    */
   void
   destroyNode(NodePointer p)
@@ -256,7 +259,7 @@ protected:
     delete(p);
   }
 
-  /*
+  /**
    * @brief initialize the head
    */
   void
@@ -268,7 +271,7 @@ protected:
     m_size = 0;
   }
 
-  /*
+  /**
    * @brief destroy all the nodes of skiplist except the head
    */
   void
@@ -284,14 +287,14 @@ protected:
     m_head->prevs.front() = m_head;
   }
 
-  /*
+  /**
    * @brief pick a random height for inserted skiplist entry
    */
   size_t
   pickRandomLevel() const
   {
-    static boost::random::mt19937 gen;
-    static boost::random::geometric_distribution<size_t> dist(Traits::getProbability());
+    static std::mt19937 gen(std::random_device{}());
+    static std::geometric_distribution<size_t> dist(Traits::getProbability());
     return std::min(dist(gen), Traits::getMaxLevels());
   }
 
@@ -473,6 +476,6 @@ SkipList<T, Compare, Traits>::erase(typename SkipList<T, Compare, Traits>::const
   }
 }
 
-} //end namespace update1
+} // namespace update1
 
-#endif // REPO_TESTS_UNIT_SKIPLIST_LIST_HPP
+#endif // REPO_TESTS_OTHER_SKIPLIST_LIST_HPP

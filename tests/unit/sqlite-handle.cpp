@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -23,6 +23,7 @@
 #include "../dataset-fixtures.hpp"
 
 #include <boost/test/unit_test.hpp>
+#include <random>
 
 namespace repo {
 namespace tests {
@@ -33,28 +34,28 @@ template<class Dataset>
 class Fixture : public SqliteFixture, public Dataset
 {
 public:
-  std::map<int64_t, shared_ptr<Data> > idToDataMap;
+  std::map<int64_t, shared_ptr<Data>> idToDataMap;
 };
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, CommonDatasets, Fixture<T>)
 {
-  BOOST_TEST_MESSAGE(T::getName());
+  BOOST_TEST_CHECKPOINT(T::getName());
 
   std::vector<int64_t> ids;
 
   // Insert
   for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i)
-    {
-      int64_t id = -1;
-      BOOST_REQUIRE_NO_THROW(id = this->handle->insert(**i));
+       i != this->data.end(); ++i) {
+    int64_t id = -1;
+    BOOST_REQUIRE_NO_THROW(id = this->handle->insert(**i));
 
-      this->idToDataMap.insert(std::make_pair(id, *i));
-      ids.push_back(id);
-    }
+    this->idToDataMap.insert(std::make_pair(id, *i));
+    ids.push_back(id);
+  }
   BOOST_CHECK_EQUAL(this->handle->size(), static_cast<int64_t>(this->data.size()));
 
-  std::random_shuffle(ids.begin(), ids.end());
+  std::mt19937 rng{std::random_device{}()};
+  std::shuffle(ids.begin(), ids.end(), rng);
 
   // Read (all items should exist)
   for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {

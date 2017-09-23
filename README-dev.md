@@ -14,8 +14,8 @@ license.  When GPL 3.0 license is used, the following is the recommended license
 boilerplate to be put into all `.hpp` and `.cpp` files:
 
     /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-    /**
-     * Copyright (c) 2014-2017,  Copyright Holder(s)
+    /*
+     * Copyright (c) [Year(s)],  [Copyright Holder(s)].
      *
      * This file is part of NDN repo-ng (Next generation of NDN repository).
      * See AUTHORS.md for complete list of repo-ng authors and contributors.

@@ -18,7 +18,7 @@
  */
 
 #include "sqlite-storage.hpp"
-#include "../../build/src/config.hpp"
+#include "config.hpp"
 #include "index.hpp"
 
 #include <ndn-cxx/util/sha256.hpp>
@@ -103,16 +103,16 @@ SqliteStorage::fullEnumerate(const std::function<void(const Storage::ItemMeta)>&
     if (rc == SQLITE_ROW) {
 
       ItemMeta item;
-      item.fullName.wireDecode(Block(sqlite3_column_blob(m_stmt, 1),
+      item.fullName.wireDecode(Block(reinterpret_cast<const uint8_t*>(sqlite3_column_blob(m_stmt, 1)),
                                      sqlite3_column_bytes(m_stmt, 1)));
       item.id = sqlite3_column_int(m_stmt, 0);
-      item.keyLocatorHash = make_shared<const ndn::Buffer>
-        (ndn::Buffer(sqlite3_column_blob(m_stmt, 3), sqlite3_column_bytes(m_stmt, 3)));
+      item.keyLocatorHash = make_shared<const ndn::Buffer>(sqlite3_column_blob(m_stmt, 3),
+                                                           sqlite3_column_bytes(m_stmt, 3));
 
       try {
         f(item);
       }
-      catch (...){
+      catch (...) {
         sqlite3_finalize(m_stmt);
         throw;
       }
@@ -176,7 +176,7 @@ SqliteStorage::insert(const Data& data)
   if (result == SQLITE_OK) {
     rc = sqlite3_step(insertStmt);
     if (rc == SQLITE_CONSTRAINT) {
-      std::cerr << "Insert  failed" << std::endl;
+      std::cerr << "Insert failed" << std::endl;
       sqlite3_finalize(insertStmt);
       BOOST_THROW_EXCEPTION(Error("Insert failed"));
      }
@@ -237,14 +237,14 @@ SqliteStorage::read(const int64_t id)
     if (sqlite3_bind_int64(queryStmt, 1, id) == SQLITE_OK) {
       rc = sqlite3_step(queryStmt);
       if (rc == SQLITE_ROW) {
-        shared_ptr<Data> data(new Data());
-        data->wireDecode(Block(sqlite3_column_blob(queryStmt, 2),
-                              sqlite3_column_bytes(queryStmt, 2)));
+        auto data = make_shared<Data>();
+        data->wireDecode(Block(reinterpret_cast<const uint8_t*>(sqlite3_column_blob(queryStmt, 2)),
+                               sqlite3_column_bytes(queryStmt, 2)));
         sqlite3_finalize(queryStmt);
         return data;
       }
       else if (rc == SQLITE_DONE) {
-        return shared_ptr<Data>();
+        return nullptr;
       }
       else {
         std::cerr << "Database query failure rc:" << rc << std::endl;
@@ -264,7 +264,7 @@ SqliteStorage::read(const int64_t id)
     std::cerr << "select statement prepared failed" << std::endl;
     BOOST_THROW_EXCEPTION(Error("select statement prepared failed"));
   }
-  return shared_ptr<Data>();
+  return nullptr;
 }
 
 int64_t

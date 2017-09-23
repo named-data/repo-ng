@@ -1,5 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
+/*
  * Copyright (c) 2014-2017, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
@@ -18,7 +18,8 @@
  */
 
 #include "repo-storage.hpp"
-#include "../../build/src/config.hpp"
+#include "config.hpp"
+
 #include <istream>
 
 namespace repo {

@@ -32,10 +32,9 @@ namespace repo {
 
 using std::string;
 
-void
+static void
 printUsage(const char* programName)
 {
-
   std::cout
     << "Usage:\n"
     << "  " << programName << " [-c <path/to/repo-ng.conf>] [-n] [-h]\n"
@@ -48,7 +47,6 @@ printUsage(const char* programName)
     << "  -c: set config file path\n"
     << "  -n: do not show implicit digest\n"
     << std::endl;
-  ;
 }
 
 class RepoEnumerator
@@ -136,7 +134,7 @@ RepoEnumerator::enumerate(bool showImplicitDigest)
     rc = sqlite3_step(m_stmt);
     if (rc == SQLITE_ROW) {
       Name name;
-      name.wireDecode(Block(sqlite3_column_blob(m_stmt, 1),
+      name.wireDecode(Block(reinterpret_cast<const uint8_t*>(sqlite3_column_blob(m_stmt, 1)),
                             sqlite3_column_bytes(m_stmt, 1)));
       try {
         if (showImplicitDigest) {

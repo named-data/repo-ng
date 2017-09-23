@@ -1,36 +1,38 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
-VERSION = '0.1'
-APPNAME = 'ndn-repo'
 
-from waflib import Build, Logs, Utils, Task, TaskGen, Configure
+VERSION = '0.1'
+APPNAME = 'ndn-repo-ng'
+
+from waflib import Utils
+import os
 
 def options(opt):
     opt.load('compiler_c compiler_cxx gnu_dirs')
-    opt.load('boost default-compiler-flags doxygen sqlite3 coverage sanitizers', tooldir=['.waf-tools'])
+    opt.load('boost default-compiler-flags doxygen sqlite3 coverage sanitizers',
+             tooldir=['.waf-tools'])
 
     ropt = opt.add_option_group('ndn-repo-ng Options')
 
-    ropt.add_option('--with-tests', action='store_true', default=False, dest='with_tests',
-                    help='''build unit tests''')
-
-    ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
-                    help='''Do not build tools''')
     ropt.add_option('--with-examples', action='store_true', default=False, dest='with_examples',
                     help='''Build examples''')
+    ropt.add_option('--with-tests', action='store_true', default=False, dest='with_tests',
+                    help='''Build unit tests''')
+    ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
+                    help='''Do not build tools''')
 
 def configure(conf):
     conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags sqlite3")
 
+    if 'PKG_CONFIG_PATH' not in os.environ:
+        os.environ['PKG_CONFIG_PATH'] = Utils.subst_vars('${LIBDIR}/pkgconfig', conf.env)
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
                    uselib_store='NDN_CXX', mandatory=True)
 
     conf.check_sqlite3(mandatory=True)
 
-    if conf.options.with_tests:
-        conf.env['WITH_TESTS'] = True
-
-    conf.env['WITH_TOOLS'] = conf.options.with_tools
     conf.env['WITH_EXAMPLES'] = conf.options.with_examples
+    conf.env['WITH_TESTS'] = conf.options.with_tests
+    conf.env['WITH_TOOLS'] = conf.options.with_tools
 
     USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'random']
     if conf.env['WITH_TESTS']:
@@ -42,6 +44,7 @@ def configure(conf):
     except:
         pass
 
+    # Loading "late" to prevent tests from being compiled with profiling flags
     conf.load('coverage')
 
     conf.load('sanitizers')
@@ -70,13 +73,9 @@ def build(bld):
         use='ndn-repo-objects',
         )
 
-    # Tests
     bld.recurse('tests')
-    bld.recurse("tests/other")
-
-    # Tools
+    bld.recurse('tests/other')
     bld.recurse('tools')
-
-    bld.recurse("examples")
+    bld.recurse('examples')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')

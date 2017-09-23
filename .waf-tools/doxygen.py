@@ -21,11 +21,15 @@ When using this tool, the wscript will look like:
 	def build(bld):
 		if bld.env.DOXYGEN:
 			bld(features="doxygen", doxyfile='Doxyfile', ...)
+
+        def doxygen(bld):
+		if bld.env.DOXYGEN:
+			bld(features="doxygen", doxyfile='Doxyfile', ...)
 """
 
 from fnmatch import fnmatchcase
 import os, os.path, re, stat
-from waflib import Task, Utils, Node, Logs, Errors
+from waflib import Task, Utils, Node, Logs, Errors, Build
 from waflib.TaskGen import feature
 
 DOXY_STR = '"${DOXYGEN}" - '
@@ -81,7 +85,7 @@ class doxygen(Task.Task):
 
 			# Override with any parameters passed to the task generator
 			if getattr(self.generator, 'pars', None):
-				for k, v in self.generator.pars.iteritems():
+				for k, v in self.generator.pars.items():
 					self.pars[k] = v
 
 			self.doxy_inputs = getattr(self, 'doxy_inputs', [])
@@ -202,3 +206,9 @@ def configure(conf):
 
 	conf.find_program('doxygen', var='DOXYGEN', mandatory=False)
 	conf.find_program('tar', var='TAR', mandatory=False)
+
+# doxygen docs
+from waflib.Build import BuildContext
+class doxy(BuildContext):
+    cmd = "doxygen"
+    fun = "doxygen"

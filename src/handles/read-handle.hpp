@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,8 +20,8 @@
 #ifndef REPO_HANDLES_READ_HANDLE_HPP
 #define REPO_HANDLES_READ_HANDLE_HPP
 
+#include "common.hpp"
 #include "base-handle.hpp"
-
 
 namespace repo {
 
@@ -29,14 +29,41 @@ class ReadHandle : public BaseHandle
 {
 
 public:
-  ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-             Scheduler& scheduler)
-    : BaseHandle(face, storageHandle, keyChain, scheduler)
+  using DataPrefixRegistrationCallback = std::function<void(const ndn::Name&)>;
+  using DataPrefixUnregistrationCallback = std::function<void(const ndn::Name&)>;
+  struct RegisteredDataPrefix
   {
+    const ndn::RegisteredPrefixId* prefixId;
+    int useCount;
+  };
+
+  ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
+             Scheduler& scheduler, size_t prefixSubsetLength);
+
+  void
+  listen(const Name& prefix) override;
+
+  void
+  connectAutoListen();
+
+PUBLIC_WITH_TESTS_ELSE_PRIVATE:
+  const std::map<ndn::Name, RegisteredDataPrefix>&
+  getRegisteredPrefixes()
+  {
+    return m_insertedDataPrefixes;
   }
 
-  virtual void
-  listen(const Name& prefix);
+  /**
+   * @param after Do something after actually removing a prefix
+   */
+  void
+  onDataDeleted(const Name& name);
+
+  /**
+   * @param after Do something after successfully registering the data prefix
+   */
+  void
+  onDataInserted(const Name& name);
 
 private:
   /**
@@ -47,6 +74,12 @@ private:
 
   void
   onRegisterFailed(const Name& prefix, const std::string& reason);
+
+private:
+  size_t m_prefixSubsetLength;
+  std::map<ndn::Name, RegisteredDataPrefix> m_insertedDataPrefixes;
+  ndn::util::signal::ScopedConnection afterDataDeletionConnection;
+  ndn::util::signal::ScopedConnection afterDataInsertionConnection;
 };
 
 } // namespace repo

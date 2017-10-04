@@ -40,7 +40,7 @@ class BasicInterestReadFixture : public RepoStorageFixture, public Dataset
 public:
   BasicInterestReadFixture()
     : scheduler(repoFace.getIoService())
-    , readHandle(repoFace, *handle, keyChain, scheduler)
+    , readHandle(repoFace, *handle, keyChain, scheduler, 0)
     , readFace(repoFace.getIoService())
   {
   }

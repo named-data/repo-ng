@@ -30,7 +30,7 @@ parseConfig(const std::string& configPath)
   }
 
   std::ifstream fin(configPath.c_str());
-  if (!fin.is_open())
+ if (!fin.is_open())
     BOOST_THROW_EXCEPTION(Repo::Error("failed to open configuration file '"+ configPath +"'"));
 
   using namespace boost::property_tree;
@@ -48,26 +48,22 @@ parseConfig(const std::string& configPath)
   repoConfig.repoConfigPath = configPath;
 
   ptree dataConf = repoConf.get_child("data");
-  for (ptree::const_iterator it = dataConf.begin();
-       it != dataConf.end();
-       ++it)
-  {
-    if (it->first == "prefix")
-      repoConfig.dataPrefixes.push_back(Name(it->second.get_value<std::string>()));
+  for (const auto section : dataConf) {
+    if (section.first == "prefix")
+      repoConfig.dataPrefixes.push_back(Name(section.second.get_value<std::string>()));
+    else if (section.first == "registration-subset")
+      repoConfig.registrationSubset = section.second.get_value<int>();
     else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'data' section in "
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'data' section in "
                                         "configuration file '"+ configPath +"'"));
   }
 
   ptree commandConf = repoConf.get_child("command");
-  for (ptree::const_iterator it = commandConf.begin();
-       it != commandConf.end();
-       ++it)
-  {
-    if (it->first == "prefix")
-      repoConfig.repoPrefixes.push_back(Name(it->second.get_value<std::string>()));
+  for (const auto section : commandConf) {
+    if (section.first == "prefix")
+      repoConfig.repoPrefixes.push_back(Name(section.second.get_value<std::string>()));
     else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'command' section in "
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'command' section in "
                                         "configuration file '"+ configPath +"'"));
   }
 
@@ -75,24 +71,21 @@ parseConfig(const std::string& configPath)
   bool isTcpBulkEnabled = false;
   std::string host = "localhost";
   std::string port = "7376";
-  for (ptree::const_iterator it = tcpBulkInsert.begin();
-       it != tcpBulkInsert.end();
-       ++it)
-  {
+  for (const auto section : dataConf) {
     isTcpBulkEnabled = true;
 
     // tcp_bulk_insert {
     //   host "localhost"  ; IP address or hostname to listen on
     //   port 7635  ; Port number to listen on
     // }
-    if (it->first == "host") {
-      host = it->second.get_value<std::string>();
+    if (section.first == "host") {
+      host = section.second.get_value<std::string>();
     }
-    else if (it->first == "port") {
-      port = it->second.get_value<std::string>();
+    else if (section.first == "port") {
+      port = section.second.get_value<std::string>();
     }
     else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + it->first + "' option in 'tcp_bulk_insert' section in "
+      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'tcp_bulk_insert' section in "
                                         "configuration file '"+ configPath +"'"));
   }
   if (isTcpBulkEnabled) {
@@ -119,7 +112,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_store(std::make_shared<SqliteStorage>(config.dbPath))
   , m_storageHandle(config.nMaxPackets, *m_store)
   , m_validator(m_face)
-  , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler)
+  , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_config.registrationSubset)
   , m_writeHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_watchHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
   , m_deleteHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
@@ -147,7 +140,6 @@ Repo::enableListening()
     // ReadHandle performs prefix registration internally.
     m_readHandle.listen(dataPrefix);
   }
-
   for (const ndn::Name& cmdPrefix : m_config.repoPrefixes) {
     m_face.registerPrefix(cmdPrefix, nullptr,
       [] (const Name& cmdPrefix, const std::string& reason) {

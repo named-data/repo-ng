@@ -44,8 +44,8 @@ public:
 public:
   BaseHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
              Scheduler& scheduler)
-    : m_face(face)
-    , m_storageHandle(storageHandle)
+    : m_storageHandle(storageHandle)
+    , m_face(face)
     , m_keyChain(keyChain)
     , m_scheduler(scheduler)
    // , m_storeindex(storeindex)
@@ -101,10 +101,11 @@ protected:
   void
   extractParameter(const Interest& interest, const Name& prefix, RepoCommandParameter& parameter);
 
-private:
-
-  Face& m_face;
+protected:
   RepoStorage& m_storageHandle;
+
+private:
+  Face& m_face;
   KeyChain& m_keyChain;
   Scheduler& m_scheduler;
  // RepoStorage& m_storeindex;

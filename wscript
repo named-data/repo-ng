@@ -36,7 +36,9 @@ def configure(conf):
 
     USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem']
     if conf.env['WITH_TESTS']:
+        conf.define('HAVE_TESTS', 1)
         USED_BOOST_LIBS += ['unit_test_framework']
+
     conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True)
 
     try:

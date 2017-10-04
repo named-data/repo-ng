@@ -20,6 +20,8 @@
 #ifndef REPO_COMMON_HPP
 #define REPO_COMMON_HPP
 
+#include "config.hpp"
+
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/interest.hpp>
 #include <ndn-cxx/name.hpp>
@@ -42,6 +44,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#ifdef HAVE_TESTS
+#define PUBLIC_WITH_TESTS_ELSE_PRIVATE public
+#else
+#define PUBLIC_WITH_TESTS_ELSE_PRIVATE private
+#endif
 
 namespace repo {
 

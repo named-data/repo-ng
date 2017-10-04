@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -17,8 +17,8 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_STORAGE_REPO_STORE_HPP
-#define REPO_STORAGE_REPO_STORE_HPP
+#ifndef REPO_REPO_STORAGE_HPP
+#define REPO_REPO_STORAGE_HPP
 
 #include "../common.hpp"
 #include "storage.hpp"
@@ -26,6 +26,7 @@
 #include "../repo-command-parameter.hpp"
 
 #include <ndn-cxx/exclude.hpp>
+#include <ndn-cxx/util/signal.hpp>
 
 #include <queue>
 
@@ -89,6 +90,10 @@ public:
   std::shared_ptr<Data>
   readData(const Interest& interest) const;
 
+public:
+  ndn::util::Signal<RepoStorage, ndn::Name> afterDataInsertion;
+  ndn::util::Signal<RepoStorage, ndn::Name> afterDataDeletion;
+
 private:
   Index m_index;
   Storage& m_storage;
@@ -96,4 +101,4 @@ private:
 
 } // namespace repo
 
-#endif // REPO_REPO_STORE_HPP
+#endif // REPO_REPO_STORAGE_HPP

@@ -1,9 +1,13 @@
 repo
 {
   ; Section defining list of Data prefixes to register
-  ; Only 'prefix' option is allowed here, which can be repeated multiple times
+  ; Additionally define how many components off the end of data prefixes to insert into NFD
+  ; 'prefix' option can be repeated multiple times
+  ; 'registration-subset' defines how many components to exclude. This includes the implicit digest
+  ; at the end of the data name.
   data
   {
+    registration-subset 2
     prefix "ndn:/example/data/1"
     prefix "ndn:/example/data/2"
   }

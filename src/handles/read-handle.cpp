@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2014-2017,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,15 +18,39 @@
  */
 
 #include "read-handle.hpp"
+#include "repo.hpp"
 
 namespace repo {
+
+ReadHandle::ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
+                       Scheduler& scheduler, size_t prefixSubsetLength)
+  : BaseHandle(face, storageHandle, keyChain, scheduler)
+  , m_prefixSubsetLength(prefixSubsetLength)
+{
+}
+
+void
+ReadHandle::connectAutoListen()
+{
+  // Connect a RepoStorage's signals to the read handle
+  if (m_prefixSubsetLength != RepoConfig::DISABLED_SUBSET_LENGTH) {
+    afterDataDeletionConnection = m_storageHandle.afterDataInsertion.connect(
+      [this] (const Name& prefix) {
+        onDataInserted(prefix);
+      });
+    afterDataInsertionConnection = m_storageHandle.afterDataDeletion.connect(
+      [this] (const Name& prefix) {
+        onDataDeleted(prefix);
+      });
+  }
+}
 
 void
 ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 {
 
   shared_ptr<ndn::Data> data = getStorageHandle().readData(interest);
-  if (data != NULL) {
+  if (data != nullptr) {
       getFace().put(*data);
   }
 }
@@ -47,4 +71,53 @@ ReadHandle::listen(const Name& prefix)
                               bind(&ReadHandle::onRegisterFailed, this, _1, _2));
 }
 
-} //namespace repo
+void
+ReadHandle::onDataDeleted(const Name& name)
+{
+  // We add one here to account for the implicit digest at the end,
+  // which is what we get from the underlying storage when deleting.
+  Name prefix = name.getPrefix(-(m_prefixSubsetLength + 1));
+  auto check = m_insertedDataPrefixes.find(prefix);
+  if (check != m_insertedDataPrefixes.end()) {
+    if (--(check->second.useCount) <= 0) {
+      getFace().unsetInterestFilter(check->second.prefixId);
+      m_insertedDataPrefixes.erase(prefix);
+    }
+  }
+}
+
+void
+ReadHandle::onDataInserted(const Name& name)
+{
+  // Note: We want to save the prefix that we register exactly, not the
+  // name that provoked the registration
+  Name prefixToRegister = name.getPrefix(-m_prefixSubsetLength);
+  ndn::InterestFilter filter(prefixToRegister);
+  auto check = m_insertedDataPrefixes.find(prefixToRegister);
+  if (check == m_insertedDataPrefixes.end()) {
+    // Because of stack lifetime problems, we assume here that the
+    // prefix registration will be successful, and we add the registered
+    // prefix to our list. This is because, if we fail, we shut
+    // everything down, anyway. If registration failures are ever
+    // considered to be recoverable, we would need to make this
+    // atomic.
+    const ndn::RegisteredPrefixId* prefixId = getFace().setInterestFilter(filter,
+      [this] (const ndn::InterestFilter& filter, const Interest& interest) {
+        // Implicit conversion to Name of filter
+        onInterest(filter, interest);
+      },
+      [this] (const Name& prefix) {
+      },
+      [this] (const Name& prefix, const std::string& reason) {
+        onRegisterFailed(prefix, reason);
+      });
+    RegisteredDataPrefix registeredPrefix{prefixId, 1};
+    // Newly registered prefix
+    m_insertedDataPrefixes.emplace(std::make_pair(prefixToRegister, registeredPrefix));
+  }
+  else {
+    check->second.useCount++;
+  }
+}
+
+} // namespace repo

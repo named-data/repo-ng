@@ -51,7 +51,10 @@ RepoStorage::insertData(const Data& data)
    int64_t id = m_storage.insert(data);
    if (id == -1)
      return false;
-   return m_index.insert(data, id);
+   bool didInsert = m_index.insert(data, id);
+   if (didInsert)
+     afterDataInsertion(data.getName());
+   return didInsert;
 }
 
 ssize_t
@@ -65,10 +68,13 @@ RepoStorage::deleteData(const Name& name)
   while (idName.first != 0) {
     bool resultDb = m_storage.erase(idName.first);
     bool resultIndex = m_index.erase(idName.second); //full name
-    if (resultDb && resultIndex)
+    if (resultDb && resultIndex) {
+      afterDataDeletion(idName.second);
       count++;
-    else
+    }
+    else {
       hasError = true;
+    }
     idName = m_index.find(name);
   }
   if (hasError)
@@ -88,10 +94,13 @@ RepoStorage::deleteData(const Interest& interest)
   while (idName.first != 0) {
     bool resultDb = m_storage.erase(idName.first);
     bool resultIndex = m_index.erase(idName.second); //full name
-    if (resultDb && resultIndex)
+    if (resultDb && resultIndex) {
+      afterDataDeletion(idName.second);
       count++;
-    else
+    }
+    else {
       hasError = true;
+    }
     idName = m_index.find(interestDelete);
   }
   if (hasError)

@@ -40,10 +40,13 @@ namespace repo {
 
 struct RepoConfig
 {
+  static const size_t DISABLED_SUBSET_LENGTH = -1;
+
   std::string repoConfigPath;
   //StorageMethod storageMethod; This will be implemtented if there is other method.
   std::string dbPath;
   std::vector<ndn::Name> dataPrefixes;
+  size_t registrationSubset = DISABLED_SUBSET_LENGTH;
   std::vector<ndn::Name> repoPrefixes;
   std::vector<std::pair<std::string, std::string> > tcpBulkInsertEndpoints;
   uint64_t nMaxPackets;

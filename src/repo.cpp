@@ -48,7 +48,7 @@ parseConfig(const std::string& configPath)
   repoConfig.repoConfigPath = configPath;
 
   ptree dataConf = repoConf.get_child("data");
-  for (const auto section : dataConf) {
+  for (const auto& section : dataConf) {
     if (section.first == "prefix")
       repoConfig.dataPrefixes.push_back(Name(section.second.get_value<std::string>()));
     else if (section.first == "registration-subset")
@@ -59,7 +59,7 @@ parseConfig(const std::string& configPath)
   }
 
   ptree commandConf = repoConf.get_child("command");
-  for (const auto section : commandConf) {
+  for (const auto& section : commandConf) {
     if (section.first == "prefix")
       repoConfig.repoPrefixes.push_back(Name(section.second.get_value<std::string>()));
     else
@@ -67,26 +67,28 @@ parseConfig(const std::string& configPath)
                                         "configuration file '"+ configPath +"'"));
   }
 
-  ptree tcpBulkInsert = repoConf.get_child("tcp_bulk_insert");
+  auto tcpBulkInsert = repoConf.get_child_optional("tcp_bulk_insert");
   bool isTcpBulkEnabled = false;
   std::string host = "localhost";
   std::string port = "7376";
-  for (const auto section : dataConf) {
-    isTcpBulkEnabled = true;
+  if (tcpBulkInsert) {
+    for (const auto& section : *tcpBulkInsert) {
+      isTcpBulkEnabled = true;
 
-    // tcp_bulk_insert {
-    //   host "localhost"  ; IP address or hostname to listen on
-    //   port 7635  ; Port number to listen on
-    // }
-    if (section.first == "host") {
-      host = section.second.get_value<std::string>();
+      // tcp_bulk_insert {
+      //   host "localhost"  ; IP address or hostname to listen on
+      //   port 7635  ; Port number to listen on
+      // }
+      if (section.first == "host") {
+        host = section.second.get_value<std::string>();
+      }
+      else if (section.first == "port") {
+        port = section.second.get_value<std::string>();
+      }
+      else
+        BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'tcp_bulk_insert' section in "
+                                          "configuration file '"+ configPath +"'"));
     }
-    else if (section.first == "port") {
-      port = section.second.get_value<std::string>();
-    }
-    else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'tcp_bulk_insert' section in "
-                                        "configuration file '"+ configPath +"'"));
   }
   if (isTcpBulkEnabled) {
     repoConfig.tcpBulkInsertEndpoints.push_back(std::make_pair(host, port));

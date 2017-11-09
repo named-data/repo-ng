@@ -21,6 +21,7 @@
 #include "../src/repo-command-response.hpp"
 
 #include <ndn-cxx/face.hpp>
+#include <ndn-cxx/security/command-interest-signer.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
@@ -83,6 +84,7 @@ public:
     , m_checkPeriod(DEFAULT_CHECK_PERIOD)
     , m_currentSegmentNo(0)
     , m_isFinished(false)
+    , m_cmdSigner(m_keyChain)
   {
   }
 
@@ -161,6 +163,7 @@ private:
 
   typedef std::map<uint64_t, shared_ptr<ndn::Data> > DataContainer;
   DataContainer m_data;
+  ndn::security::CommandInterestSigner m_cmdSigner;
 };
 
 void
@@ -433,17 +436,19 @@ ndn::Interest
 NdnPutFile::generateCommandInterest(const ndn::Name& commandPrefix, const std::string& command,
                                     const RepoCommandParameter& commandParameter)
 {
-  ndn::Interest interest(ndn::Name(commandPrefix)
-                         .append(command)
-                         .append(commandParameter.wireEncode()));
-  interest.setInterestLifetime(interestLifetime);
+  Name cmd = commandPrefix;
+  cmd
+    .append(command)
+    .append(commandParameter.wireEncode());
+  ndn::Interest interest;
 
   if (identityForCommand.empty())
-    m_keyChain.sign(interest);
+    interest = m_cmdSigner.makeCommandInterest(cmd);
   else {
-    m_keyChain.sign(interest, ndn::signingByIdentity(identityForCommand));
+    interest = m_cmdSigner.makeCommandInterest(cmd, ndn::signingByIdentity(identityForCommand));
   }
 
+  interest.setInterestLifetime(interestLifetime);
   return interest;
 }
 

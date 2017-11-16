@@ -48,7 +48,6 @@ ReadHandle::connectAutoListen()
 void
 ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 {
-
   shared_ptr<ndn::Data> data = getStorageHandle().readData(interest);
   if (data != nullptr) {
       getFace().put(*data);
@@ -106,8 +105,7 @@ ReadHandle::onDataInserted(const Name& name)
         // Implicit conversion to Name of filter
         onInterest(filter, interest);
       },
-      [this] (const Name& prefix) {
-      },
+      [] (const Name&) {},
       [this] (const Name& prefix, const std::string& reason) {
         onRegisterFailed(prefix, reason);
       });

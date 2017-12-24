@@ -24,6 +24,7 @@
 #include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
+#include <boost/asio/io_service.hpp>
 #include <boost/test/unit_test.hpp>
 
 namespace repo {

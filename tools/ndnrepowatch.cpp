@@ -33,6 +33,7 @@
 #include <iostream>
 #include <string>
 
+#include <boost/asio/io_service.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace repo {

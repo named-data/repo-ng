@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,13 +22,11 @@
 
 #include <istream>
 
+#include <ndn-cxx/util/logger.hpp>
+
 namespace repo {
 
-static void
-insertItemToIndex(Index* index, const Storage::ItemMeta& item)
-{
-  index->insert(item.fullName, item.id, item.keyLocatorHash);
-}
+NDN_LOG_INIT(repo.RepoStorage);
 
 RepoStorage::RepoStorage(const int64_t& nMaxPackets, Storage& store)
   : m_index(nMaxPackets)
@@ -39,7 +37,16 @@ RepoStorage::RepoStorage(const int64_t& nMaxPackets, Storage& store)
 void
 RepoStorage::initialize()
 {
-  m_storage.fullEnumerate(bind(&insertItemToIndex, &m_index, _1));
+  NDN_LOG_DEBUG("Initialize");
+  m_storage.fullEnumerate(bind(&RepoStorage::insertItemToIndex, this, _1));
+}
+
+void
+RepoStorage::insertItemToIndex(const Storage::ItemMeta& item)
+{
+  NDN_LOG_DEBUG("Insert data to index " << item.fullName);
+  m_index.insert(item.fullName, item.id, item.keyLocatorHash);
+  afterDataInsertion(item.fullName);
 }
 
 bool

@@ -34,12 +34,11 @@ def configure(conf):
     conf.env['WITH_TESTS'] = conf.options.with_tests
     conf.env['WITH_TOOLS'] = conf.options.with_tools
 
-    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem']
+    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'thread', 'log', 'log_setup']
     if conf.env['WITH_TESTS']:
         conf.define('HAVE_TESTS', 1)
         USED_BOOST_LIBS += ['unit_test_framework']
-
-    conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True)
+    conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True, mt=True)
 
     try:
         conf.load("doxygen")

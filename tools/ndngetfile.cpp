@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -42,22 +42,17 @@ Consumer::fetchData(const Name& name)
 {
   Interest interest(name);
   interest.setInterestLifetime(m_interestLifetime);
-  //std::cout<<"interest name = "<<interest.getName()<<std::endl;
-  if (m_hasVersion)
-    {
-      interest.setMustBeFresh(m_mustBeFresh);
-    }
-  else
-    {
-      interest.setMustBeFresh(true);
-      interest.setChildSelector(1);
-    }
+  if (m_hasVersion) {
+    interest.setMustBeFresh(m_mustBeFresh);
+  }
+  else {
+    interest.setMustBeFresh(true);
+    interest.setChildSelector(1);
+  }
 
   m_face.expressInterest(interest,
-                         m_hasVersion ?
-                         bind(&Consumer::onVersionedData, this, _1, _2)
-                         :
-                         bind(&Consumer::onUnversionedData, this, _1, _2),
+                         m_hasVersion ? bind(&Consumer::onVersionedData, this, _1, _2)
+                                      : bind(&Consumer::onUnversionedData, this, _1, _2),
                          bind(&Consumer::onTimeout, this, _1), // Nack
                          bind(&Consumer::onTimeout, this, _1));
 }
@@ -156,8 +151,7 @@ Consumer::readData(const Data& data)
   const Block& content = data.getContent();
   m_os.write(reinterpret_cast<const char*>(content.value()), content.value_size());
   m_totalSize += content.value_size();
-  if (m_verbose)
-  {
+  if (m_verbose) {
     std::cerr << "LOG: received data = " << data.getName() << std::endl;
   }
   if (m_isFinished || m_isSingle) {
@@ -171,13 +165,13 @@ void
 Consumer::fetchNextData(const Name& name, const Data& data)
 {
   uint64_t segment = name[-1].toSegment();
-  BOOST_ASSERT(segment == (m_nextSegment - 1));
+  BOOST_VERIFY(segment == (m_nextSegment - 1));
+
   const ndn::name::Component& finalBlockId = data.getMetaInfo().getFinalBlockId();
   if (finalBlockId == name[-1]) {
     m_isFinished = true;
   }
-  else
-  {
+  else {
     // Reset retry counter
     m_retryCount = 0;
     if (m_hasVersion)
@@ -190,23 +184,18 @@ Consumer::fetchNextData(const Name& name, const Data& data)
 void
 Consumer::onTimeout(const Interest& interest)
 {
-  if (m_retryCount++ < MAX_RETRY)
-    {
-      // Retransmit the interest
-      fetchData(interest.getName());
-      if (m_verbose)
-        {
-          std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
-        }
-    }
-  else
-    {
-      std::cerr << "TIMEOUT: last interest sent for segment #" << (m_nextSegment - 1) << std::endl;
-      std::cerr << "TIMEOUT: abort fetching after " << MAX_RETRY
-                << " times of retry" << std::endl;
-    }
+  if (m_retryCount++ < MAX_RETRY) {
+    // Retransmit the interest
+    fetchData(interest.getName());
+    if (m_verbose)
+      std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
+  }
+  else {
+    std::cerr << "TIMEOUT: last interest sent for segment #" << (m_nextSegment - 1) << std::endl;
+    std::cerr << "TIMEOUT: abort fetching after " << MAX_RETRY
+              << " times of retry" << std::endl;
+  }
 }
-
 
 int
 usage(const std::string& filename)
@@ -224,101 +213,85 @@ usage(const std::string& filename)
   return 1;
 }
 
-
 int
 main(int argc, char** argv)
 {
   std::string name;
-  const char* outputFile = 0;
+  const char* outputFile = nullptr;
   bool verbose = false, versioned = false, single = false;
   int interestLifetime = 4000;  // in milliseconds
   int timeout = 0;  // in milliseconds
 
   int opt;
-  while ((opt = getopt(argc, argv, "vsul:w:o:")) != -1)
-    {
-      switch (opt) {
-      case 'v':
-        verbose = true;
-        break;
-      case 's':
-        single = true;
-        break;
-      case 'u':
-        versioned = true;
-        break;
-      case 'l':
-        try
-          {
-            interestLifetime = boost::lexical_cast<int>(optarg);
-          }
-        catch (const boost::bad_lexical_cast&)
-          {
-            std::cerr << "ERROR: -l option should be an integer." << std::endl;
-            return 1;
-          }
-        interestLifetime = std::max(interestLifetime, 0);
-        break;
-      case 'w':
-        try
-          {
-            timeout = boost::lexical_cast<int>(optarg);
-          }
-        catch (const boost::bad_lexical_cast&)
-          {
-            std::cerr << "ERROR: -w option should be an integer." << std::endl;
-            return 1;
-          }
-        timeout = std::max(timeout, 0);
-        break;
-      case 'o':
-        outputFile = optarg;
-        break;
-      default:
-        return usage(argv[0]);
+  while ((opt = getopt(argc, argv, "vsul:w:o:")) != -1) {
+    switch (opt) {
+    case 'v':
+      verbose = true;
+      break;
+    case 's':
+      single = true;
+      break;
+    case 'u':
+      versioned = true;
+      break;
+    case 'l':
+      try {
+        interestLifetime = boost::lexical_cast<int>(optarg);
       }
-    }
-
-  if (optind < argc)
-    {
-      name = argv[optind];
-    }
-
-  if (name.empty())
-    {
+      catch (const boost::bad_lexical_cast&) {
+        std::cerr << "ERROR: -l option should be an integer." << std::endl;
+        return 1;
+      }
+      interestLifetime = std::max(interestLifetime, 0);
+      break;
+    case 'w':
+      try {
+        timeout = boost::lexical_cast<int>(optarg);
+      }
+      catch (const boost::bad_lexical_cast&) {
+        std::cerr << "ERROR: -w option should be an integer." << std::endl;
+        return 1;
+      }
+      timeout = std::max(timeout, 0);
+      break;
+    case 'o':
+      outputFile = optarg;
+      break;
+    default:
       return usage(argv[0]);
     }
+  }
+
+  if (optind < argc)
+    name = argv[optind];
+
+  if (name.empty())
+    return usage(argv[0]);
 
   std::streambuf* buf;
   std::ofstream of;
 
-  if (outputFile != 0)
-    {
-      of.open(outputFile, std::ios::out | std::ios::binary | std::ios::trunc);
-      if (!of || !of.is_open()) {
-        std::cerr << "ERROR: cannot open " << outputFile << std::endl;
-        return 1;
-      }
-      buf = of.rdbuf();
+  if (outputFile != nullptr) {
+    of.open(outputFile, std::ios::out | std::ios::binary | std::ios::trunc);
+    if (!of || !of.is_open()) {
+      std::cerr << "ERROR: cannot open " << outputFile << std::endl;
+      return 1;
     }
-  else
-    {
-      buf = std::cout.rdbuf();
-    }
+    buf = of.rdbuf();
+  }
+  else {
+    buf = std::cout.rdbuf();
+  }
 
   std::ostream os(buf);
+  Consumer consumer(name, os, verbose, versioned, single, interestLifetime, timeout);
 
-  Consumer consumer(name, os, verbose, versioned, single,
-                    interestLifetime, timeout);
-
-  try
-    {
-      consumer.run();
-    }
-  catch (const std::exception& e)
-    {
-      std::cerr << "ERROR: " << e.what() << std::endl;
-    }
+  try {
+    consumer.run();
+  }
+  catch (const std::exception& e) {
+    std::cerr << "ERROR: " << e.what() << std::endl;
+  }
 
   return 0;
 }

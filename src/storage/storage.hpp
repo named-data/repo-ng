@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -19,9 +19,7 @@
 
 #ifndef REPO_STORAGE_STORAGE_HPP
 #define REPO_STORAGE_STORAGE_HPP
-#include <string>
-#include <iostream>
-#include <stdlib.h>
+
 #include "../common.hpp"
 
 namespace repo {
@@ -42,7 +40,6 @@ public:
     }
   };
 
-public:
   class ItemMeta
   {
   public:
@@ -51,12 +48,9 @@ public:
     ndn::ConstBufferPtr keyLocatorHash;
   };
 
-public :
-
+public:
   virtual
-  ~Storage()
-  {
-  };
+  ~Storage() = default;
 
   /**
    *  @brief  put the data into database
@@ -91,9 +85,8 @@ public :
    */
   virtual void
   fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f) = 0;
-
 };
 
 } // namespace repo
 
-#endif // REPO_STORAGE_Storage_HPP
+#endif // REPO_STORAGE_STORAGE_HPP

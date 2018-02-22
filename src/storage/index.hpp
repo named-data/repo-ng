@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,7 +20,8 @@
 #ifndef REPO_STORAGE_INDEX_HPP
 #define REPO_STORAGE_INDEX_HPP
 
-#include "common.hpp"
+#include "../common.hpp"
+
 #include <set>
 
 namespace repo {
@@ -52,13 +53,10 @@ public:
     };
 
   public:
-
     /**
      * @brief used by set to construct node
      */
-    Entry()
-    {
-    };
+    Entry() = default;
 
     /**
      * @brief construct Entry by data and id number
@@ -143,7 +141,6 @@ public:
   };
 
 private:
-
   typedef std::set<Entry> IndexContainer;
 
 public:

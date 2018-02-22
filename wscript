@@ -7,8 +7,9 @@ from waflib import Utils
 import os
 
 def options(opt):
-    opt.load('compiler_c compiler_cxx gnu_dirs')
-    opt.load('boost default-compiler-flags doxygen sqlite3 coverage sanitizers',
+    opt.load(['compiler_cxx', 'gnu_dirs'])
+    opt.load(['default-compiler-flags', 'coverage', 'sanitizers', 'boost',
+              'sqlite3', 'doxygen'],
              tooldir=['.waf-tools'])
 
     ropt = opt.add_option_group('ndn-repo-ng Options')
@@ -21,7 +22,8 @@ def options(opt):
                     help='''Do not build tools''')
 
 def configure(conf):
-    conf.load("compiler_c compiler_cxx gnu_dirs boost default-compiler-flags sqlite3")
+    conf.load(['compiler_cxx', 'gnu_dirs',
+               'default-compiler-flags', 'boost', 'sqlite3'])
 
     if 'PKG_CONFIG_PATH' not in os.environ:
         os.environ['PKG_CONFIG_PATH'] = Utils.subst_vars('${LIBDIR}/pkgconfig', conf.env)
@@ -45,9 +47,10 @@ def configure(conf):
     except:
         pass
 
+    conf.check_compiler_flags()
+
     # Loading "late" to prevent tests from being compiled with profiling flags
     conf.load('coverage')
-
     conf.load('sanitizers')
 
     conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env['SYSCONFDIR'])

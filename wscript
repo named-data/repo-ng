@@ -75,7 +75,6 @@ def build(bld):
         )
 
     bld.recurse('tests')
-    bld.recurse('tests/other')
     bld.recurse('tools')
     bld.recurse('examples')
 

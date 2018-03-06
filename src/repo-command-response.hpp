@@ -150,7 +150,6 @@ public:
   wireDecode(const Block& wire);
 
 private:
-  //uint64_t m_statusCode;
   uint64_t m_startBlockId;
   uint64_t m_endBlockId;
   uint64_t m_processId;

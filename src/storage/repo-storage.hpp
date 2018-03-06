@@ -22,10 +22,8 @@
 
 #include "../common.hpp"
 #include "storage.hpp"
-#include "index.hpp"
 #include "../repo-command-parameter.hpp"
 
-#include <ndn-cxx/exclude.hpp>
 #include <ndn-cxx/util/signal.hpp>
 
 #include <queue>
@@ -50,13 +48,7 @@ public:
   };
 
 public:
-  RepoStorage(const int64_t& nMaxPackets, Storage& store);
-
-  /**
-   *  @brief  rebuild index from database
-   */
-  void
-  initialize();
+  RepoStorage(Storage& store);
 
   /**
    *  @brief  insert data into repo
@@ -66,7 +58,7 @@ public:
 
   /**
    *  @brief   delete data from repo
-   *  @param   name     used to find entry needed to be erased in repo
+   *  @param   name from interest, use it as a prefix to find entry needed to be erased in repo
    *  @return  if deletion in either index or database fail, return -1,
    *           otherwise return the number of erased entries
    */
@@ -83,24 +75,20 @@ public:
   deleteData(const Interest& interest);
 
   /**
-   *  @brief  read data from repo
+   *  @brief   read data from repo
    *  @param   interest  used to request data
    *  @return  std::shared_ptr<Data>
    */
   std::shared_ptr<Data>
   readData(const Interest& interest) const;
 
-private:
-  void
-  insertItemToIndex(const Storage::ItemMeta& item);
-
 public:
   ndn::util::Signal<RepoStorage, ndn::Name> afterDataInsertion;
   ndn::util::Signal<RepoStorage, ndn::Name> afterDataDeletion;
 
 private:
-  Index m_index;
   Storage& m_storage;
+  const int NOTFOUND = -1;
 };
 
 } // namespace repo

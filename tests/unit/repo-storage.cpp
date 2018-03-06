@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -37,41 +37,31 @@ class Fixture : public Dataset, public RepoStorageFixture
 {
 };
 
-// Combine CommonDatasets with ComplexSelectorDataset
-typedef boost::mpl::push_back<CommonDatasets,
-                              ComplexSelectorsDataset>::type Datasets;
 
-BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, Datasets, Fixture<T>)
+BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, CommonDatasets, Fixture<T>)
 {
-  // typedef ComplexSelectorsDataset T;
   BOOST_TEST_MESSAGE(T::getName());
 
   // Insert data into repo
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i)
-    {
-      BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
-    }
+  for (auto i = this->data.begin(); i != this->data.end(); ++i) {
+    BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
+  }
 
   // check size directly with the storage (repo doesn't have interface yet)
   BOOST_CHECK_EQUAL(this->store->size(), static_cast<int64_t>(this->data.size()));
 
   // Read
-  for (typename T::InterestContainer::iterator i = this->interests.begin();
-       i != this->interests.end(); ++i)
-  {
-      shared_ptr<ndn::Data> dataTest = this->handle->readData(i->first);
-      BOOST_CHECK_EQUAL(*this->handle->readData(i->first), *i->second);
-    }
+  for (auto i = this->interests.begin(); i != this->interests.end(); ++i) {
+    std::shared_ptr<ndn::Data> dataTest = this->handle->readData(i->first);
+    BOOST_CHECK_EQUAL(*dataTest, *i->second);
+  }
 
   // Remove items
-  for (typename T::RemovalsContainer::iterator i = this->removals.begin();
-       i != this->removals.end(); ++i)
-    {
-      size_t nRemoved = 0;
-      BOOST_REQUIRE_NO_THROW(nRemoved = this->handle->deleteData(i->first));
-      BOOST_CHECK_EQUAL(nRemoved, i->second);
-    }
+  for (auto i = this->removals.begin(); i != this->removals.end(); ++i) {
+    size_t nRemoved = 0;
+    nRemoved = this->handle->deleteData(i->first);
+    BOOST_CHECK_EQUAL(nRemoved, i->second);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

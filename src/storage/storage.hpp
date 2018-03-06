@@ -43,14 +43,6 @@ public:
     }
   };
 
-  class ItemMeta
-  {
-  public:
-    int64_t id;
-    Name fullName;
-    ndn::ConstBufferPtr keyLocatorHash;
-  };
-
 public:
   virtual
   ~Storage() = default;
@@ -63,31 +55,38 @@ public:
   insert(const Data& data) = 0;
 
   /**
-   *  @brief  remove the entry in the database by using id
-   *  @param  id   id number of entry in the database
+   *  @brief  remove the entry in the database by full name
+   *  @param  full name   full name of the data
    */
   virtual bool
-  erase(const int64_t id) = 0;
+  erase(const Name& name) = 0;
 
   /**
    *  @brief  get the data from database
-   *  @param  id   id number of each entry in the database, used to find the data
+   *  @param  full name   full name of the data
    */
   virtual std::shared_ptr<Data>
-  read(const int64_t id) = 0;
+  read(const Name& name) = 0;
+
+  /**
+   *  @brief  check if database already has the data
+   *  @param  full name   full name of the data
+   */
+  virtual bool
+  has(const Name& name) = 0;
+
+  /**
+   *  @brief  find the data in database by full name and return it
+   *  @param  full name   full name of the data
+   */
+  virtual std::shared_ptr<Data>
+  find(const Name& name, bool exactMatch = false) = 0;
 
   /**
    *  @brief  return the size of database
    */
-  virtual int64_t
+  virtual uint64_t
   size() = 0;
-
-  /**
-   *  @brief enumerate each entry in database and call the function
-   *         insertItemToIndex to reubuild index from database
-   */
-  virtual void
-  fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f) = 0;
 };
 
 } // namespace repo

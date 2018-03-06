@@ -20,18 +20,22 @@
 #include "repo.hpp"
 #include "storage/sqlite-storage.hpp"
 
+#include <ndn-cxx/util/logger.hpp>
+
 namespace repo {
+
+NDN_LOG_INIT(repo);
 
 RepoConfig
 parseConfig(const std::string& configPath)
 {
   if (configPath.empty()) {
-    std::cerr << "configuration file path is empty" << std::endl;
+    NDN_LOG_DEBUG("configuration file path is empty");
   }
 
   std::ifstream fin(configPath.c_str());
  if (!fin.is_open())
-    BOOST_THROW_EXCEPTION(Repo::Error("failed to open configuration file '"+ configPath +"'"));
+    BOOST_THROW_EXCEPTION(Repo::Error("failed to open configuration file '" + configPath + "'"));
 
   using namespace boost::property_tree;
   ptree propertyTree;
@@ -39,7 +43,7 @@ parseConfig(const std::string& configPath)
     read_info(fin, propertyTree);
   }
   catch (const ptree_error& e) {
-    BOOST_THROW_EXCEPTION(Repo::Error("failed to read configuration file '"+ configPath +"'"));
+    BOOST_THROW_EXCEPTION(Repo::Error("failed to read configuration file '" + configPath + "'"));
   }
 
   ptree repoConf = propertyTree.get_child("repo");
@@ -74,11 +78,6 @@ parseConfig(const std::string& configPath)
   if (tcpBulkInsert) {
     for (const auto& section : *tcpBulkInsert) {
       isTcpBulkEnabled = true;
-
-      // tcp_bulk_insert {
-      //   host "localhost"  ; IP address or hostname to listen on
-      //   port 7635  ; Port number to listen on
-      // }
       if (section.first == "host") {
         host = section.second.get_value<std::string>();
       }
@@ -113,11 +112,10 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_face(ioService)
   , m_dispatcher(m_face, m_keyChain)
   , m_store(std::make_shared<SqliteStorage>(config.dbPath))
-  , m_storageHandle(config.nMaxPackets, *m_store)
+  , m_storageHandle(*m_store)
   , m_validator(m_face)
   , m_readHandle(m_face, m_storageHandle, m_config.registrationSubset)
   , m_writeHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
-  , m_watchHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
   , m_deleteHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
   , m_tcpBulkInsertHandle(ioService, m_storageHandle)
 {
@@ -129,10 +127,9 @@ Repo::initializeStorage()
 {
   // Rebuild storage if storage checkpoin exists
   ndn::time::steady_clock::TimePoint start = ndn::time::steady_clock::now();
-  m_storageHandle.initialize();
   ndn::time::steady_clock::TimePoint end = ndn::time::steady_clock::now();
   ndn::time::milliseconds cost = ndn::time::duration_cast<ndn::time::milliseconds>(end - start);
-  std::cerr << "initialize storage cost: " << cost << "ms" << std::endl;
+  NDN_LOG_DEBUG("initialize storage cost: " << cost << "ms");
 }
 
 void
@@ -145,7 +142,7 @@ Repo::enableListening()
   for (const ndn::Name& cmdPrefix : m_config.repoPrefixes) {
     m_face.registerPrefix(cmdPrefix, nullptr,
       [] (const Name& cmdPrefix, const std::string& reason) {
-        std::cerr << "Command prefix " << cmdPrefix << " registration error: " << reason << std::endl;
+        NDN_LOG_DEBUG("Command prefix " << cmdPrefix << " registration error: " << reason);
         BOOST_THROW_EXCEPTION(Error("Command prefix registration failed"));
       });
 

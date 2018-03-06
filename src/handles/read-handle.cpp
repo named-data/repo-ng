@@ -20,7 +20,11 @@
 #include "read-handle.hpp"
 #include "repo.hpp"
 
+#include <ndn-cxx/util/logger.hpp>
+
 namespace repo {
+
+NDN_LOG_INIT(repo.ReadHandle);
 
 ReadHandle::ReadHandle(Face& face, RepoStorage& storageHandle, size_t prefixSubsetLength)
   : m_prefixSubsetLength(prefixSubsetLength)
@@ -35,11 +39,11 @@ ReadHandle::connectAutoListen()
 {
   // Connect a RepoStorage's signals to the read handle
   if (m_prefixSubsetLength != RepoConfig::DISABLED_SUBSET_LENGTH) {
-    afterDataDeletionConnection = m_storageHandle.afterDataInsertion.connect(
+    afterDataInsertionConnection = m_storageHandle.afterDataInsertion.connect(
       [this] (const Name& prefix) {
         onDataInserted(prefix);
       });
-    afterDataInsertionConnection = m_storageHandle.afterDataDeletion.connect(
+    afterDataDeletionConnection = m_storageHandle.afterDataDeletion.connect(
       [this] (const Name& prefix) {
         onDataDeleted(prefix);
       });
@@ -49,16 +53,21 @@ ReadHandle::connectAutoListen()
 void
 ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 {
-  shared_ptr<ndn::Data> data = m_storageHandle.readData(interest);
+  NDN_LOG_DEBUG("Received Interest " << interest.getName());
+  std::shared_ptr<ndn::Data> data = m_storageHandle.readData(interest);
   if (data != nullptr) {
-      m_face.put(*data);
+    NDN_LOG_DEBUG("Put Data: " << *data);
+    m_face.put(*data);
+  }
+  else {
+    NDN_LOG_DEBUG("No data for " << interest.getName());
   }
 }
 
 void
 ReadHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
-  std::cerr << "ERROR: Failed to register prefix in local hub's daemon" << std::endl;
+  NDN_LOG_ERROR("ERROR: Failed to register prefix in local hub's daemon");
   m_face.shutdown();
 }
 
@@ -67,8 +76,8 @@ ReadHandle::listen(const Name& prefix)
 {
   ndn::InterestFilter filter(prefix);
   m_face.setInterestFilter(filter,
-                              bind(&ReadHandle::onInterest, this, _1, _2),
-                              bind(&ReadHandle::onRegisterFailed, this, _1, _2));
+                           std::bind(&ReadHandle::onInterest, this, _1, _2),
+                           std::bind(&ReadHandle::onRegisterFailed, this, _1, _2));
 }
 
 void

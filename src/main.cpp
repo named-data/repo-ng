@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2018,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,6 +20,12 @@
 #include "config.hpp"
 #include "repo.hpp"
 
+#include "extended-error-message.hpp"
+
+#include <ndn-cxx/util/logger.hpp>
+
+NDN_LOG_INIT(repo.main);
+
 static const std::string ndnRepoUsageMessage =
   /* argv[0] */ " - Next generation of NDN repository\n"
   "-h: show help message\n"
@@ -35,19 +41,14 @@ terminate(boost::asio::io_service& ioService,
   if (error)
     return;
 
-  if (signalNo == SIGINT ||
-      signalNo == SIGTERM)
-    {
-      ioService.stop();
-      std::cout << "Caught signal '" << strsignal(signalNo) << "', exiting..." << std::endl;
-    }
-  else
-    {
-      /// \todo May be try to reload config file
-      signalSet.async_wait(std::bind(&terminate, std::ref(ioService),
-                                     std::placeholders::_1, std::placeholders::_2,
-                                     std::ref(signalSet)));
-    }
+  if (signalNo == SIGINT || signalNo == SIGTERM) {
+    ioService.stop();
+    std::cout << "Caught signal '" << strsignal(signalNo) << "', exiting..." << std::endl;
+  }
+  else {
+    /// \todo try to reload config file
+    signalSet.async_wait(std::bind(&terminate, std::ref(ioService), _1, _2, std::ref(signalSet)));
+  }
 }
 
 int
@@ -91,7 +92,7 @@ main(int argc, char** argv)
     ioService.run();
   }
   catch (const std::exception& e) {
-    std::cerr << "ERROR: " << e.what() << std::endl;
+    NDN_LOG_FATAL(repo::getExtendedErrorMessage(e));
     return 2;
   }
 

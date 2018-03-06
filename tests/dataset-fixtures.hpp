@@ -40,13 +40,13 @@ public:
     }
   };
 
-  typedef std::list<std::shared_ptr<ndn::Data> > DataContainer;
+  using DataContainer = std::list<std::shared_ptr<ndn::Data>>;
   DataContainer data;
 
-  typedef std::list<std::pair<ndn::Interest, std::shared_ptr<ndn::Data> > > InterestContainer;
+  using InterestContainer = std::list<std::pair<ndn::Interest, std::shared_ptr<ndn::Data>>>;
   InterestContainer interests;
 
-  typedef std::list<std::pair<ndn::Interest, size_t > > RemovalsContainer;
+  using RemovalsContainer = std::list<std::pair<ndn::Interest, size_t>>;
   RemovalsContainer removals;
 
 protected:
@@ -77,7 +77,7 @@ protected:
   }
 
 private:
-  std::map<Name, shared_ptr<Data> > map;
+  std::map<Name, std::shared_ptr<Data>> map;
 };
 
 
@@ -205,187 +205,10 @@ public:
   }
 };
 
-
-class BasicChildSelectorDataset : public DatasetBase
-{
-public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "BasicChildSelectorDataset";
-    return name;
-  }
-
-  BasicChildSelectorDataset()
-  {
-    this->data.push_back(createData("/a/1"));
-    this->data.push_back(createData("/b/1"));
-    this->interests.push_back(std::make_pair(Interest()
-                                               .setName("/b")
-                                               .setSelectors(Selectors()
-                                                               .setChildSelector(0)),
-                                             this->data.back()));
-
-    this->data.push_back(createData("/c/1"));
-    this->data.push_back(createData("/b/99"));
-    this->interests.push_back(std::make_pair(Interest()
-                                               .setName("/b")
-                                               .setSelectors(Selectors()
-                                                               .setChildSelector(1)),
-                                             this->data.back()));
-    this->data.push_back(createData("/b/5"));
-    this->data.push_back(createData("/b/55"));
-  }
-};
-
-
-class ExtendedChildSelectorDataset : public DatasetBase
-{
-public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "storage";
-    return name;
-  }
-
-  ExtendedChildSelectorDataset()
-  {
-    this->data.push_back(createData("/a/b/1"));
-
-    this->data.push_back(createData("/a/c/1"));
-    this->interests.push_back(std::make_pair(Interest("/a")
-                                             .setSelectors(Selectors()
-                                                           .setChildSelector(1)),
-                                              this->data.back()));
-
-    this->data.push_back(createData("/a/c/2"));
-
-    this->data.push_back(createData("/b"));
-  }
-};
-
-
-class ComplexSelectorsDataset : public DatasetBase
-{
-public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "ComplexSelectorsDataset";
-    return name;
-  }
-
-  std::map<std::string, shared_ptr<Data> > map;
-
-  void
-  addData(const std::string& name)
-  {
-  }
-
-  ComplexSelectorsDataset()
-  {
-    // Dataset
-    this->data.push_back(createData("/a/b/c"));
-    this->data.push_back(createData("/a/b/d/1"));
-    this->data.push_back(createData("/a/b/d/2"));
-    this->data.push_back(createData("/a/b/d/3"));
-    this->data.push_back(createData("/a/b/d/4/I"));
-    this->data.push_back(createData("/a/b/d/4"));
-    this->data.push_back(createData("/a/b/d"));
-    this->data.push_back(createData("/a/b/e/1"));
-    this->data.push_back(createData("/a/b/e"));
-
-    // Basic selects
-    this->interests.push_back(std::make_pair(Interest("/a/b/c"),     this->getData("/a/b/c")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d"),     this->getData("/a/b/d")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/1"),   this->getData("/a/b/d/1")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/2"),   this->getData("/a/b/d/2")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/3"),   this->getData("/a/b/d/3")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/4/I"), this->getData("/a/b/d/4/I")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/d/4"),   this->getData("/a/b/d/4")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/e"),     this->getData("/a/b/e")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/e/1"),   this->getData("/a/b/e/1")));
-
-    // Complex selects
-    this->interests.push_back(std::make_pair(Interest("/a/b")
-                                             .setSelectors(Selectors()
-                                                           .setMinSuffixComponents(2)
-                                                           .setMaxSuffixComponents(2)),
-                                             this->getData("/a/b/c")));
-
-    this->interests.push_back(std::make_pair(Interest("/a/b/d")
-                                             .setSelectors(Selectors()
-                                                           .setMinSuffixComponents(-1)
-                                                           .setChildSelector(0)),
-                                             this->getData("/a/b/d")));
-
-    this->interests.push_back(std::make_pair(Interest("/a/b/d")
-                                             .setSelectors(Selectors()
-                                                           .setMinSuffixComponents(2)
-                                                           .setChildSelector(0)),
-                                             this->getData("/a/b/d/1")));
-
-    this->interests.push_back(std::make_pair(
-      Interest("/a/b/d")
-      .setSelectors(Selectors()
-                    .setChildSelector(1)
-                    .setMaxSuffixComponents(2)
-                    .setMinSuffixComponents(2)
-                    .setExclude(Exclude()
-                                .excludeRange(ndn::name::Component("3"),
-                                              ndn::name::Component("4")))),
-      this->getData("/a/b/d/2")));
-
-
-    this->interests.push_back(std::make_pair(Interest("/a/b/d")
-                                               .setSelectors(Selectors().setMinSuffixComponents(3)),
-                                             this->getData("/a/b/d/4/I")));
-
-    // According to selector definition, RightMost for the next level and LeftMost for the next-next level
-    this->interests.push_back(std::make_pair(Interest("/a/b/d")
-                                             .setSelectors(Selectors()
-                                                           .setMinSuffixComponents(2)
-                                                           .setChildSelector(1)),
-                                             this->getData("/a/b/d/4")));
-
-    // because of the digest component, /a/b/d will be to the right of /a/b/d/4
-    this->interests.push_back(std::make_pair(Interest("/a/b/d")
-                                             .setSelectors(Selectors()
-                                                           .setChildSelector(1)),
-                                             this->getData("/a/b/d/4")));
-
-    // Alex: this interest doesn't make sense, as all Data packets will have the same selector
-    this->interests.push_back(std::make_pair(Interest("/a/b/e")
-                                             .setSelectors(Selectors()
-                                                           .setPublisherPublicKeyLocator(
-                                                             this->data.back()
-                                                               ->getSignature().getKeyLocator())),
-                                             this->getData("/a/b/e")));
-
-    // Removals
-    this->removals.push_back(std::make_pair(Interest("/a/b/d/2"), 1));
-
-    this->removals.push_back(std::make_pair(
-      Interest("/a/b/d")
-      .setSelectors(Selectors()
-                    .setMaxSuffixComponents(2)
-                    .setMinSuffixComponents(2)
-                    .setExclude(Exclude()
-                                .excludeOne(ndn::name::Component("3")))),
-      2));
-  }
-};
-
-
-typedef boost::mpl::vector<BasicDataset,
-                           FetchByPrefixDataset,
-                           BasicChildSelectorDataset,
-                           ExtendedChildSelectorDataset,
-                           SamePrefixDataset<10>,
-                           SamePrefixDataset<100>> CommonDatasets;
-
-
+using CommonDatasets = boost::mpl::vector<BasicDataset,
+                                          FetchByPrefixDataset,
+                                          SamePrefixDataset<10>,
+                                          SamePrefixDataset<100>>;
 } // namespace tests
 } // namespace repo
 

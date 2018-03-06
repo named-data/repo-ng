@@ -47,14 +47,15 @@ Consumer::fetchData(const Name& name)
   }
   else {
     interest.setMustBeFresh(true);
-    interest.setChildSelector(1);
   }
 
+  interest.setCanBePrefix(m_canBePrefix);
+
   m_face.expressInterest(interest,
-                         m_hasVersion ? bind(&Consumer::onVersionedData, this, _1, _2)
-                                      : bind(&Consumer::onUnversionedData, this, _1, _2),
-                         bind(&Consumer::onTimeout, this, _1), // Nack
-                         bind(&Consumer::onTimeout, this, _1));
+                         m_hasVersion ? std::bind(&Consumer::onVersionedData, this, _1, _2)
+                                      : std::bind(&Consumer::onUnversionedData, this, _1, _2),
+                         std::bind(&Consumer::onTimeout, this, _1), // Nack
+                         std::bind(&Consumer::onTimeout, this, _1));
 }
 
 void
@@ -112,7 +113,6 @@ void
 Consumer::onUnversionedData(const Interest& interest, const Data& data)
 {
   const Name& name = data.getName();
-  //std::cout<<"recevied data name = "<<name<<std::endl;
   if (name.size() == m_dataName.size() + 1) {
     if (!m_isSingle) {
       Name fetchName = name;
@@ -155,7 +155,7 @@ Consumer::readData(const Data& data)
     std::cerr << "LOG: received data = " << data.getName() << std::endl;
   }
   if (m_isFinished || m_isSingle) {
-    std::cerr << "INFO: End of file is reached." << std::endl;
+    std::cerr << "INFO: End of file is reached" << std::endl;
     std::cerr << "INFO: Total # of segments received: " << m_nextSegment  << std::endl;
     std::cerr << "INFO: Total # bytes of content received: " << m_totalSize << std::endl;
   }
@@ -188,7 +188,7 @@ Consumer::onTimeout(const Interest& interest)
     // Retransmit the interest
     fetchData(interest.getName());
     if (m_verbose) {
-        std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
+      std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
     }
   }
   else {
@@ -240,7 +240,7 @@ main(int argc, char** argv)
           interestLifetime = boost::lexical_cast<int>(optarg);
         }
         catch (const boost::bad_lexical_cast&) {
-          std::cerr << "ERROR: -l option should be an integer." << std::endl;
+          std::cerr << "ERROR: -l option should be an integer" << std::endl;
           return 1;
         }
         interestLifetime = std::max(interestLifetime, 0);
@@ -250,7 +250,7 @@ main(int argc, char** argv)
           timeout = boost::lexical_cast<int>(optarg);
         }
         catch (const boost::bad_lexical_cast&) {
-          std::cerr << "ERROR: -w option should be an integer." << std::endl;
+          std::cerr << "ERROR: -w option should be an integer" << std::endl;
           return 1;
         }
         timeout = std::max(timeout, 0);

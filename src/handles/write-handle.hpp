@@ -23,14 +23,11 @@
 #include "command-base-handle.hpp"
 
 #include <ndn-cxx/mgmt/dispatcher.hpp>
+#include <ndn-cxx/util/segment-fetcher.hpp>
 
 #include <queue>
 
 namespace repo {
-
-using std::map;
-using std::pair;
-using std::queue;
 
 /**
  * @brief WriteHandle provides basic credit based congestion control.
@@ -80,12 +77,11 @@ private:
   */
   struct ProcessInfo
   {
-    //ProcessId id;
     RepoCommandResponse response;
-    queue<SegmentNo> nextSegmentQueue;  ///< queue of waiting segment
+    std::queue<SegmentNo> nextSegmentQueue;  ///< queue of waiting segment
                                         ///  to be sent when having credits
     SegmentNo nextSegment;  ///< last segment put into the nextSegmentQueue
-    map<SegmentNo, int> retryCounts;  ///< to store retrying times of timeout segment
+    std::map<SegmentNo, int> retryCounts;  ///< to store retrying times of timeout segment
     int credit;  ///< congestion control credits of process
 
     /**
@@ -136,16 +132,13 @@ private:  // segmented data fetching
    * @brief fetch segmented data
    */
   void
-  onSegmentData(const Interest& interest, const Data& data, ProcessId processId);
-
-  void
-  onSegmentDataValidated(const Interest& interest, const Data& data, ProcessId processId);
+  onSegmentData(ndn::util::SegmentFetcher& fetcher, const Data& data, ProcessId processId);
 
   /**
-   * @brief Timeout when fetching segmented data. Data can be fetched RETRY_TIMEOUT times.
+   * @brief handle when fetching segmented data timeout
    */
   void
-  onSegmentTimeout(const Interest& interest, ProcessId processId);
+  onSegmentTimeout(ndn::util::SegmentFetcher& fetcher, ProcessId processId);
 
   /**
    * @brief initiate fetching segmented data
@@ -153,29 +146,11 @@ private:  // segmented data fetching
   void
   segInit(ProcessId processId, const RepoCommandParameter& parameter);
 
-  /**
-   * @brief control for sending interests in function onSegmentData()
-   */
-  void
-  onSegmentDataControl(ProcessId processId, const Interest& interest);
-
-  /**
-   * @brief control for sending interest in function onSegmentTimeout
-   */
-  void
-  onSegmentTimeoutControl(ProcessId processId, const Interest& interest);
-
   void
   processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
                                 const ndn::mgmt::CommandContinuation& done);
 
 private:
-  /**
-   * @brief failure of validation for both one or segmented data
-   */
-  void
-  onDataValidationFailed(const Data& data, const ValidationError& error);
-
   /**
    * @brief extends noEndTime of process if not noEndTimeout, set StatusCode 405
    *
@@ -213,9 +188,12 @@ private:
 
 private:
   Validator& m_validator;
-  map<ProcessId, ProcessInfo> m_processes;
-  int m_retryTime;
+
+  std::map<ProcessId, ProcessInfo> m_processes;
+
   int m_credit;
+  bool m_canBePrefix;
+  ndn::time::milliseconds m_maxTimeout;
   ndn::time::milliseconds m_noEndTimeout;
   ndn::time::milliseconds m_interestLifetime;
 };

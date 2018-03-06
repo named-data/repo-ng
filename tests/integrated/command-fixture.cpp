@@ -28,8 +28,8 @@ CommandFixture::CommandFixture()
   , dispatcher(repoFace, keyChain)
   , validator(repoFace)
 {
-  this->saveIdentityCertificate(keyChain.getPib().getDefaultIdentity().getName(),
-                                "tests/integrated/insert-delete-test.cert");
+  this->addIdentity("/ndn/test/repo");
+  this->saveIdentityCertificate("/ndn/test/repo", "tests/integrated/insert-delete-test.cert");
   validator.load("tests/integrated/insert-delete-validator-config.conf");
 }
 

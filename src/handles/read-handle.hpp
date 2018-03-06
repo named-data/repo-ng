@@ -54,7 +54,7 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   }
 
   /**
-   * @param after Do something after actually removing a prefix
+   * @param name Full name of the deleted Data
    */
   void
   onDataDeleted(const Name& name);

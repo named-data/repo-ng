@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2018,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -17,38 +17,35 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_TESTS_REPO_STORAGE_FIXTURE_HPP
-#define REPO_TESTS_REPO_STORAGE_FIXTURE_HPP
+#ifndef REPO_EXTENDED_ERROR_MESSAGE_HPP
+#define REPO_EXTENDED_ERROR_MESSAGE_HPP
 
-#include "storage/repo-storage.hpp"
-
-#include <boost/filesystem.hpp>
-#include <boost/test/unit_test.hpp>
+#include <boost/exception/get_error_info.hpp>
+#include <sstream>
 
 namespace repo {
-namespace tests {
 
-class RepoStorageFixture
+template<typename E>
+std::string
+getExtendedErrorMessage(const E& exception)
 {
-public:
-  RepoStorageFixture()
-    : store(std::make_shared<SqliteStorage>("unittestdb"))
-    , handle(std::make_shared<RepoStorage>(*store))
-  {
+  std::ostringstream errorMessage;
+  errorMessage << exception.what();
+
+  const char* const* file = boost::get_error_info<boost::throw_file>(exception);
+  const int* line = boost::get_error_info<boost::throw_line>(exception);
+  const char* const* func = boost::get_error_info<boost::throw_function>(exception);
+  if (file && line) {
+    errorMessage << " [from " << *file << ":" << *line;
+    if (func) {
+      errorMessage << " in " << *func;
+    }
+    errorMessage << "]";
   }
 
-  ~RepoStorageFixture()
-  {
-    boost::filesystem::remove_all(boost::filesystem::path("unittestdb"));
-  }
+  return errorMessage.str();
+}
 
-
-public:
-  std::shared_ptr<Storage> store;
-  std::shared_ptr<RepoStorage> handle;
-};
-
-} // namespace tests
 } // namespace repo
 
-#endif // REPO_TESTS_REPO_STORAGE_FIXTURE_HPP
+#endif // REPO_EXTENDED_ERROR_MESSAGE_HPP

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -23,14 +23,14 @@
 #include <iostream>
 #include <string>
 
+#include <ndn-cxx/util/sqlite3-statement.hpp>
+
 #include <boost/property_tree/info_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 #include <sqlite3.h>
 
 namespace repo {
-
-using std::string;
 
 static void
 printUsage(const char* programName)
@@ -80,20 +80,19 @@ private:
 RepoEnumerator::RepoEnumerator(const std::string& configFile)
 {
   readConfig(configFile);
-  char* errMsg = 0;
-  int rc = sqlite3_open_v2(m_dbPath.c_str(), &m_db,
-                           SQLITE_OPEN_READONLY,
+  char* errMsg = nullptr;
+  int rc = sqlite3_open_v2(m_dbPath.c_str(), &m_db, SQLITE_OPEN_READONLY,
    #ifdef DISABLE_SQLITE3_FS_LOCKING
-                            "unix-dotfile"
+                           "unix-dotfile"
    #else
-                            0
+                           nullptr
    #endif
                           );
   if (rc != SQLITE_OK) {
     BOOST_THROW_EXCEPTION(Error("Database file open failure"));
   }
-  sqlite3_exec(m_db, "PRAGMA synchronous = OFF", 0, 0, &errMsg);
-  sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", 0, 0, &errMsg);
+  sqlite3_exec(m_db, "PRAGMA synchronous = OFF", nullptr, nullptr, &errMsg);
+  sqlite3_exec(m_db, "PRAGMA journal_mode = WAL", nullptr, nullptr, &errMsg);
 }
 
 void
@@ -123,49 +122,34 @@ RepoEnumerator::readConfig(const std::string& configFile)
 uint64_t
 RepoEnumerator::enumerate(bool showImplicitDigest)
 {
-  sqlite3_stmt* m_stmt = 0;
-  int rc = SQLITE_DONE;
-  string sql = string("SELECT id, name, keylocatorHash FROM NDN_REPO;");
-  rc = sqlite3_prepare_v2(m_db, sql.c_str(), -1, &m_stmt, 0);
-  if (rc != SQLITE_OK)
-    BOOST_THROW_EXCEPTION(Error("Initiation Read Entries from Database Prepare error"));
-  uint64_t entryNumber = 0;
+  ndn::util::Sqlite3Statement stmt(m_db, "SELECT data FROM NDN_REPO_V2;");
+  uint64_t nEntries = 0;
   while (true) {
-    rc = sqlite3_step(m_stmt);
+    int rc = stmt.step();
     if (rc == SQLITE_ROW) {
-      Name name;
-      name.wireDecode(Block(reinterpret_cast<const uint8_t*>(sqlite3_column_blob(m_stmt, 1)),
-                            sqlite3_column_bytes(m_stmt, 1)));
-      try {
-        if (showImplicitDigest) {
-          std::cout << name << std::endl;
-        }
-        else {
-          std::cout << name.getPrefix(-1) << std::endl;
-        }
+      Data data(stmt.getBlock(0));
+      if (showImplicitDigest) {
+        std::cout << data.getFullName() << std::endl;
       }
-      catch (...){
-        sqlite3_finalize(m_stmt);
-        throw;
+      else {
+        std::cout << data.getName() << std::endl;
       }
-      entryNumber++;
+      nEntries++;
     }
     else if (rc == SQLITE_DONE) {
-      sqlite3_finalize(m_stmt);
       break;
     }
     else {
-      sqlite3_finalize(m_stmt);
       BOOST_THROW_EXCEPTION(Error("Initiation Read Entries error"));
     }
   }
-  return entryNumber;
+  return nEntries;
 }
 
 int
 main(int argc, char** argv)
 {
-  string configPath = DEFAULT_CONFIG_FILE;
+  std::string configPath = DEFAULT_CONFIG_FILE;
   bool showImplicitDigest = true;
   int opt;
   while ((opt = getopt(argc, argv, "hc:n")) != -1) {
@@ -174,7 +158,7 @@ main(int argc, char** argv)
       printUsage(argv[0]);
       return 0;
     case 'c':
-      configPath = string(optarg);
+      configPath = std::string(optarg);
       break;
     case 'n':
       showImplicitDigest = false;

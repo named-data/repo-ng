@@ -21,9 +21,8 @@
 
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
 #include <ndn-cxx/encoding/block-helpers.hpp>
-#include <ndn-cxx/name.hpp>
-#include <ndn-cxx/selectors.hpp>
 #include <ndn-cxx/mgmt/control-parameters.hpp>
+#include <ndn-cxx/name.hpp>
 
 namespace repo {
 
@@ -32,14 +31,6 @@ RepoCommandParameter::setName(const Name& name)
 {
   m_name = name;
   m_hasFields[REPO_PARAMETER_NAME] = true;
-  m_wire.reset();
-  return *this;
-}
-
-RepoCommandParameter&
-RepoCommandParameter::setSelectors(const Selectors& selectors)
-{
-  m_selectors = selectors;
   m_wire.reset();
   return *this;
 }
@@ -67,24 +58,6 @@ RepoCommandParameter::setProcessId(uint64_t processId)
 {
   m_processId = processId;
   m_hasFields[REPO_PARAMETER_PROCESS_ID] = true;
-  m_wire.reset();
-  return *this;
-}
-
-RepoCommandParameter&
-RepoCommandParameter::setMaxInterestNum(uint64_t maxInterestNum)
-{
-  m_maxInterestNum = maxInterestNum;
-  m_hasFields[REPO_PARAMETER_MAX_INTEREST_NUM] = true;
-  m_wire.reset();
-  return *this;
-}
-
-RepoCommandParameter&
-RepoCommandParameter::setWatchTimeout(milliseconds watchTimeout)
-{
-  m_watchTimeout = watchTimeout;
-  m_hasFields[REPO_PARAMETER_WATCH_TIME_OUT] = true;
   m_wire.reset();
   return *this;
 }
@@ -126,29 +99,11 @@ RepoCommandParameter::wireEncode(EncodingImpl<T>& encoder) const
     totalLength += encoder.prependVarNumber(tlv::StartBlockId);
   }
 
-  if (m_hasFields[REPO_PARAMETER_MAX_INTEREST_NUM]) {
-    variableLength = encoder.prependNonNegativeInteger(m_maxInterestNum);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::MaxInterestNum);
-  }
-
-  if (m_hasFields[REPO_PARAMETER_WATCH_TIME_OUT]) {
-    variableLength = encoder.prependNonNegativeInteger(m_watchTimeout.count());
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::WatchTimeout);
-  }
-
   if (m_hasFields[REPO_PARAMETER_INTEREST_LIFETIME]) {
     variableLength = encoder.prependNonNegativeInteger(m_interestLifetime.count());
     totalLength += variableLength;
     totalLength += encoder.prependVarNumber(variableLength);
     totalLength += encoder.prependVarNumber(tlv::InterestLifetime);
-  }
-
-  if (!getSelectors().empty()) {
-    totalLength += getSelectors().wireEncode(encoder);
   }
 
   if (m_hasFields[REPO_PARAMETER_NAME]) {
@@ -196,15 +151,6 @@ RepoCommandParameter::wireDecode(const Block& wire)
     m_name.wireDecode(m_wire.get(tlv::Name));
   }
 
-  // Selectors
-  val = m_wire.find(tlv::Selectors);
-  if (val != m_wire.elements_end())
-  {
-    m_selectors.wireDecode(*val);
-  }
-  else
-    m_selectors = Selectors();
-
   // StartBlockId
   val = m_wire.find(tlv::StartBlockId);
   if (val != m_wire.elements_end())
@@ -227,22 +173,6 @@ RepoCommandParameter::wireDecode(const Block& wire)
   {
     m_hasFields[REPO_PARAMETER_PROCESS_ID] = true;
     m_processId = readNonNegativeInteger(*val);
-  }
-
-  // MaxInterestNum
-  val = m_wire.find(tlv::MaxInterestNum);
-  if (val != m_wire.elements_end())
-  {
-    m_hasFields[REPO_PARAMETER_MAX_INTEREST_NUM] = true;
-    m_maxInterestNum = readNonNegativeInteger(*val);
-  }
-
-  // WatchTimeout
-  val = m_wire.find(tlv::WatchTimeout);
-  if (val != m_wire.elements_end())
-  {
-    m_hasFields[REPO_PARAMETER_WATCH_TIME_OUT] = true;
-    m_watchTimeout = milliseconds(readNonNegativeInteger(*val));
   }
 
   // InterestLifeTime
@@ -274,14 +204,6 @@ operator<<(std::ostream& os, const RepoCommandParameter& repoCommandParameter)
   // ProcessId
   if (repoCommandParameter.hasProcessId()) {
     os << " ProcessId: " << repoCommandParameter.getProcessId();
-  }
-  // MaxInterestNum
-  if (repoCommandParameter.hasMaxInterestNum()) {
-    os << " MaxInterestNum: " << repoCommandParameter.getMaxInterestNum();
-  }
-  // WatchTimeout
-  if (repoCommandParameter.hasProcessId()) {
-    os << " WatchTimeout: " << repoCommandParameter.getWatchTimeout();
   }
   // InterestLifetime
   if (repoCommandParameter.hasProcessId()) {

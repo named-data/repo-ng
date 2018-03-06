@@ -62,10 +62,6 @@ private:
                              const ndn::mgmt::CommandContinuation& done) const;
 
   void
-  processSelectorDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
-                               const ndn::mgmt::CommandContinuation& done) const;
-
-  void
   processSegmentDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
                               const ndn::mgmt::CommandContinuation& done) const;
 };

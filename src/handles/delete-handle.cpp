@@ -19,7 +19,11 @@
 
 #include "delete-handle.hpp"
 
+#include <ndn-cxx/util/logger.hpp>
+
 namespace repo {
+
+NDN_LOG_INIT(repo.DeleteHandle);
 
 DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle,
                            ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
@@ -39,12 +43,6 @@ DeleteHandle::handleDeleteCommand(const Name& prefix, const Interest& interest,
                                   const ndn::mgmt::CommandContinuation& done)
 {
   const RepoCommandParameter& repoParameter = dynamic_cast<const RepoCommandParameter&>(parameter);
-
-  if (repoParameter.hasSelectors()) {
-    //choose data with selector and delete it
-    processSelectorDeleteCommand(interest, repoParameter, done);
-    return;
-  }
 
   if (!repoParameter.hasStartBlockId() && !repoParameter.hasEndBlockId()) {
     processSingleDeleteCommand(interest, repoParameter, done);
@@ -87,25 +85,11 @@ DeleteHandle::processSingleDeleteCommand(const Interest& interest, const RepoCom
 {
   int64_t nDeletedData = storageHandle.deleteData(parameter.getName());
   if (nDeletedData == -1) {
-    std::cerr << "Deletion Failed!" <<std::endl;
+    NDN_LOG_DEBUG("Deletion Failed");
     done(negativeReply(interest, 405, "Deletion Failed"));
   }
   else
   done(positiveReply(interest, parameter, 200, nDeletedData));
-}
-
-void
-DeleteHandle::processSelectorDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
-                                           const ndn::mgmt::CommandContinuation& done) const
-{
-  int64_t nDeletedData = storageHandle.deleteData(Interest(parameter.getName())
-                                      .setSelectors(parameter.getSelectors()));
-  if (nDeletedData == -1) {
-    std::cerr << "Deletion Failed!" <<std::endl;
-    done(negativeReply(interest, 405, "Deletion Failed"));
-  }
-  else
-    done(positiveReply(interest, parameter, 200, nDeletedData));
 }
 
 void

@@ -67,27 +67,6 @@ InsertCheckCommand::InsertCheckCommand()
     .required(REPO_PARAMETER_PROCESS_ID);
 }
 
-WatchStartCommand::WatchStartCommand()
-{
-  m_requestValidator
-    .required(REPO_PARAMETER_NAME)
-    .optional(REPO_PARAMETER_INTEREST_LIFETIME)
-    .optional(REPO_PARAMETER_MAX_INTEREST_NUM)
-    .optional(REPO_PARAMETER_WATCH_TIME_OUT);
-}
-
-WatchCheckCommand::WatchCheckCommand()
-{
-  m_requestValidator
-    .required(REPO_PARAMETER_NAME);
-}
-
-WatchStopCommand::WatchStopCommand()
-{
-  m_requestValidator
-    .required(REPO_PARAMETER_NAME);
-}
-
 DeleteCommand::DeleteCommand()
 {
   m_requestValidator
@@ -95,16 +74,6 @@ DeleteCommand::DeleteCommand()
     .required(REPO_PARAMETER_START_BLOCK_ID)
     .required(REPO_PARAMETER_END_BLOCK_ID)
     .required(REPO_PARAMETER_PROCESS_ID);
-}
-void
-InsertCommand::check(const RepoCommandParameter& parameters) const
-{
-  if (parameters.hasStartBlockId() || parameters.hasEndBlockId()) {
-    if (parameters.hasSelectors()) {
-      BOOST_THROW_EXCEPTION(ArgumentError("BlockId present. BlockId is not supported in this protocol"));
-      return;
-    }
-  }
 }
 
 void

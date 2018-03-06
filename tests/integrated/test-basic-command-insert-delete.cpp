@@ -36,15 +36,13 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
 
-
-#include <iostream>
-
 namespace repo {
 namespace tests {
 
 using ndn::time::milliseconds;
 using ndn::time::seconds;
 using ndn::EventId;
+
 
 // All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandInsertDelete)
@@ -60,6 +58,7 @@ public:
     , deleteHandle(repoFace, *handle, dispatcher, scheduler, validator)
     , insertFace(repoFace.getIoService())
     , deleteFace(repoFace.getIoService())
+    , signer(keyChain)
   {
     Name cmdPrefix("/repo/command");
     repoFace.registerPrefix(cmdPrefix, nullptr,
@@ -113,6 +112,8 @@ public:
   Face insertFace;
   Face deleteFace;
   std::map<Name, EventId> insertEvents;
+  std::map<Name, Name> deleteNamePairs;
+  ndn::security::CommandInterestSigner signer;
 };
 
 template<class T> void
@@ -129,9 +130,7 @@ Fixture<T>::onInsertInterest(const Interest& interest)
     insertEvents.erase(event);
   }
   // schedule an event 50ms later to check whether insert is Ok
-  scheduler.scheduleEvent(500_ms,
-                          bind(&Fixture<T>::checkInsertOk, this, interest));
-
+  scheduler.scheduleEvent(500_ms, std::bind(&Fixture<T>::checkInsertOk, this, interest));
 }
 
 
@@ -165,8 +164,7 @@ Fixture<T>::onDeleteData(const Interest& interest, const Data& data)
   BOOST_CHECK_EQUAL(statusCode, 200);
 
   //schedlute an event to check whether delete is Ok.
-  scheduler.scheduleEvent(100_ms,
-                          bind(&Fixture<T>::checkDeleteOk, this, interest));
+  scheduler.scheduleEvent(100_ms, std::bind(&Fixture<T>::checkDeleteOk, this, interest));
 }
 
 template<class T> void
@@ -185,25 +183,25 @@ template<class T> void
 Fixture<T>::sendInsertInterest(const Interest& insertInterest)
 {
   insertFace.expressInterest(insertInterest,
-                             bind(&Fixture<T>::onInsertData, this, _1, _2),
-                             bind(&Fixture<T>::onInsertTimeout, this, _1), // Nack
-                             bind(&Fixture<T>::onInsertTimeout, this, _1));
+                             std::bind(&Fixture<T>::onInsertData, this, _1, _2),
+                             std::bind(&Fixture<T>::onInsertTimeout, this, _1), // Nack
+                             std::bind(&Fixture<T>::onInsertTimeout, this, _1));
 }
 
 template<class T> void
 Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
 {
   deleteFace.expressInterest(deleteInterest,
-                             bind(&Fixture<T>::onDeleteData, this, _1, _2),
-                             bind(&Fixture<T>::onDeleteTimeout, this, _1), // Nack
-                             bind(&Fixture<T>::onDeleteTimeout, this, _1));
+                             std::bind(&Fixture<T>::onDeleteData, this, _1, _2),
+                             std::bind(&Fixture<T>::onDeleteTimeout, this, _1), // Nack
+                             std::bind(&Fixture<T>::onDeleteTimeout, this, _1));
 }
 
 template<class T> void
 Fixture<T>::checkInsertOk(const Interest& interest)
 {
   BOOST_TEST_MESSAGE(interest);
-  shared_ptr<Data> data = handle->readData(interest);
+  std::shared_ptr<Data> data = handle->readData(interest);
   if (data) {
     int rc = memcmp(data->getContent().value(), content, sizeof(content));
     BOOST_CHECK_EQUAL(rc, 0);
@@ -216,9 +214,13 @@ Fixture<T>::checkInsertOk(const Interest& interest)
 template<class T> void
 Fixture<T>::checkDeleteOk(const Interest& interest)
 {
-  shared_ptr<Data> data = handle->readData(interest);
-  BOOST_CHECK_EQUAL(data, shared_ptr<Data>());
+  std::map<Name, Name>::iterator name = deleteNamePairs.find(interest.getName());
+  BOOST_CHECK_MESSAGE(name != deleteNamePairs.end(), "Delete name not found: " << interest.getName());
+  Interest dataInterest(name->second);
+  std::shared_ptr<Data> data = handle->readData(dataInterest);
+  BOOST_CHECK(!data);
 }
+
 
 template<class T> void
 Fixture<T>::scheduleInsertEvent()
@@ -230,24 +232,20 @@ Fixture<T>::scheduleInsertEvent()
     RepoCommandParameter insertParameter;
     insertParameter.setName(Name((*i)->getName())
                             .appendNumber(ndn::random::generateWord64()));
-
     insertCommandName.append(insertParameter.wireEncode());
-    Interest insertInterest(insertCommandName);
-    keyChain.sign(insertInterest);
-
+    Interest insertInterest = signer.makeCommandInterest(insertCommandName);
     // schedule a job to express insertInterest every 50ms
     scheduler.scheduleEvent(milliseconds(timeCount * 50 + 1000),
-                            bind(&Fixture<T>::sendInsertInterest, this, insertInterest));
+                            std::bind(&Fixture<T>::sendInsertInterest, this, insertInterest));
     // schedule what to do when interest timeout
     EventId delayEventId = scheduler.scheduleEvent(milliseconds(5000 + timeCount * 50),
-                                                   bind(&Fixture<T>::delayedInterest, this));
+                                                   std::bind(&Fixture<T>::delayedInterest, this));
     insertEvents[insertParameter.getName()] = delayEventId;
-
-    //The delayEvent will be canceled in onInsertInterest
+    // The delayEvent will be canceled in onInsertInterest
     insertFace.setInterestFilter(insertParameter.getName(),
-                                 bind(&Fixture<T>::onInsertInterest, this, _2),
+                                 std::bind(&Fixture<T>::onInsertInterest, this, _2),
                                  ndn::RegisterPrefixSuccessCallback(),
-                                 bind(&Fixture<T>::onRegisterFailed, this, _2));
+                                 std::bind(&Fixture<T>::onRegisterFailed, this, _2));
     timeCount++;
   }
 }
@@ -263,27 +261,23 @@ Fixture<T>::scheduleDeleteEvent()
     deleteParameter.setProcessId(ndn::random::generateWord64());
     deleteParameter.setName((*i)->getName());
     deleteCommandName.append(deleteParameter.wireEncode());
-    Interest deleteInterest(deleteCommandName);
-    keyChain.sign(deleteInterest);
+    Interest deleteInterest = signer.makeCommandInterest(deleteCommandName);
+    deleteNamePairs[deleteInterest.getName()] = (*i)->getName();
     scheduler.scheduleEvent(milliseconds(4000 + timeCount * 50),
-                            bind(&Fixture<T>::sendDeleteInterest, this, deleteInterest));
+                            std::bind(&Fixture<T>::sendDeleteInterest, this, deleteInterest));
     timeCount++;
   }
 }
 
-typedef boost::mpl::vector<BasicDataset,
-                           FetchByPrefixDataset,
-                           BasicChildSelectorDataset,
-                           ExtendedChildSelectorDataset,
-                           SamePrefixDataset<10>> Datasets;
+using Datasets = boost::mpl::vector<BasicDataset,
+                                    FetchByPrefixDataset,
+                                    SamePrefixDataset<10>>;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 {
   // schedule events
-  this->scheduler.scheduleEvent(0_s,
-                                bind(&Fixture<T>::scheduleInsertEvent, this));
-  this->scheduler.scheduleEvent(10_s,
-                                bind(&Fixture<T>::scheduleDeleteEvent, this));
+  this->scheduler.scheduleEvent(0_s, std::bind(&Fixture<T>::scheduleInsertEvent, this));
+  this->scheduler.scheduleEvent(10_s, std::bind(&Fixture<T>::scheduleDeleteEvent, this));
 
   this->repoFace.processEvents(30_s);
 }

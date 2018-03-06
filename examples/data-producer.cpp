@@ -110,12 +110,10 @@ void
 Publisher::run()
 {
   if (mode == AUTO) {
-    m_scheduler.scheduleEvent(timeInterval,
-                            bind(&Publisher::autoGenerate, this));
+    m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::autoGenerate, this));
   }
   else {
-    m_scheduler.scheduleEvent(timeInterval,
-                              bind(&Publisher::generateFromFile, this));
+    m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::generateFromFile, this));
   }
   m_face.processEvents(duration);
 }
@@ -126,10 +124,8 @@ Publisher::autoGenerate()
   Name name = dataPrefix;
   name.appendNumber(m_range());
   std::shared_ptr<Data> data = createData(name);
-  // std::cout<<"data name = "<<data->getName()<<std::endl;
   m_face.put(*data);
-  m_scheduler.scheduleEvent(timeInterval,
-                            bind(&Publisher::autoGenerate, this));
+  m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::autoGenerate, this));
 }
 
 void
@@ -143,8 +139,7 @@ Publisher::generateFromFile()
   getline(insertStream, name);
   std::shared_ptr<Data> data = createData(Name(name));
   m_face.put(*data);
-  m_scheduler.scheduleEvent(timeInterval,
-                            bind(&Publisher::generateFromFile, this));
+  m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::generateFromFile, this));
 }
 
 std::shared_ptr<Data>
@@ -206,7 +201,7 @@ main(int argc, char** argv)
         generator.duration = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-s option should be an integer.";
+        std::cerr << "-s option should be an integer" << std::endl;;
         return 1;
       }
       break;
@@ -215,7 +210,7 @@ main(int argc, char** argv)
         generator.timeInterval = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-t option should be an integer.";
+        std::cerr << "-t option should be an integer" << std::endl;;
         return 1;
       }
       break;

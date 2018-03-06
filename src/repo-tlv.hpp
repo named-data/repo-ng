@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2018,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -36,11 +36,9 @@ enum {
   StatusCode           = 208,
   InsertNum            = 209,
   DeleteNum            = 210,
-  MaxInterestNum       = 211,
-  WatchTimeout         = 212
 };
 
-} // tlv
-} // repo
+} // namespace tlv
+} // namespace repo
 
 #endif // REPO_REPO_TLV_HPP

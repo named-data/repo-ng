@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -30,7 +30,8 @@ public:
   Consumer(const std::string& dataName, std::ostream& os,
            bool verbose, bool versioned, bool single,
            int interestLifetime, int timeout,
-           bool mustBeFresh = false)
+           bool mustBeFresh = false,
+           bool canBePrefix = false)
     : m_dataName(dataName)
     , m_os(os)
     , m_verbose(verbose)
@@ -44,6 +45,7 @@ public:
     , m_totalSize(0)
     , m_retryCount(0)
     , m_mustBeFresh(mustBeFresh)
+    , m_canBePrefix(canBePrefix)
   {
   }
 
@@ -85,6 +87,7 @@ private:
   int m_totalSize;
   int m_retryCount;
   bool m_mustBeFresh;
+  bool m_canBePrefix;
 };
 
 } // namespace repo

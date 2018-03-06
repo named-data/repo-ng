@@ -33,9 +33,9 @@
 #include <iostream>
 #include <string>
 
+#include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/asio.hpp>
 #include <boost/iostreams/operations.hpp>
 #include <boost/iostreams/read.hpp>
 
@@ -161,7 +161,7 @@ private:
   bool m_isFinished;
   ndn::Name m_dataPrefix;
 
-  typedef std::map<uint64_t, shared_ptr<ndn::Data> > DataContainer;
+  using DataContainer = std::map<uint64_t, shared_ptr<ndn::Data>>;
   DataContainer m_data;
   ndn::security::CommandInterestSigner m_cmdSigner;
 };
@@ -265,7 +265,6 @@ void
 NdnPutFile::onInsertCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  //int statusCode = response.getStatusCode();
   int statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("insert command failed with code " +
@@ -503,7 +502,7 @@ main(int argc, char** argv)
         ndnPutFile.freshnessPeriod = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-x option should be an integer.";
+        std::cerr << "-x option should be an integer" << std::endl;;
         return 1;
       }
       break;
@@ -512,7 +511,7 @@ main(int argc, char** argv)
         ndnPutFile.interestLifetime = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-l option should be an integer.";
+        std::cerr << "-l option should be an integer" << std::endl;;
         return 1;
       }
       break;
@@ -522,7 +521,7 @@ main(int argc, char** argv)
         ndnPutFile.timeout = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-w option should be an integer.";
+        std::cerr << "-w option should be an integer" << std::endl;;
         return 1;
       }
       break;
@@ -543,10 +542,9 @@ main(int argc, char** argv)
   if (argc != 3)
     usage();
 
-  ndnPutFile.repoPrefix = Name(argv[0]); std::cout << "Repo prefix: " << argv[0] << std::endl;
-  ndnPutFile.ndnName = Name(argv[1]);    std::cout << "NDN name: " << argv[1] << std::endl;
+  ndnPutFile.repoPrefix = Name(argv[0]);
+  ndnPutFile.ndnName = Name(argv[1]);
   if (strcmp(argv[2], "-") == 0) {
-
     ndnPutFile.insertStream = &std::cin;
     ndnPutFile.run();
   }

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -34,40 +34,40 @@ template<class Dataset>
 class Fixture : public SqliteFixture, public Dataset
 {
 public:
-  std::map<int64_t, shared_ptr<Data>> idToDataMap;
+  std::map<Name, std::shared_ptr<Data>> nameToDataMap;
 };
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertReadDelete, T, CommonDatasets, Fixture<T>)
 {
   BOOST_TEST_CHECKPOINT(T::getName());
 
-  std::vector<int64_t> ids;
+  std::vector<Name> names;
 
   // Insert
-  for (typename T::DataContainer::iterator i = this->data.begin();
+  for (auto i = this->data.begin();
        i != this->data.end(); ++i) {
-    int64_t id = -1;
-    BOOST_REQUIRE_NO_THROW(id = this->handle->insert(**i));
-
-    this->idToDataMap.insert(std::make_pair(id, *i));
-    ids.push_back(id);
+    Name name = Name();
+    this->handle->insert(**i);
+    name = (*i)->getFullName();
+    this->nameToDataMap.insert(std::make_pair(name, *i));
+    names.push_back(name);
   }
   BOOST_CHECK_EQUAL(this->handle->size(), static_cast<int64_t>(this->data.size()));
 
   std::mt19937 rng{std::random_device{}()};
-  std::shuffle(ids.begin(), ids.end(), rng);
+  std::shuffle(names.begin(), names.end(), rng);
 
   // Read (all items should exist)
-  for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {
-    shared_ptr<Data> retrievedData = this->handle->read(*i);
+  for (auto i = names.begin(); i != names.end(); ++i) {
+    std::shared_ptr<Data> retrievedData = this->handle->read(*i);
 
-    BOOST_REQUIRE(this->idToDataMap.count(*i) > 0);
-    BOOST_CHECK_EQUAL(*this->idToDataMap[*i], *retrievedData);
+    BOOST_REQUIRE(this->nameToDataMap.count(*i) > 0);
+    BOOST_CHECK_EQUAL(*this->nameToDataMap[*i], *retrievedData);
   }
   BOOST_CHECK_EQUAL(this->handle->size(), static_cast<int64_t>(this->data.size()));
 
   // Delete
-  for (std::vector<int64_t>::iterator i = ids.begin(); i != ids.end(); ++i) {
+  for (auto i = names.begin(); i != names.end(); ++i) {
     BOOST_CHECK_EQUAL(this->handle->erase(*i), true);
   }
 

@@ -96,34 +96,12 @@ class InsertCommand : public RepoCommand
 {
 public:
   InsertCommand();
-
-private:
-  void
-  check(const RepoCommandParameter& parameters) const override;
 };
 
 class InsertCheckCommand : public RepoCommand
 {
 public:
   InsertCheckCommand();
-};
-
-class WatchStartCommand : public RepoCommand
-{
-public:
-  WatchStartCommand();
-};
-
-class WatchCheckCommand : public RepoCommand
-{
-public:
-  WatchCheckCommand();
-};
-
-class WatchStopCommand : public RepoCommand
-{
-public:
-  WatchStopCommand();
 };
 
 class DeleteCommand : public RepoCommand

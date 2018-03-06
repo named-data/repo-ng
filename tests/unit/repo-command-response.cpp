@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -19,6 +19,8 @@
 
 #include "repo-command-response.hpp"
 
+#include "common.hpp"
+
 #include <boost/test/unit_test.hpp>
 
 namespace repo {
@@ -36,21 +38,15 @@ BOOST_AUTO_TEST_CASE(EncodeDecode)
   response.setInsertNum(100);
   response.setDeleteNum(100);
 
-  ndn::Block wire = response.wireEncode();
+  Block wire = response.wireEncode();
 
   // These octets are obtained by the snippet below.
   // This check is intended to detect unexpected encoding change in the future.
-  //for (auto it = wire.begin(); it != wire.end(); ++it) {
-  //  printf("0x%02x, ", *it);
-  //}
-  static const uint8_t expected[] = {
-    0xcf, 0x16, 0xce, 0x04, 0x49, 0x96, 0x02, 0xd2, 0xd0, 0x02,
-    0x01, 0x94, 0xcc, 0x01, 0x01, 0xcd, 0x01, 0x64, 0xd1, 0x01,
-    0x64, 0xd2, 0x01, 0x64
-  };
+  // Construct a \c Block from hexadecimal \p input.
 
-  BOOST_REQUIRE_EQUAL_COLLECTIONS(expected, expected + sizeof(expected),
-                                  wire.begin(), wire.end());
+  Block expected = "CF16 CE04499602D2D0020194CC0101CD0164D10164D20164"_block;
+
+  BOOST_CHECK_EQUAL(wire, expected);
 
   repo::RepoCommandResponse decoded(wire);
   BOOST_CHECK_EQUAL(decoded.getCode(), response.getCode());

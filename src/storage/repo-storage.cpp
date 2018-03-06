@@ -28,62 +28,52 @@ namespace repo {
 
 NDN_LOG_INIT(repo.RepoStorage);
 
-RepoStorage::RepoStorage(const int64_t& nMaxPackets, Storage& store)
-  : m_index(nMaxPackets)
-  , m_storage(store)
+RepoStorage::RepoStorage(Storage& store)
+  : m_storage(store)
 {
-}
-
-void
-RepoStorage::initialize()
-{
-  NDN_LOG_DEBUG("Initialize");
-  m_storage.fullEnumerate(bind(&RepoStorage::insertItemToIndex, this, _1));
-}
-
-void
-RepoStorage::insertItemToIndex(const Storage::ItemMeta& item)
-{
-  NDN_LOG_DEBUG("Insert data to index " << item.fullName);
-  m_index.insert(item.fullName, item.id, item.keyLocatorHash);
-  afterDataInsertion(item.fullName);
 }
 
 bool
 RepoStorage::insertData(const Data& data)
 {
-   bool isExist = m_index.hasData(data);
-   if (isExist)
-     BOOST_THROW_EXCEPTION(Error("The Entry Has Already In the Skiplist. Cannot be Inserted!"));
-   int64_t id = m_storage.insert(data);
-   if (id == -1)
-     return false;
-   bool didInsert = m_index.insert(data, id);
-   if (didInsert)
-     afterDataInsertion(data.getName());
-   return didInsert;
+  bool isExist = m_storage.has(data.getFullName());
+
+  if (isExist) {
+    NDN_LOG_DEBUG("Data already in storage, regarded as successful data insertion");
+    return true;
+  }
+
+  int64_t id = m_storage.insert(data);
+  NDN_LOG_DEBUG("Insert ID: " << id << ", full name:" << data.getFullName());
+  if (id == NOTFOUND)
+    return false;
+
+  afterDataInsertion(data.getName());
+  return true;
 }
 
 ssize_t
 RepoStorage::deleteData(const Name& name)
 {
+  NDN_LOG_DEBUG("Delete: " << name);
   bool hasError = false;
-  std::pair<int64_t,ndn::Name> idName = m_index.find(name);
-  if (idName.first == 0)
-    return false;
+
   int64_t count = 0;
-  while (idName.first != 0) {
-    bool resultDb = m_storage.erase(idName.first);
-    bool resultIndex = m_index.erase(idName.second); //full name
-    if (resultDb && resultIndex) {
-      afterDataDeletion(idName.second);
+  std::shared_ptr<Data> foundData;
+  Name foundName;
+  while ((foundData = m_storage.find(name))) {
+    foundName = foundData->getFullName();
+    bool resultDb = m_storage.erase(foundName);
+    if (resultDb) {
+      afterDataDeletion(foundName);
       count++;
     }
     else {
       hasError = true;
     }
-    idName = m_index.find(name);
+    NDN_LOG_DEBUG("Delete: " << name << ", found " << foundName << ", count " << count << ", result " << resultDb);
   }
+
   if (hasError)
     return -1;
   else
@@ -93,40 +83,15 @@ RepoStorage::deleteData(const Name& name)
 ssize_t
 RepoStorage::deleteData(const Interest& interest)
 {
-  Interest interestDelete = interest;
-  interestDelete.setChildSelector(0);  //to disable the child selector in delete handle
-  int64_t count = 0;
-  bool hasError = false;
-  std::pair<int64_t,ndn::Name> idName = m_index.find(interestDelete);
-  while (idName.first != 0) {
-    bool resultDb = m_storage.erase(idName.first);
-    bool resultIndex = m_index.erase(idName.second); //full name
-    if (resultDb && resultIndex) {
-      afterDataDeletion(idName.second);
-      count++;
-    }
-    else {
-      hasError = true;
-    }
-    idName = m_index.find(interestDelete);
-  }
-  if (hasError)
-    return -1;
-  else
-    return count;
+  return deleteData(interest.getName());
 }
 
-shared_ptr<Data>
+std::shared_ptr<Data>
 RepoStorage::readData(const Interest& interest) const
 {
-  std::pair<int64_t,ndn::Name> idName = m_index.find(interest);
-  if (idName.first != 0) {
-    shared_ptr<Data> data = m_storage.read(idName.first);
-    if (data) {
-      return data;
-    }
-  }
-  return shared_ptr<Data>();
+  NDN_LOG_DEBUG("Reading data for " << interest.getName());
+
+  return m_storage.read(interest.getName());
 }
 
 

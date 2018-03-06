@@ -26,7 +26,6 @@
 #include "handles/delete-handle.hpp"
 #include "handles/read-handle.hpp"
 #include "handles/tcp-bulk-insert-handle.hpp"
-#include "handles/watch-handle.hpp"
 #include "handles/write-handle.hpp"
 
 #include "common.hpp"
@@ -44,12 +43,11 @@ struct RepoConfig
   static const size_t DISABLED_SUBSET_LENGTH = -1;
 
   std::string repoConfigPath;
-  //StorageMethod storageMethod; This will be implemtented if there is other method.
   std::string dbPath;
   std::vector<ndn::Name> dataPrefixes;
   size_t registrationSubset = DISABLED_SUBSET_LENGTH;
   std::vector<ndn::Name> repoPrefixes;
-  std::vector<std::pair<std::string, std::string> > tcpBulkInsertEndpoints;
+  std::vector<std::pair<std::string, std::string>> tcpBulkInsertEndpoints;
   uint64_t nMaxPackets;
   boost::property_tree::ptree validatorNode;
 };
@@ -95,7 +93,6 @@ private:
 
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;
-  WatchHandle m_watchHandle;
   DeleteHandle m_deleteHandle;
   TcpBulkInsertHandle m_tcpBulkInsertHandle;
 };

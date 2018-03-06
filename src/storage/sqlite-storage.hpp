@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014,  Regents of the University of California.
+ * Copyright (c) 2018,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,18 +21,16 @@
 #define REPO_STORAGE_SQLITE_STORAGE_HPP
 
 #include "storage.hpp"
-#include "index.hpp"
-#include <string>
-#include <iostream>
-#include <sqlite3.h>
-#include <stdlib.h>
-#include <vector>
-#include <queue>
+
 #include <algorithm>
+#include <iostream>
+#include <queue>
+#include <stdlib.h>
+#include <string>
+#include <sqlite3.h>
+#include <vector>
 
 namespace repo {
-
-using std::queue;
 
 class SqliteStorage : public Storage
 {
@@ -50,7 +48,6 @@ public:
   explicit
   SqliteStorage(const std::string& dbPath);
 
-  virtual
   ~SqliteStorage();
 
   /**
@@ -58,35 +55,30 @@ public:
    *  @param  data     the data should be inserted into databse
    *  @return int64_t  the id number of each entry in the database
    */
-  virtual int64_t
-  insert(const Data& data);
+  int64_t
+  insert(const Data& data) override;
 
   /**
-   *  @brief  remove the entry in the database by using id
-   *  @param  id   id number of each entry in the database
+   *  @brief  remove the entry in the database by using name as index
+   *  @param  name   name of the data
    */
-  virtual bool
-  erase(const int64_t id);
+  bool
+  erase(const Name& name) override;
 
-  /**
-   *  @brief  get the data from database
-   *  @para   id   id number of each entry in the database, used to find the data
-   */
-  virtual std::shared_ptr<Data>
-  read(const int64_t id);
+  std::shared_ptr<Data>
+  read(const Name& name) override;
+
+  bool
+  has(const Name& name) override;
+
+  std::shared_ptr<Data>
+  find(const Name& name, bool exactMatch = false) override;
 
   /**
    *  @brief  return the size of database
    */
-  virtual int64_t
-  size();
-
-  /**
-   *  @brief enumerate each entry in database and call the function
-   *         insertItemToIndex to reubuild index from database
-   */
-  void
-  fullEnumerate(const std::function<void(const Storage::ItemMeta)>& f);
+  uint64_t
+  size() override;
 
 private:
   void
@@ -95,7 +87,6 @@ private:
 private:
   sqlite3* m_db;
   std::string m_dbPath;
-  int64_t m_size;
 };
 
 

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(EncodeDecode)
 
   // These octets are obtained by the snippet below.
   // This check is intended to detect unexpected encoding change in the future.
-  //for (ndn::Buffer::const_iterator it = wire.begin(); it != wire.end(); ++it) {
+  //for (auto it = wire.begin(); it != wire.end(); ++it) {
   //  printf("0x%02x, ", *it);
   //}
   static const uint8_t expected[] = {
@@ -51,8 +51,6 @@ BOOST_AUTO_TEST_CASE(EncodeDecode)
 
   BOOST_REQUIRE_EQUAL_COLLECTIONS(expected, expected + sizeof(expected),
                                   wire.begin(), wire.end());
-
-  BOOST_REQUIRE_NO_THROW(repo::RepoCommandResponse(wire));
 
   repo::RepoCommandResponse decoded(wire);
   BOOST_CHECK_EQUAL(decoded.getStatusCode(), response.getStatusCode());

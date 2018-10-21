@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,21 +20,22 @@
 #ifndef REPO_REPO_HPP
 #define REPO_REPO_HPP
 
-//#include "storage/repo_storage.hpp"
-#include "storage/sqlite-storage.hpp"
 #include "storage/repo-storage.hpp"
+#include "storage/sqlite-storage.hpp"
 
-#include "handles/read-handle.hpp"
-#include "handles/write-handle.hpp"
-#include "handles/watch-handle.hpp"
 #include "handles/delete-handle.hpp"
+#include "handles/read-handle.hpp"
 #include "handles/tcp-bulk-insert-handle.hpp"
+#include "handles/watch-handle.hpp"
+#include "handles/write-handle.hpp"
 
 #include "common.hpp"
 
+#include <ndn-cxx/mgmt/dispatcher.hpp>
 #include <ndn-cxx/security/validator-config.hpp>
-#include <boost/property_tree/ptree.hpp>
+
 #include <boost/property_tree/info_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 namespace repo {
 
@@ -86,10 +87,12 @@ private:
   RepoConfig m_config;
   ndn::Scheduler m_scheduler;
   ndn::Face m_face;
+  ndn::mgmt::Dispatcher m_dispatcher;
   std::shared_ptr<Storage> m_store;
   RepoStorage m_storageHandle;
   KeyChain m_keyChain;
   ValidatorConfig m_validator;
+
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;
   WatchHandle m_watchHandle;

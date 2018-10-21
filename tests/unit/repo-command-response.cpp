@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(RepoCommandResponse)
 BOOST_AUTO_TEST_CASE(EncodeDecode)
 {
   repo::RepoCommandResponse response;
-  response.setStatusCode(404);
+  response.setCode(404);
   response.setStartBlockId(1);
   response.setEndBlockId(100);
   response.setProcessId(1234567890);
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(EncodeDecode)
                                   wire.begin(), wire.end());
 
   repo::RepoCommandResponse decoded(wire);
-  BOOST_CHECK_EQUAL(decoded.getStatusCode(), response.getStatusCode());
+  BOOST_CHECK_EQUAL(decoded.getCode(), response.getCode());
   BOOST_CHECK_EQUAL(decoded.getStartBlockId(), response.getStartBlockId());
   BOOST_CHECK_EQUAL(decoded.getEndBlockId(), response.getEndBlockId());
   BOOST_CHECK_EQUAL(decoded.getProcessId(), response.getProcessId());

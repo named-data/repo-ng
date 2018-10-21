@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,6 +22,7 @@
 
 #include "../identity-management-fixture.hpp"
 #include <ndn-cxx/security/validator-null.hpp>
+#include <ndn-cxx/mgmt/dispatcher.hpp>
 
 namespace repo {
 namespace tests {
@@ -35,7 +36,7 @@ protected:
   Face repoFace;
   Scheduler scheduler;
   KeyChain& keyChain;
-
+  ndn::mgmt::Dispatcher dispatcher;
   /// \todo #4091 switch to ValidatorPolicyConf and load insert-delete-validator-config.conf
   ValidatorConfig validator;
 };

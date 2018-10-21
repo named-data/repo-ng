@@ -22,10 +22,10 @@
 
 namespace repo {
 
-ReadHandle::ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-                       Scheduler& scheduler, size_t prefixSubsetLength)
-  : BaseHandle(face, storageHandle, keyChain, scheduler)
-  , m_prefixSubsetLength(prefixSubsetLength)
+ReadHandle::ReadHandle(Face& face, RepoStorage& storageHandle, size_t prefixSubsetLength)
+  : m_prefixSubsetLength(prefixSubsetLength)
+  , m_face(face)
+  , m_storageHandle(storageHandle)
 {
   connectAutoListen();
 }
@@ -49,9 +49,9 @@ ReadHandle::connectAutoListen()
 void
 ReadHandle::onInterest(const Name& prefix, const Interest& interest)
 {
-  shared_ptr<ndn::Data> data = getStorageHandle().readData(interest);
+  shared_ptr<ndn::Data> data = m_storageHandle.readData(interest);
   if (data != nullptr) {
-      getFace().put(*data);
+      m_face.put(*data);
   }
 }
 
@@ -59,14 +59,14 @@ void
 ReadHandle::onRegisterFailed(const Name& prefix, const std::string& reason)
 {
   std::cerr << "ERROR: Failed to register prefix in local hub's daemon" << std::endl;
-  getFace().shutdown();
+  m_face.shutdown();
 }
 
 void
 ReadHandle::listen(const Name& prefix)
 {
   ndn::InterestFilter filter(prefix);
-  getFace().setInterestFilter(filter,
+  m_face.setInterestFilter(filter,
                               bind(&ReadHandle::onInterest, this, _1, _2),
                               bind(&ReadHandle::onRegisterFailed, this, _1, _2));
 }
@@ -80,7 +80,7 @@ ReadHandle::onDataDeleted(const Name& name)
   auto check = m_insertedDataPrefixes.find(prefix);
   if (check != m_insertedDataPrefixes.end()) {
     if (--(check->second.useCount) <= 0) {
-      getFace().unsetInterestFilter(check->second.prefixId);
+      m_face.unsetInterestFilter(check->second.prefixId);
       m_insertedDataPrefixes.erase(prefix);
     }
   }
@@ -101,7 +101,7 @@ ReadHandle::onDataInserted(const Name& name)
     // everything down, anyway. If registration failures are ever
     // considered to be recoverable, we would need to make this
     // atomic.
-    const ndn::RegisteredPrefixId* prefixId = getFace().setInterestFilter(filter,
+    const ndn::RegisteredPrefixId* prefixId = m_face.setInterestFilter(filter,
       [this] (const ndn::InterestFilter& filter, const Interest& interest) {
         // Implicit conversion to Name of filter
         onInterest(filter, interest);

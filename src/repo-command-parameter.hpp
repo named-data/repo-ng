@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -26,6 +26,7 @@
 #include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/name.hpp>
 #include <ndn-cxx/selectors.hpp>
+#include <ndn-cxx/mgmt/control-parameters.hpp>
 
 namespace repo {
 
@@ -37,12 +38,33 @@ using ndn::EncodingEstimator;
 using ndn::EncodingBuffer;
 using namespace ndn::time;
 
+enum RepoParameterField {
+  REPO_PARAMETER_NAME,
+  REPO_PARAMETER_START_BLOCK_ID,
+  REPO_PARAMETER_END_BLOCK_ID,
+  REPO_PARAMETER_PROCESS_ID,
+  REPO_PARAMETER_MAX_INTEREST_NUM,
+  REPO_PARAMETER_WATCH_TIME_OUT,
+  REPO_PARAMETER_INTEREST_LIFETIME,
+  REPO_PARAMETER_UBOUND
+};
+
+const std::string REPO_PARAMETER_FIELD[REPO_PARAMETER_UBOUND] = {
+  "Name",
+  "StartBlockId",
+  "EndBlockId",
+  "ProcessId",
+  "MaxInterestNum",
+  "WatchTimeout",
+  "InterestLifetime"
+};
+
 /**
 * @brief Class defining abstraction of parameter of command for NDN Repo Protocol
 * @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
 **/
 
-class RepoCommandParameter
+class RepoCommandParameter : public ndn::mgmt::ControlParameters
 {
 public:
   class Error : public ndn::tlv::Error
@@ -56,18 +78,13 @@ public:
   };
 
   RepoCommandParameter()
-    : m_hasName(false)
-    , m_hasStartBlockId(false)
-    , m_hasEndBlockId(false)
-    , m_hasProcessId(false)
-    , m_hasMaxInterestNum(false)
-    , m_hasWatchTimeout(false)
-    , m_hasInterestLifetime(false)
+    : m_hasFields(REPO_PARAMETER_UBOUND)
   {
   }
 
   explicit
   RepoCommandParameter(const Block& block)
+    : m_hasFields(REPO_PARAMETER_UBOUND)
   {
     wireDecode(block);
   }
@@ -79,18 +96,12 @@ public:
   }
 
   RepoCommandParameter&
-  setName(const Name& name)
-  {
-    m_name = name;
-    m_hasName = true;
-    m_wire.reset();
-    return *this;
-  }
+  setName(const Name& name);
 
   bool
   hasName() const
   {
-    return m_hasName;
+    return m_hasFields[REPO_PARAMETER_NAME];
   }
 
   const Selectors&
@@ -100,12 +111,7 @@ public:
   }
 
   RepoCommandParameter&
-  setSelectors(const Selectors& selectors)
-  {
-    m_selectors = selectors;
-    m_wire.reset();
-    return *this;
-  }
+  setSelectors(const Selectors& selectors);
 
   bool
   hasSelectors() const
@@ -121,18 +127,12 @@ public:
   }
 
   RepoCommandParameter&
-  setStartBlockId(uint64_t startBlockId)
-  {
-    m_startBlockId  = startBlockId;
-    m_hasStartBlockId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setStartBlockId(uint64_t startBlockId);
 
   bool
   hasStartBlockId() const
   {
-    return m_hasStartBlockId;
+    return m_hasFields[REPO_PARAMETER_START_BLOCK_ID];
   }
 
   uint64_t
@@ -143,18 +143,12 @@ public:
   }
 
   RepoCommandParameter&
-  setEndBlockId(uint64_t endBlockId)
-  {
-    m_endBlockId  = endBlockId;
-    m_hasEndBlockId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setEndBlockId(uint64_t endBlockId);
 
   bool
   hasEndBlockId() const
   {
-    return m_hasEndBlockId;
+    return m_hasFields[REPO_PARAMETER_END_BLOCK_ID];
   }
 
   uint64_t
@@ -165,18 +159,12 @@ public:
   }
 
   RepoCommandParameter&
-  setProcessId(uint64_t processId)
-  {
-    m_processId = processId;
-    m_hasProcessId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setProcessId(uint64_t processId);
 
   bool
   hasProcessId() const
   {
-    return m_hasProcessId;
+    return m_hasFields[REPO_PARAMETER_PROCESS_ID];
   }
 
   uint64_t
@@ -187,18 +175,12 @@ public:
   }
 
   RepoCommandParameter&
-  setMaxInterestNum(uint64_t maxInterestNum)
-  {
-    m_maxInterestNum = maxInterestNum;
-    m_hasMaxInterestNum = true;
-    m_wire.reset();
-    return *this;
-  }
+  setMaxInterestNum(uint64_t maxInterestNum);
 
   bool
   hasMaxInterestNum() const
   {
-    return m_hasMaxInterestNum;
+    return m_hasFields[REPO_PARAMETER_MAX_INTEREST_NUM];
   }
 
   milliseconds
@@ -209,18 +191,12 @@ public:
   }
 
   RepoCommandParameter&
-  setWatchTimeout(milliseconds watchTimeout)
-  {
-    m_watchTimeout = watchTimeout;
-    m_hasWatchTimeout = true;
-    m_wire.reset();
-    return *this;
-  }
+  setWatchTimeout(milliseconds watchTimeout);
 
   bool
   hasWatchTimeout() const
   {
-    return m_hasWatchTimeout;
+    return m_hasFields[REPO_PARAMETER_WATCH_TIME_OUT];
   }
 
   milliseconds
@@ -231,32 +207,31 @@ public:
   }
 
   RepoCommandParameter&
-  setInterestLifetime(milliseconds interestLifetime)
-  {
-    m_interestLifetime = interestLifetime;
-    m_hasInterestLifetime = true;
-    m_wire.reset();
-    return *this;
-  }
+  setInterestLifetime(milliseconds interestLifetime);
 
   bool
   hasInterestLifetime() const
   {
-    return m_hasInterestLifetime;
+    return m_hasFields[REPO_PARAMETER_INTEREST_LIFETIME];
+  }
+
+  const std::vector<bool>&
+  getPresentFields() const {
+    return m_hasFields;
   }
 
   template<ndn::encoding::Tag T>
   size_t
   wireEncode(EncodingImpl<T>& block) const;
 
-  const Block&
+  Block
   wireEncode() const;
 
   void
   wireDecode(const Block& wire);
 
 private:
-
+  std::vector<bool> m_hasFields;
   Name m_name;
   Selectors m_selectors;
   uint64_t m_startBlockId;
@@ -266,217 +241,10 @@ private:
   milliseconds m_watchTimeout;
   milliseconds m_interestLifetime;
 
-  bool m_hasName;
-  bool m_hasStartBlockId;
-  bool m_hasEndBlockId;
-  bool m_hasProcessId;
-  bool m_hasMaxInterestNum;
-  bool m_hasWatchTimeout;
-  bool m_hasInterestLifetime;
-
   mutable Block m_wire;
 };
 
-template<ndn::encoding::Tag T>
-inline size_t
-RepoCommandParameter::wireEncode(EncodingImpl<T>& encoder) const
-{
-  size_t totalLength = 0;
-  size_t variableLength = 0;
-
-  if (m_hasProcessId) {
-    variableLength = encoder.prependNonNegativeInteger(m_processId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::ProcessId);
-  }
-
-  if (m_hasEndBlockId) {
-    variableLength = encoder.prependNonNegativeInteger(m_endBlockId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::EndBlockId);
-  }
-
-  if (m_hasStartBlockId) {
-    variableLength = encoder.prependNonNegativeInteger(m_startBlockId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::StartBlockId);
-  }
-
-  if (m_hasMaxInterestNum) {
-    variableLength = encoder.prependNonNegativeInteger(m_maxInterestNum);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::MaxInterestNum);
-  }
-
-  if (m_hasWatchTimeout) {
-    variableLength = encoder.prependNonNegativeInteger(m_watchTimeout.count());
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::WatchTimeout);
-  }
-
-  if (m_hasInterestLifetime) {
-    variableLength = encoder.prependNonNegativeInteger(m_interestLifetime.count());
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::InterestLifetime);
-  }
-
-  if (!getSelectors().empty()) {
-    totalLength += getSelectors().wireEncode(encoder);
-  }
-
-  if (m_hasName) {
-    totalLength += getName().wireEncode(encoder);
-  }
-
-  totalLength += encoder.prependVarNumber(totalLength);
-  totalLength += encoder.prependVarNumber(tlv::RepoCommandParameter);
-  return totalLength;
-}
-
-inline const Block&
-RepoCommandParameter::wireEncode() const
-{
-  if (m_wire.hasWire())
-    return m_wire;
-
-  EncodingEstimator estimator;
-  size_t estimatedSize = wireEncode(estimator);
-
-  EncodingBuffer buffer(estimatedSize, 0);
-  wireEncode(buffer);
-
-  m_wire = buffer.block();
-  return m_wire;
-}
-
-inline void
-RepoCommandParameter::wireDecode(const Block& wire)
-{
-  m_hasName = false;
-  m_hasStartBlockId = false;
-  m_hasEndBlockId = false;
-  m_hasProcessId = false;
-  m_hasMaxInterestNum = false;
-  m_hasWatchTimeout = false;
-  m_hasInterestLifetime = false;
-
-  m_wire = wire;
-
-  m_wire.parse();
-
-  if (m_wire.type() != tlv::RepoCommandParameter)
-    BOOST_THROW_EXCEPTION(Error("Requested decoding of RepoCommandParameter, but Block is of different type"));
-
-  // Name
-  Block::element_const_iterator val = m_wire.find(tlv::Name);
-  if (val != m_wire.elements_end())
-  {
-    m_hasName = true;
-    m_name.wireDecode(m_wire.get(tlv::Name));
-  }
-
-  // Selectors
-  val = m_wire.find(tlv::Selectors);
-  if (val != m_wire.elements_end())
-  {
-    m_selectors.wireDecode(*val);
-  }
-  else
-    m_selectors = Selectors();
-
-  // StartBlockId
-  val = m_wire.find(tlv::StartBlockId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasStartBlockId = true;
-    m_startBlockId = readNonNegativeInteger(*val);
-  }
-
-  // EndBlockId
-  val = m_wire.find(tlv::EndBlockId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasEndBlockId = true;
-    m_endBlockId = readNonNegativeInteger(*val);
-  }
-
-  // ProcessId
-  val = m_wire.find(tlv::ProcessId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasProcessId = true;
-    m_processId = readNonNegativeInteger(*val);
-  }
-
-  // MaxInterestNum
-  val = m_wire.find(tlv::MaxInterestNum);
-  if (val != m_wire.elements_end())
-  {
-    m_hasMaxInterestNum = true;
-    m_maxInterestNum = readNonNegativeInteger(*val);
-  }
-
-  // WatchTimeout
-  val = m_wire.find(tlv::WatchTimeout);
-  if (val != m_wire.elements_end())
-  {
-    m_hasWatchTimeout = true;
-    m_watchTimeout = milliseconds(readNonNegativeInteger(*val));
-  }
-
-  // InterestLiftTime
-  val = m_wire.find(tlv::InterestLifetime);
-  if (val != m_wire.elements_end())
-  {
-    m_hasInterestLifetime = true;
-    m_interestLifetime = milliseconds(readNonNegativeInteger(*val));
-  }
-
-
-}
-
-inline std::ostream&
-operator<<(std::ostream& os, const RepoCommandParameter& repoCommandParameter)
-{
-  os << "RepoCommandParameter(";
-
-  // Name
-  if (repoCommandParameter.hasName()) {
-    os << " Name: " << repoCommandParameter.getName();
-  }
-  if (repoCommandParameter.hasStartBlockId()) {
-  // StartBlockId
-    os << " StartBlockId: " << repoCommandParameter.getStartBlockId();
-  }
-  // EndBlockId
-  if (repoCommandParameter.hasEndBlockId()) {
-    os << " EndBlockId: " << repoCommandParameter.getEndBlockId();
-  }
-  // ProcessId
-  if (repoCommandParameter.hasProcessId()) {
-    os << " ProcessId: " << repoCommandParameter.getProcessId();
-  }
-  // MaxInterestNum
-  if (repoCommandParameter.hasMaxInterestNum()) {
-    os << " MaxInterestNum: " << repoCommandParameter.getMaxInterestNum();
-  }
-  // WatchTimeout
-  if (repoCommandParameter.hasProcessId()) {
-    os << " WatchTimeout: " << repoCommandParameter.getWatchTimeout();
-  }
-  // InterestLifetime
-  if (repoCommandParameter.hasProcessId()) {
-    os << " InterestLifetime: " << repoCommandParameter.getInterestLifetime();
-  }
-  os << " )";
-  return os;
-}
+NDN_CXX_DECLARE_WIRE_ENCODE_INSTANTIATIONS(RepoCommandParameter);
 
 } // namespace repo
 

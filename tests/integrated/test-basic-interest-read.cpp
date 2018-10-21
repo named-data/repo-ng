@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -27,6 +27,8 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <ndn-cxx/util/time.hpp>
+
 namespace repo {
 namespace tests {
 
@@ -41,7 +43,7 @@ class BasicInterestReadFixture : public RepoStorageFixture, public Dataset
 public:
   BasicInterestReadFixture()
     : scheduler(repoFace.getIoService())
-    , readHandle(repoFace, *handle, keyChain, scheduler, 0)
+    , readHandle(repoFace, *handle, 0)
     , readFace(repoFace.getIoService())
   {
   }
@@ -65,7 +67,7 @@ public:
          i != this->data.end(); ++i) {
       //First insert a data into database;
       (*i)->setContent(content, sizeof(content));
-      (*i)->setFreshnessPeriod(ndn::time::milliseconds(36000));
+      (*i)->setFreshnessPeriod(36000_ms);
       keyChain.sign(**i);
       bool rc = handle->insertData(**i);
 
@@ -93,11 +95,17 @@ public:
   }
 
   void
+  onReadNack(const ndn::Interest& interest, const ndn::lp::Nack& nack)
+  {
+    BOOST_ERROR("Read nacked");
+  }
+
+  void
   sendInterest(const ndn::Interest& interest)
   {
     readFace.expressInterest(interest,
                              bind(&BasicInterestReadFixture::onReadData, this, _1, _2),
-                             bind(&BasicInterestReadFixture::onReadTimeout, this, _1), // Nack
+                             bind(&BasicInterestReadFixture::onReadNack, this, _1, _2),
                              bind(&BasicInterestReadFixture::onReadTimeout, this, _1));
   }
 
@@ -109,28 +117,19 @@ public:
   ndn::Face readFace;
 };
 
-
-typedef boost::mpl::vector< BasicDataset,
+typedef boost::mpl::vector<BasicDataset,
                             FetchByPrefixDataset,
                             BasicChildSelectorDataset,
                             ExtendedChildSelectorDataset,
-                            SamePrefixDataset<10> > Datasets;
+                            SamePrefixDataset<10>> Datasets;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 {
-  // Insert dataset
-  // for (typename T::DataContainer::iterator i = this->data.begin();
-  //      i != this->data.end(); ++i) {
-  //   BOOST_CHECK_EQUAL(this->handle.insertData(**i), true);
-  // }
-
-  // BOOST_CHECK_EQUAL(this->handle.size(), this->data.size());
-
   this->startListen();
-  this->scheduler.scheduleEvent(ndn::time::seconds(0),
+  this->scheduler.scheduleEvent(1_s,
                                 bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
 
-  this->repoFace.processEvents(ndn::time::seconds(20));
+  this->repoFace.processEvents(20_s);
 
 }
 

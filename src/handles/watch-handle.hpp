@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,7 +20,9 @@
 #ifndef REPO_HANDLES_WATCH_HANDLE_HPP
 #define REPO_HANDLES_WATCH_HANDLE_HPP
 
-#include "base-handle.hpp"
+#include "command-base-handle.hpp"
+
+#include <ndn-cxx/mgmt/dispatcher.hpp>
 
 #include <queue>
 
@@ -38,40 +40,37 @@ using namespace ndn::time;
  * watching the prefix until a command interest tell it to stop, the total
  * amount of sent interests reaches a specific number or time out.
  */
-class WatchHandle : public BaseHandle
+class WatchHandle : public CommandBaseHandle
 {
 
 public:
-  class Error : public BaseHandle::Error
+  class Error : public CommandBaseHandle::Error
   {
   public:
     explicit
     Error(const std::string& what)
-      : BaseHandle::Error(what)
+      : CommandBaseHandle::Error(what)
     {
     }
   };
 
 
 public:
-  WatchHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-              Scheduler& scheduler, Validator& validator);
-
-  virtual void
-  listen(const Name& prefix);
+  WatchHandle(Face& face, RepoStorage& storageHandle,
+              ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
+              Validator& validator);
 
 private: // watch-insert command
   /**
    * @brief handle watch commands
    */
-  void
-  onInterest(const Name& prefix, const Interest& interest);
 
   void
-  onValidated(const Interest& interest, const Name& prefix);
-
+  handleStartCommand(const Name& prefix, const Interest& interest,
+                     const ndn::mgmt::ControlParameters& parameters,
+                     const ndn::mgmt::CommandContinuation& done);
   void
-  onValidationFailed(const Interest& interest, const ValidationError& error);
+  onValidationFailed(const std::shared_ptr<const Interest>& interest, const std::string& reason);
 
 private: // data fetching
   /**
@@ -98,7 +97,8 @@ private: // data fetching
 
 
   void
-  processWatchCommand(const Interest& interest, RepoCommandParameter& parameter);
+  processWatchCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                      const ndn::mgmt::CommandContinuation& done);
 
   void
   watchStop(const Name& name);
@@ -107,11 +107,11 @@ private: // watch state check command
   /**
    * @brief handle watch check command
    */
-  void
-  onCheckInterest(const Name& prefix, const Interest& interest);
 
   void
-  onCheckValidated(const Interest& interest, const Name& prefix);
+  handleCheckCommand(const Name& prefix, const Interest& interest,
+                     const ndn::mgmt::ControlParameters& parameters,
+                     const ndn::mgmt::CommandContinuation& done);
 
   void
   onCheckValidationFailed(const Interest& interest, const ValidationError& error);
@@ -120,19 +120,16 @@ private: // watch stop command
   /**
    * @brief handle watch stop command
    */
-  void
-  onStopInterest(const Name& prefix, const Interest& interest);
 
   void
-  onStopValidated(const Interest& interest, const Name& prefix);
+  handleStopCommand(const Name& prefix, const Interest& interest,
+                    const ndn::mgmt::ControlParameters& parameters,
+                    const ndn::mgmt::CommandContinuation& done);
 
   void
   onStopValidationFailed(const Interest& interest, const ValidationError& error);
 
 private:
-  void
-  negativeReply(const Interest& interest, int statusCode);
-
   void
   deferredDeleteProcess(const Name& name);
 
@@ -144,7 +141,6 @@ private:
 
 private:
   Validator& m_validator;
-
   map<Name, std::pair<RepoCommandResponse, bool> > m_processes;
   int64_t m_interestNum;
   int64_t m_maxInterestNum;

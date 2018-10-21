@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -17,19 +17,27 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "handles/write-handle.hpp"
 #include "handles/delete-handle.hpp"
-#include "storage/sqlite-storage.hpp"
+#include "handles/write-handle.hpp"
+
 #include "storage/repo-storage.hpp"
+#include "storage/sqlite-storage.hpp"
 
 #include "command-fixture.hpp"
 #include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
+#include <ndn-cxx/security/command-interest-signer.hpp>
+#include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/random.hpp>
+#include <ndn-cxx/util/time.hpp>
 
+#include <boost/asio/io_service.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
+
+
+#include <iostream>
 
 namespace repo {
 namespace tests {
@@ -48,8 +56,8 @@ class Fixture : public CommandFixture, public RepoStorageFixture, public Dataset
 {
 public:
   Fixture()
-    : writeHandle(repoFace, *handle, keyChain, scheduler, validator)
-    , deleteHandle(repoFace, *handle, keyChain, scheduler, validator)
+    : writeHandle(repoFace, *handle, dispatcher, scheduler, validator)
+    , deleteHandle(repoFace, *handle, dispatcher, scheduler, validator)
     , insertFace(repoFace.getIoService())
     , deleteFace(repoFace.getIoService())
   {
@@ -58,8 +66,6 @@ public:
       [] (const Name& cmdPrefix, const std::string& reason) {
         BOOST_FAIL("Command prefix registration error: " << reason);
       });
-    writeHandle.listen(cmdPrefix);
-    deleteHandle.listen(cmdPrefix);
   }
 
   void
@@ -114,7 +120,7 @@ Fixture<T>::onInsertInterest(const Interest& interest)
 {
   Data data(Name(interest.getName()));
   data.setContent(content, sizeof(content));
-  data.setFreshnessPeriod(milliseconds(0));
+  data.setFreshnessPeriod(0_ms);
   keyChain.sign(data);
   insertFace.put(data);
   std::map<Name, EventId>::iterator event = insertEvents.find(interest.getName());
@@ -123,7 +129,7 @@ Fixture<T>::onInsertInterest(const Interest& interest)
     insertEvents.erase(event);
   }
   // schedule an event 50ms later to check whether insert is Ok
-  scheduler.scheduleEvent(milliseconds(500),
+  scheduler.scheduleEvent(500_ms,
                           bind(&Fixture<T>::checkInsertOk, this, interest));
 
 }
@@ -146,9 +152,8 @@ Fixture<T>::onInsertData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   BOOST_CHECK_EQUAL(statusCode, 100);
-  //  std::cout<<"statuse code of insert name = "<<response.getName()<<std::endl;
 }
 
 template<class T> void
@@ -156,11 +161,11 @@ Fixture<T>::onDeleteData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   BOOST_CHECK_EQUAL(statusCode, 200);
 
   //schedlute an event to check whether delete is Ok.
-  scheduler.scheduleEvent(milliseconds(100),
+  scheduler.scheduleEvent(100_ms,
                           bind(&Fixture<T>::checkDeleteOk, this, interest));
 }
 
@@ -204,7 +209,7 @@ Fixture<T>::checkInsertOk(const Interest& interest)
     BOOST_CHECK_EQUAL(rc, 0);
   }
   else {
-    std::cerr<<"Check Insert Failed"<<std::endl;
+    BOOST_ERROR("Check Insert Failed");
   }
 }
 
@@ -229,11 +234,11 @@ Fixture<T>::scheduleInsertEvent()
     insertCommandName.append(insertParameter.wireEncode());
     Interest insertInterest(insertCommandName);
     keyChain.sign(insertInterest);
-    //schedule a job to express insertInterest every 50ms
+
+    // schedule a job to express insertInterest every 50ms
     scheduler.scheduleEvent(milliseconds(timeCount * 50 + 1000),
                             bind(&Fixture<T>::sendInsertInterest, this, insertInterest));
-    //schedule what to do when interest timeout
-
+    // schedule what to do when interest timeout
     EventId delayEventId = scheduler.scheduleEvent(milliseconds(5000 + timeCount * 50),
                                                    bind(&Fixture<T>::delayedInterest, this));
     insertEvents[insertParameter.getName()] = delayEventId;
@@ -266,21 +271,21 @@ Fixture<T>::scheduleDeleteEvent()
   }
 }
 
-typedef boost::mpl::vector< BasicDataset,
-                            FetchByPrefixDataset,
-                            BasicChildSelectorDataset,
-                            ExtendedChildSelectorDataset,
-                            SamePrefixDataset<10> > Datasets;
+typedef boost::mpl::vector<BasicDataset,
+                           FetchByPrefixDataset,
+                           BasicChildSelectorDataset,
+                           ExtendedChildSelectorDataset,
+                           SamePrefixDataset<10>> Datasets;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 {
   // schedule events
-  this->scheduler.scheduleEvent(seconds(0),
+  this->scheduler.scheduleEvent(0_s,
                                 bind(&Fixture<T>::scheduleInsertEvent, this));
-  this->scheduler.scheduleEvent(seconds(10),
+  this->scheduler.scheduleEvent(10_s,
                                 bind(&Fixture<T>::scheduleDeleteEvent, this));
 
-  this->repoFace.processEvents(seconds(30));
+  this->repoFace.processEvents(30_s);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

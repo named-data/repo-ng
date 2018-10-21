@@ -21,6 +21,9 @@
 #define REPO_STORAGE_STORAGE_HPP
 
 #include "../common.hpp"
+#include <string>
+#include <iostream>
+#include <stdlib.h>
 
 namespace repo {
 

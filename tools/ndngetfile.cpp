@@ -187,8 +187,9 @@ Consumer::onTimeout(const Interest& interest)
   if (m_retryCount++ < MAX_RETRY) {
     // Retransmit the interest
     fetchData(interest.getName());
-    if (m_verbose)
-      std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
+    if (m_verbose) {
+        std::cerr << "TIMEOUT: retransmit interest for " << interest.getName() << std::endl;
+    }
   }
   else {
     std::cerr << "TIMEOUT: last interest sent for segment #" << (m_nextSegment - 1) << std::endl;
@@ -225,48 +226,50 @@ main(int argc, char** argv)
   int opt;
   while ((opt = getopt(argc, argv, "vsul:w:o:")) != -1) {
     switch (opt) {
-    case 'v':
-      verbose = true;
-      break;
-    case 's':
-      single = true;
-      break;
-    case 'u':
-      versioned = true;
-      break;
-    case 'l':
-      try {
-        interestLifetime = boost::lexical_cast<int>(optarg);
-      }
-      catch (const boost::bad_lexical_cast&) {
-        std::cerr << "ERROR: -l option should be an integer." << std::endl;
-        return 1;
-      }
-      interestLifetime = std::max(interestLifetime, 0);
-      break;
-    case 'w':
-      try {
-        timeout = boost::lexical_cast<int>(optarg);
-      }
-      catch (const boost::bad_lexical_cast&) {
-        std::cerr << "ERROR: -w option should be an integer." << std::endl;
-        return 1;
-      }
-      timeout = std::max(timeout, 0);
-      break;
-    case 'o':
-      outputFile = optarg;
-      break;
-    default:
-      return usage(argv[0]);
+      case 'v':
+        verbose = true;
+        break;
+      case 's':
+        single = true;
+        break;
+      case 'u':
+        versioned = true;
+        break;
+      case 'l':
+        try {
+          interestLifetime = boost::lexical_cast<int>(optarg);
+        }
+        catch (const boost::bad_lexical_cast&) {
+          std::cerr << "ERROR: -l option should be an integer." << std::endl;
+          return 1;
+        }
+        interestLifetime = std::max(interestLifetime, 0);
+        break;
+      case 'w':
+        try {
+          timeout = boost::lexical_cast<int>(optarg);
+        }
+        catch (const boost::bad_lexical_cast&) {
+          std::cerr << "ERROR: -w option should be an integer." << std::endl;
+          return 1;
+        }
+        timeout = std::max(timeout, 0);
+        break;
+      case 'o':
+        outputFile = optarg;
+        break;
+      default:
+        return usage(argv[0]);
     }
   }
 
-  if (optind < argc)
+  if (optind < argc) {
     name = argv[optind];
+  }
 
-  if (name.empty())
+  if (name.empty()) {
     return usage(argv[0]);
+  }
 
   std::streambuf* buf;
   std::ofstream of;

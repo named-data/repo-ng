@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -46,7 +46,7 @@ class Fixture : public CommandFixture, public RepoStorageFixture, public Dataset
 {
 public:
   Fixture()
-    : watchHandle(repoFace, *handle, keyChain, scheduler, validator)
+    : watchHandle(repoFace, *handle, dispatcher, scheduler, validator)
     , watchFace(repoFace.getIoService())
   {
     Name cmdPrefix("/repo/command");
@@ -54,7 +54,6 @@ public:
       [] (const Name& cmdPrefix, const std::string& reason) {
         BOOST_FAIL("Command prefix registration error: " << reason);
       });
-    watchHandle.listen(cmdPrefix);
   }
 
   void
@@ -99,12 +98,12 @@ Fixture<T>::onWatchInterest(const Interest& interest)
   auto data = make_shared<Data>(Name(interest.getName())
                                 .appendNumber(ndn::random::generateWord64() + 100));
   data->setContent(content, sizeof(content));
-  data->setFreshnessPeriod(milliseconds(0));
+  data->setFreshnessPeriod(0_ms);
   keyChain.sign(*data);
   watchFace.put(*data);
 
   // schedule an event 50ms later to check whether watch is Ok
-  scheduler.scheduleEvent(milliseconds(10000),
+  scheduler.scheduleEvent(10000_ms,
                           bind(&Fixture<T>::checkWatchOk, this,
                                Interest(data->getName())));
 }
@@ -128,7 +127,7 @@ Fixture<T>::onWatchData(const Interest& interest, const Data& data)
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
 
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   BOOST_CHECK_EQUAL(statusCode, 100);
 }
 
@@ -138,7 +137,7 @@ Fixture<T>::onWatchStopData(const Interest& interest, const Data& data)
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
 
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   BOOST_CHECK_EQUAL(statusCode, 101);
 }
 
@@ -187,13 +186,13 @@ Fixture<T>::scheduleWatchEvent()
   RepoCommandParameter watchParameter;
   watchParameter.setName(Name("/a/b"));
   watchParameter.setMaxInterestNum(10);
-  watchParameter.setInterestLifetime(milliseconds(50000));
-  watchParameter.setWatchTimeout(milliseconds(1000000000));
+  watchParameter.setInterestLifetime(50000_ms);
+  watchParameter.setWatchTimeout(1000000000_ms);
   watchCommandName.append(watchParameter.wireEncode());
   Interest watchInterest(watchCommandName);
   keyChain.sign(watchInterest);
   //schedule a job to express watchInterest
-  scheduler.scheduleEvent(milliseconds(1000),
+  scheduler.scheduleEvent(1000_ms,
                           bind(&Fixture<T>::sendWatchStartInterest, this, watchInterest));
 
   Name watchStopName("/repo/command/watch/stop");
@@ -202,8 +201,6 @@ Fixture<T>::scheduleWatchEvent()
   Interest watchStopInterest(watchStopName);
   keyChain.sign(watchStopInterest);
 
- // scheduler.scheduleEvent(milliseconds(10000),
-  //                        bind(&Fixture<T>::sendWatchStopInterest, this, watchStopInterest));
   //The delayEvent will be canceled in onWatchInterest
   watchFace.setInterestFilter(watchParameter.getName(),
                               bind(&Fixture<T>::onWatchInterest, this, _2),
@@ -211,15 +208,15 @@ Fixture<T>::scheduleWatchEvent()
                               bind(&Fixture<T>::onRegisterFailed, this, _2));
 }
 
-typedef boost::mpl::vector< BasicDataset > Dataset;
+typedef boost::mpl::vector<BasicDataset> Dataset;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(WatchDelete, T, Dataset, Fixture<T>)
 {
   // schedule events
-  this->scheduler.scheduleEvent(seconds(0),
+  this->scheduler.scheduleEvent(1_s,
                                 bind(&Fixture<T>::scheduleWatchEvent, this));
 
-  this->repoFace.processEvents(seconds(500));
+  this->repoFace.processEvents(500_s);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

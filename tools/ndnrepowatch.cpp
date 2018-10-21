@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -24,6 +24,8 @@
 #include <ndn-cxx/security/command-interest-signer.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
+
+#include <boost/asio/io_service.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
 
 #include <stdint.h>
@@ -201,7 +203,7 @@ void
 NdnRepoWatch::onWatchCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("Watch command failed with code " +
                                 boost::lexical_cast<std::string>(statusCode)));
@@ -264,7 +266,7 @@ void
 NdnRepoWatch::onStopCommandResponse(const ndn::Interest& interest, ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   if (statusCode != 101) {
     BOOST_THROW_EXCEPTION(Error("Watch stop command failed with code: " +
                                 boost::lexical_cast<std::string>(statusCode)));

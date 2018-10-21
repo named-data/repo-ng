@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/*
- * Copyright (c) 2014-2017, Regents of the University of California.
+/**
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,6 +22,7 @@
 
 #include "repo-tlv.hpp"
 
+#include <ndn-cxx/mgmt/control-response.hpp>
 #include <ndn-cxx/encoding/block.hpp>
 #include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
@@ -38,7 +39,7 @@ using ndn::EncodingBuffer;
 * @brief Class defining abstraction of Response for NDN Repo Protocol
 * @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#Repo-Command-Response
 */
-class RepoCommandResponse
+class RepoCommandResponse : public ndn::mgmt::ControlResponse
 {
 public:
   class Error : public ndn::tlv::Error
@@ -51,14 +52,18 @@ public:
     }
   };
 
-  RepoCommandResponse()
-    : m_hasStartBlockId(false)
+  RepoCommandResponse(uint32_t code, const std::string& text)
+    : ndn::mgmt::ControlResponse(code, text)
+    , m_hasStartBlockId(false)
     , m_hasEndBlockId(false)
     , m_hasProcessId(false)
     , m_hasInsertNum(false)
     , m_hasDeleteNum(false)
     , m_hasStatusCode(false)
   {
+  }
+
+  RepoCommandResponse(){
   }
 
   explicit
@@ -74,19 +79,10 @@ public:
   }
 
   RepoCommandResponse&
-  setStartBlockId(uint64_t startBlockId)
-  {
-    m_startBlockId  = startBlockId;
-    m_hasStartBlockId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setStartBlockId(uint64_t startBlockId);
 
   bool
-  hasStartBlockId() const
-  {
-    return m_hasStartBlockId;
-  }
+  hasStartBlockId() const;
 
   uint64_t
   getEndBlockId() const
@@ -96,20 +92,10 @@ public:
   }
 
   RepoCommandResponse&
-  setEndBlockId(uint64_t endBlockId)
-  {
-    m_endBlockId  = endBlockId;
-    m_hasEndBlockId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setEndBlockId(uint64_t endBlockId);
 
   bool
-  hasEndBlockId() const
-  {
-    return m_hasEndBlockId;
-  }
-
+  hasEndBlockId() const;
 
   uint64_t
   getProcessId() const
@@ -118,40 +104,16 @@ public:
   }
 
   RepoCommandResponse&
-  setProcessId(uint64_t processId)
-  {
-    m_processId  = processId;
-    m_hasProcessId = true;
-    m_wire.reset();
-    return *this;
-  }
+  setProcessId(uint64_t processId);
 
   bool
-  hasProcessId() const
-  {
-    return m_hasProcessId;
-  }
-
-  uint64_t
-  getStatusCode() const
-  {
-    return m_statusCode;
-  }
+  hasProcessId() const;
 
   RepoCommandResponse&
-  setStatusCode(uint64_t statusCode)
-  {
-    m_statusCode  = statusCode;
-    m_hasStatusCode = true;
-    m_wire.reset();
-    return *this;
-  }
+  setCode(uint32_t statusCode);
 
   bool
-  hasStatusCode() const
-  {
-    return m_hasStatusCode;
-  }
+  hasStatusCode() const;
 
   uint64_t
   getInsertNum() const
@@ -160,19 +122,10 @@ public:
   }
 
   RepoCommandResponse&
-  setInsertNum(uint64_t insertNum)
-  {
-    m_insertNum = insertNum;
-    m_hasInsertNum = true;
-    m_wire.reset();
-    return *this;
-  }
+  setInsertNum(uint64_t insertNum);
 
   bool
-  hasInsertNum() const
-  {
-    return m_hasInsertNum;
-  }
+  hasInsertNum() const;
 
   uint64_t
   getDeleteNum() const
@@ -181,19 +134,10 @@ public:
   }
 
   RepoCommandResponse&
-  setDeleteNum(uint64_t deleteNum)
-  {
-    m_deleteNum = deleteNum;
-    m_hasDeleteNum = true;
-    m_wire.reset();
-    return *this;
-  }
+  setDeleteNum(uint64_t deleteNum);
 
   bool
-  hasDeleteNum() const
-  {
-    return m_hasDeleteNum;
-  }
+  hasDeleteNum() const;
 
   template<ndn::encoding::Tag T>
   size_t
@@ -206,7 +150,7 @@ public:
   wireDecode(const Block& wire);
 
 private:
-  uint64_t m_statusCode;
+  //uint64_t m_statusCode;
   uint64_t m_startBlockId;
   uint64_t m_endBlockId;
   uint64_t m_processId;
@@ -223,178 +167,7 @@ private:
   mutable Block m_wire;
 };
 
-template<ndn::encoding::Tag T>
-inline size_t
-RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
-{
-  size_t totalLength = 0;
-  size_t variableLength = 0;
-
-  if (m_hasDeleteNum) {
-    variableLength = encoder.prependNonNegativeInteger(m_deleteNum);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::DeleteNum);
-  }
-
-  if (m_hasInsertNum) {
-    variableLength = encoder.prependNonNegativeInteger(m_insertNum);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::InsertNum);
-  }
-
-  if (m_hasEndBlockId) {
-    variableLength = encoder.prependNonNegativeInteger(m_endBlockId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::EndBlockId);
-  }
-
-  if (m_hasStartBlockId) {
-    variableLength = encoder.prependNonNegativeInteger(m_startBlockId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(repo::tlv::StartBlockId);
-  }
-
-  if (m_hasStatusCode) {
-    variableLength = encoder.prependNonNegativeInteger(m_statusCode);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::StatusCode);
-  }
-  else {
-    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
-  }
-
-  if (m_hasProcessId) {
-    variableLength = encoder.prependNonNegativeInteger(m_processId);
-    totalLength += variableLength;
-    totalLength += encoder.prependVarNumber(variableLength);
-    totalLength += encoder.prependVarNumber(tlv::ProcessId);
-  }
-
-  totalLength += encoder.prependVarNumber(totalLength);
-  totalLength += encoder.prependVarNumber(tlv::RepoCommandResponse);
-  return totalLength;
-}
-
-inline const Block&
-RepoCommandResponse::wireEncode() const
-{
-  if (m_wire.hasWire())
-    return m_wire;
-
-  EncodingEstimator estimator;
-  size_t estimatedSize = wireEncode(estimator);
-
-  EncodingBuffer buffer(estimatedSize, 0);
-  wireEncode(buffer);
-
-  m_wire = buffer.block();
-  return m_wire;
-}
-
-inline void
-RepoCommandResponse::wireDecode(const Block& wire)
-{
-  m_hasStartBlockId = false;
-  m_hasEndBlockId = false;
-  m_hasProcessId = false;
-  m_hasStatusCode = false;
-  m_hasInsertNum = false;
-  m_hasDeleteNum = false;
-
-  m_wire = wire;
-
-  m_wire.parse();
-
-  Block::element_const_iterator val;
-
-  if (m_wire.type() != tlv::RepoCommandResponse)
-    BOOST_THROW_EXCEPTION(Error("RepoCommandResponse malformed"));
-
-  // StartBlockId
-  val = m_wire.find(tlv::StartBlockId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasStartBlockId = true;
-    m_startBlockId = readNonNegativeInteger(*val);
-  }
-
-  // EndBlockId
-  val = m_wire.find(tlv::EndBlockId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasEndBlockId = true;
-    m_endBlockId = readNonNegativeInteger(*val);
-  }
-
-  // ProcessId
-  val = m_wire.find(tlv::ProcessId);
-  if (val != m_wire.elements_end())
-  {
-    m_hasProcessId = true;
-    m_processId = readNonNegativeInteger(*val);
-  }
-
-  // StatusCode
-  val = m_wire.find(tlv::StatusCode);
-  if (val != m_wire.elements_end())
-  {
-    m_hasStatusCode = true;
-    m_statusCode = readNonNegativeInteger(*val);
-
-  }
-  else {
-    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
-  }
-
-  // InsertNum
-  val = m_wire.find(tlv::InsertNum);
-  if (val != m_wire.elements_end())
-  {
-    m_hasInsertNum = true;
-    m_insertNum = readNonNegativeInteger(*val);
-  }
-
-  // DeleteNum
-  val = m_wire.find(tlv::DeleteNum);
-  if (val != m_wire.elements_end())
-  {
-    m_hasDeleteNum = true;
-    m_deleteNum = readNonNegativeInteger(*val);
-  }
-}
-
-inline std::ostream&
-operator<<(std::ostream& os, const RepoCommandResponse& repoCommandResponse)
-{
-  os << "RepoCommandResponse(";
-
-  if (repoCommandResponse.hasProcessId()) {
-    os << " ProcessId: " << repoCommandResponse.getProcessId();
-  }
-  if (repoCommandResponse.hasStatusCode()) {
-    os << " StatusCode: " << repoCommandResponse.getStatusCode();
-  }
-  if (repoCommandResponse.hasStartBlockId()) {
-    os << " StartBlockId: " << repoCommandResponse.getStartBlockId();
-  }
-  if (repoCommandResponse.hasEndBlockId()) {
-    os << " EndBlockId: " << repoCommandResponse.getEndBlockId();
-  }
-  if (repoCommandResponse.hasInsertNum()) {
-    os << " InsertNum: " << repoCommandResponse.getInsertNum();
-  }
-  if (repoCommandResponse.hasDeleteNum()) {
-    os << " DeleteNum: " << repoCommandResponse.getDeleteNum();
-
-  }
-  os << " )";
-  return os;
-}
+NDN_CXX_DECLARE_WIRE_ENCODE_INSTANTIATIONS(RepoCommandResponse);
 
 } // namespace repo
 

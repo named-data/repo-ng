@@ -21,11 +21,15 @@
 #define REPO_HANDLES_READ_HANDLE_HPP
 
 #include "common.hpp"
-#include "base-handle.hpp"
+
+#include "storage/repo-storage.hpp"
+#include "repo-command-response.hpp"
+#include "repo-command-parameter.hpp"
+#include "repo-command.hpp"
 
 namespace repo {
 
-class ReadHandle : public BaseHandle
+class ReadHandle : public noncopyable
 {
 
 public:
@@ -37,11 +41,10 @@ public:
     int useCount;
   };
 
-  ReadHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-             Scheduler& scheduler, size_t prefixSubsetLength);
+  ReadHandle(Face& face, RepoStorage& storageHandle, size_t prefixSubsetLength);
 
   void
-  listen(const Name& prefix) override;
+  listen(const Name& prefix);
 
 PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   const std::map<ndn::Name, RegisteredDataPrefix>&
@@ -80,6 +83,8 @@ private:
   std::map<ndn::Name, RegisteredDataPrefix> m_insertedDataPrefixes;
   ndn::util::signal::ScopedConnection afterDataDeletionConnection;
   ndn::util::signal::ScopedConnection afterDataInsertionConnection;
+  Face& m_face;
+  RepoStorage& m_storageHandle;
 };
 
 } // namespace repo

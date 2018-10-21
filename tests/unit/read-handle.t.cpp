@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /**
- * Copyright (c) 2014-2017,  Regents of the University of California.
+ * Copyright (c) 2014-2018,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -53,7 +53,7 @@ public:
     , subsetLength(1)
     , dataPrefix("/ndn/test/prefix")
     , identity("/ndn/test/identity")
-    , readHandle(face, *handle, keyChain, scheduler, subsetLength)
+    , readHandle(face, *handle, subsetLength)
     , numPrefixRegistrations(0)
     , numPrefixUnregistrations(0)
   {
@@ -103,32 +103,32 @@ BOOST_FIXTURE_TEST_CASE(DataPrefixes, Fixture)
   bool didMatch = false;
   face.sentInterests.clear();
   handle->insertData(*data1);
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"register"}, true);
 
   face.sentInterests.clear();
   handle->deleteData(data1->getFullName());
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, true);
 
   face.sentInterests.clear();
   handle->insertData(*data1);
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"register"}, true);
 
   face.sentInterests.clear();
   handle->insertData(*data2);
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"register"}, false);
 
   face.sentInterests.clear();
   handle->deleteData(data1->getFullName());
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, false);
 
   face.sentInterests.clear();
   handle->deleteData(data2->getFullName());
-  face.processEvents(ndn::time::milliseconds(-1));
+  face.processEvents(-1_ms);
   CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, true);
 }
 

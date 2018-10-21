@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -111,15 +111,15 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   : m_config(config)
   , m_scheduler(ioService)
   , m_face(ioService)
+  , m_dispatcher(m_face, m_keyChain)
   , m_store(std::make_shared<SqliteStorage>(config.dbPath))
   , m_storageHandle(config.nMaxPackets, *m_store)
   , m_validator(m_face)
-  , m_readHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_config.registrationSubset)
-  , m_writeHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
-  , m_watchHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
-  , m_deleteHandle(m_face, m_storageHandle, m_keyChain, m_scheduler, m_validator)
+  , m_readHandle(m_face, m_storageHandle, m_config.registrationSubset)
+  , m_writeHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
+  , m_watchHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
+  , m_deleteHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
   , m_tcpBulkInsertHandle(ioService, m_storageHandle)
-
 {
   this->enableValidation();
 }
@@ -149,9 +149,7 @@ Repo::enableListening()
         BOOST_THROW_EXCEPTION(Error("Command prefix registration failed"));
       });
 
-    m_writeHandle.listen(cmdPrefix);
-    m_watchHandle.listen(cmdPrefix);
-    m_deleteHandle.listen(cmdPrefix);
+    m_dispatcher.addTopPrefix(cmdPrefix);
   }
 
   for (const auto& ep : m_config.tcpBulkInsertEndpoints) {

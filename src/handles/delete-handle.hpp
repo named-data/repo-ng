@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,66 +20,54 @@
 #ifndef REPO_HANDLES_DELETE_HANDLE_HPP
 #define REPO_HANDLES_DELETE_HANDLE_HPP
 
-#include "base-handle.hpp"
+#include "command-base-handle.hpp"
+
+#include <ndn-cxx/mgmt/dispatcher.hpp>
 
 namespace repo {
 
-class DeleteHandle : public BaseHandle
+class DeleteHandle : public CommandBaseHandle
 {
 
 public:
-  class Error : public BaseHandle::Error
+  class Error : public CommandBaseHandle::Error
   {
   public:
     explicit
     Error(const std::string& what)
-      : BaseHandle::Error(what)
+      : CommandBaseHandle::Error(what)
     {
     }
   };
 
 public:
-  DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-               Scheduler& scheduler, Validator& validator);
-
-  virtual void
-  listen(const Name& prefix);
+  DeleteHandle(Face& face, RepoStorage& storageHandle,
+               ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler, Validator& validator);
 
 private:
   void
-  onInterest(const Name& prefix, const Interest& interest);
+  handleDeleteCommand(const Name& prefix, const Interest& interest,
+                      const ndn::mgmt::ControlParameters& parameters,
+                      const ndn::mgmt::CommandContinuation& done);
 
-  void
-  onValidated(const Interest& interest, const Name& prefix);
-
-  void
-  onValidationFailed(const Interest& interest, const ValidationError& error);
-
-  /**
-   * @todo delete check has not been realized due to the while loop of segmented data deletion.
-   */
-  void
-  onCheckInterest(const Name& prefix, const Interest& interest);
-
-  void
+  RepoCommandResponse
   positiveReply(const Interest& interest, const RepoCommandParameter& parameter,
-                uint64_t statusCode, uint64_t nDeletedDatas);
+                uint64_t statusCode, uint64_t nDeletedData) const;
+
+  RepoCommandResponse
+  negativeReply(const Interest& interest, uint64_t statusCode, const std::string text) const;
 
   void
-  negativeReply(const Interest& interest, uint64_t statusCode);
+  processSingleDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                             const ndn::mgmt::CommandContinuation& done) const;
 
   void
-  processSingleDeleteCommand(const Interest& interest, RepoCommandParameter& parameter);
+  processSelectorDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                               const ndn::mgmt::CommandContinuation& done) const;
 
   void
-  processSelectorDeleteCommand(const Interest& interest, RepoCommandParameter& parameter);
-
-  void
-  processSegmentDeleteCommand(const Interest& interest, RepoCommandParameter& parameter);
-
-private:
-  Validator& m_validator;
-
+  processSegmentDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                              const ndn::mgmt::CommandContinuation& done) const;
 };
 
 } // namespace repo

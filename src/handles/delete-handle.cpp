@@ -21,151 +21,112 @@
 
 namespace repo {
 
-DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-                           Scheduler& scheduler,
+DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle,
+                           ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
                            Validator& validator)
-  : BaseHandle(face, storageHandle, keyChain, scheduler)
-  , m_validator(validator)
+  : CommandBaseHandle(face, storageHandle, scheduler, validator)
 {
+  dispatcher.addControlCommand<RepoCommandParameter>(ndn::PartialName("delete"),
+    makeAuthorization(),
+    std::bind(&DeleteHandle::validateParameters<DeleteCommand>, this, _1),
+    std::bind(&DeleteHandle::handleDeleteCommand, this, _1, _2, _3, _4));
+
 }
 
 void
-DeleteHandle::onInterest(const Name& prefix, const Interest& interest)
+DeleteHandle::handleDeleteCommand(const Name& prefix, const Interest& interest,
+                                  const ndn::mgmt::ControlParameters& parameter,
+                                  const ndn::mgmt::CommandContinuation& done)
 {
-  m_validator.validate(interest, bind(&DeleteHandle::onValidated, this, _1, prefix),
-                                 bind(&DeleteHandle::onValidationFailed, this, _1, _2));
-}
+  const RepoCommandParameter& repoParameter = dynamic_cast<const RepoCommandParameter&>(parameter);
 
-void
-DeleteHandle::onValidated(const Interest& interest, const Name& prefix)
-{
-  RepoCommandParameter parameter;
-
-  try {
-    extractParameter(interest, prefix, parameter);
-  }
-  catch (const RepoCommandParameter::Error&) {
-    negativeReply(interest, 403);
-    return;
-  }
-
-  if (parameter.hasSelectors()) {
-
-    if (parameter.hasStartBlockId() || parameter.hasEndBlockId()) {
-      negativeReply(interest, 402);
-      return;
-    }
-
+  if (repoParameter.hasSelectors()) {
     //choose data with selector and delete it
-    processSelectorDeleteCommand(interest, parameter);
+    processSelectorDeleteCommand(interest, repoParameter, done);
     return;
   }
 
-  if (!parameter.hasStartBlockId() && !parameter.hasEndBlockId()) {
-    processSingleDeleteCommand(interest, parameter);
+  if (!repoParameter.hasStartBlockId() && !repoParameter.hasEndBlockId()) {
+    processSingleDeleteCommand(interest, repoParameter, done);
     return;
   }
 
-  processSegmentDeleteCommand(interest, parameter);
+  processSegmentDeleteCommand(interest, repoParameter, done);
 }
 
-void
-DeleteHandle::onValidationFailed(const Interest& interest, const ValidationError& error)
-{
-  std::cerr << error << std::endl;
-  negativeReply(interest, 401);
-}
-//listen change the setinterestfilter
-void
-DeleteHandle::listen(const Name& prefix)
-{
-  getFace().setInterestFilter(Name(prefix).append("delete"),
-                              bind(&DeleteHandle::onInterest, this, _1, _2));
-}
-
-void
+RepoCommandResponse
 DeleteHandle::positiveReply(const Interest& interest, const RepoCommandParameter& parameter,
-                            uint64_t statusCode, uint64_t nDeletedDatas)
+                            uint64_t statusCode, uint64_t nDeletedData) const
 {
-  RepoCommandResponse response;
+  RepoCommandResponse response(statusCode, "Deletion Successful");
+
   if (parameter.hasProcessId()) {
     response.setProcessId(parameter.getProcessId());
-    response.setStatusCode(statusCode);
-    response.setDeleteNum(nDeletedDatas);
+    response.setDeleteNum(nDeletedData);
+    response.setBody(response.wireEncode());
   }
   else {
-    response.setStatusCode(403);
+    response.setCode(403);
+    response.setText("Malformed Command");
+    response.setBody(response.wireEncode());
   }
-  reply(interest, response);
+  return response;
+}
+
+RepoCommandResponse
+DeleteHandle::negativeReply(const Interest& interest, uint64_t statusCode, std::string text) const
+{
+  RepoCommandResponse response(statusCode, text);
+  response.setBody(response.wireEncode());
+  return response;
 }
 
 void
-DeleteHandle::negativeReply(const Interest& interest, uint64_t statusCode)
+DeleteHandle::processSingleDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                                         const ndn::mgmt::CommandContinuation& done) const
 {
-  RepoCommandResponse response;
-  response.setStatusCode(statusCode);
-  reply(interest, response);
-}
-
-void
-DeleteHandle::processSingleDeleteCommand(const Interest& interest,
-                                         RepoCommandParameter& parameter)
-{
-  int64_t nDeletedDatas = getStorageHandle().deleteData(parameter.getName());
-  if (nDeletedDatas == -1) {
+  int64_t nDeletedData = storageHandle.deleteData(parameter.getName());
+  if (nDeletedData == -1) {
     std::cerr << "Deletion Failed!" <<std::endl;
-    negativeReply(interest, 405); //405 means deletion fail
+    done(negativeReply(interest, 405, "Deletion Failed"));
   }
   else
-    positiveReply(interest, parameter, 200, nDeletedDatas);
+  done(positiveReply(interest, parameter, 200, nDeletedData));
 }
 
 void
-DeleteHandle::processSelectorDeleteCommand(const Interest& interest,
-                                           RepoCommandParameter& parameter)
+DeleteHandle::processSelectorDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                                           const ndn::mgmt::CommandContinuation& done) const
 {
-  int64_t nDeletedDatas = getStorageHandle()
-                            .deleteData(Interest(parameter.getName())
-                                          .setSelectors(parameter.getSelectors()));
-  if (nDeletedDatas == -1) {
+  int64_t nDeletedData = storageHandle.deleteData(Interest(parameter.getName())
+                                      .setSelectors(parameter.getSelectors()));
+  if (nDeletedData == -1) {
     std::cerr << "Deletion Failed!" <<std::endl;
-    negativeReply(interest, 405); //405 means deletion fail
+    done(negativeReply(interest, 405, "Deletion Failed"));
   }
   else
-    positiveReply(interest, parameter, 200, nDeletedDatas);
+    done(positiveReply(interest, parameter, 200, nDeletedData));
 }
 
 void
-DeleteHandle::processSegmentDeleteCommand(const Interest& interest,
-                                          RepoCommandParameter& parameter)
+DeleteHandle::processSegmentDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,
+                                          const ndn::mgmt::CommandContinuation& done) const
 {
-  if (!parameter.hasStartBlockId())
-    parameter.setStartBlockId(0);
+  SegmentNo startBlockId = parameter.hasStartBlockId() ? parameter.getStartBlockId() : 0;
+  SegmentNo endBlockId = parameter.getEndBlockId();
 
-  if (parameter.hasEndBlockId()) {
-    SegmentNo startBlockId = parameter.getStartBlockId();
-    SegmentNo endBlockId = parameter.getEndBlockId();
-
-    if (startBlockId > endBlockId) {
-      negativeReply(interest, 403);
-      return;
+  Name prefix = parameter.getName();
+  uint64_t nDeletedData = 0;
+  for (SegmentNo i = startBlockId; i <= endBlockId; i++) {
+    Name name = prefix;
+    name.appendSegment(i);
+    if (storageHandle.deleteData(name)) {
+      nDeletedData++;
     }
+  }
+  //All the data deleted, return 200
+  done(positiveReply(interest, parameter, 200, nDeletedData));
 
-    Name prefix = parameter.getName();
-    uint64_t nDeletedDatas = 0;
-    for (SegmentNo i = startBlockId; i <= endBlockId; i++) {
-      Name name = prefix;
-      name.appendSegment(i);
-      if (getStorageHandle().deleteData(name)) {
-        nDeletedDatas++;
-      }
-    }
-    //All the data deleted, return 200
-    positiveReply(interest, parameter, 200, nDeletedDatas);
-  }
-  else {
-    BOOST_ASSERT(false); // segmented deletion without EndBlockId, not implemented
-  }
 }
 
 } // namespace repo

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,7 +20,9 @@
 #ifndef REPO_HANDLES_WRITE_HANDLE_HPP
 #define REPO_HANDLES_WRITE_HANDLE_HPP
 
-#include "base-handle.hpp"
+#include "command-base-handle.hpp"
+
+#include <ndn-cxx/mgmt/dispatcher.hpp>
 
 #include <queue>
 
@@ -51,27 +53,25 @@ using std::queue;
  *
  * If repo cannot get FinalBlockId in noendTimeout time, the fetching process will terminate.
  */
-class WriteHandle : public BaseHandle
+class WriteHandle : public CommandBaseHandle
 {
 
 public:
-  class Error : public BaseHandle::Error
+  class Error : public CommandBaseHandle::Error
   {
   public:
     explicit
     Error(const std::string& what)
-      : BaseHandle::Error(what)
+      : CommandBaseHandle::Error(what)
     {
     }
   };
 
 
 public:
-  WriteHandle(Face& face, RepoStorage& storageHandle, KeyChain& keyChain,
-              Scheduler& scheduler, Validator& validator);
-
-  virtual void
-  listen(const Name& prefix);
+  WriteHandle(Face& face, RepoStorage& storageHandle,
+              ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
+              Validator& validator);
 
 private:
   /**
@@ -104,10 +104,9 @@ private: // insert command
    * @brief handle insert commands
    */
   void
-  onInterest(const Name& prefix, const Interest& interest);
-
-  void
-  onValidated(const Interest& interest, const Name& prefix);
+  handleInsertCommand(const Name& prefix, const Interest& interest,
+                      const ndn::mgmt::ControlParameters& parameters,
+                      const ndn::mgmt::CommandContinuation& done);
 
   void
   onValidationFailed(const Interest& interest, const ValidationError& error);
@@ -129,7 +128,8 @@ private: // single data fetching
   onTimeout(const Interest& interest, ProcessId processId);
 
   void
-  processSingleInsertCommand(const Interest& interest, RepoCommandParameter& parameter);
+  processSingleInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+                             const ndn::mgmt::CommandContinuation& done);
 
 private:  // segmented data fetching
   /**
@@ -166,7 +166,8 @@ private:  // segmented data fetching
   onSegmentTimeoutControl(ProcessId processId, const Interest& interest);
 
   void
-  processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter);
+  processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+                                const ndn::mgmt::CommandContinuation& done);
 
 private:
   /**
@@ -188,11 +189,11 @@ private: // insert state check command
   /**
    * @brief handle insert check command
    */
-  void
-  onCheckInterest(const Name& prefix, const Interest& interest);
 
   void
-  onCheckValidated(const Interest& interest, const Name& prefix);
+  handleCheckCommand(const Name& prefix, const Interest& interest,
+                     const ndn::mgmt::ControlParameters& parameters,
+                     const ndn::mgmt::CommandContinuation& done);
 
   void
   onCheckValidationFailed(const Interest& interest, const ValidationError& error);
@@ -207,14 +208,12 @@ private:
   void
   deferredDeleteProcess(ProcessId processId);
 
-  void
-  negativeReply(const Interest& interest, int statusCode);
+  RepoCommandResponse
+  negativeReply(std::string text, int statusCode);
 
 private:
   Validator& m_validator;
-
   map<ProcessId, ProcessInfo> m_processes;
-
   int m_retryTime;
   int m_credit;
   ndn::time::milliseconds m_noEndTimeout;

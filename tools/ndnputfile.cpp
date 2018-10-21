@@ -265,7 +265,8 @@ void
 NdnPutFile::onInsertCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  //int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("insert command failed with code " +
                                 boost::lexical_cast<std::string>(statusCode)));
@@ -397,7 +398,7 @@ void
 NdnPutFile::onCheckCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getStatusCode();
+  int statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("Insert check command failed with code: " +
                                 boost::lexical_cast<std::string>(statusCode)));
@@ -542,8 +543,8 @@ main(int argc, char** argv)
   if (argc != 3)
     usage();
 
-  ndnPutFile.repoPrefix = Name(argv[0]);
-  ndnPutFile.ndnName = Name(argv[1]);
+  ndnPutFile.repoPrefix = Name(argv[0]); std::cout << "Repo prefix: " << argv[0] << std::endl;
+  ndnPutFile.ndnName = Name(argv[1]);    std::cout << "NDN name: " << argv[1] << std::endl;
   if (strcmp(argv[2], "-") == 0) {
 
     ndnPutFile.insertStream = &std::cin;

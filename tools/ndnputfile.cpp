@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -201,7 +201,7 @@ NdnPutFile::prepareNextData(uint64_t referenceSegmentNo)
                                     .appendSegment(m_currentSegmentNo));
 
     if (insertStream->peek() == std::istream::traits_type::eof()) {
-      data->setFinalBlockId(ndn::name::Component::fromSegment(m_currentSegmentNo));
+      data->setFinalBlock(ndn::name::Component::fromSegment(m_currentSegmentNo));
       m_isFinished = true;
     }
 
@@ -318,8 +318,7 @@ NdnPutFile::onInterest(const ndn::Name& prefix, const ndn::Interest& interest)
 
   if (m_isFinished) {
     uint64_t final = m_currentSegmentNo - 1;
-    item->second->setFinalBlockId(ndn::name::Component::fromSegment(final));
-
+    item->second->setFinalBlock(ndn::name::Component::fromSegment(final));
   }
   m_face.put(*item->second);
 }

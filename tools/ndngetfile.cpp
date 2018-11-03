@@ -167,7 +167,7 @@ Consumer::fetchNextData(const Name& name, const Data& data)
   uint64_t segment = name[-1].toSegment();
   BOOST_VERIFY(segment == (m_nextSegment - 1));
 
-  const ndn::name::Component& finalBlockId = data.getMetaInfo().getFinalBlockId();
+  auto finalBlockId = data.getFinalBlock();
   if (finalBlockId == name[-1]) {
     m_isFinished = true;
   }

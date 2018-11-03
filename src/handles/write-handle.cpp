@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2017, Regents of the University of California.
+ * Copyright (c) 2014-2018, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -57,12 +57,11 @@ WriteHandle::onInterest(const Name& prefix, const Interest& interest)
 void
 WriteHandle::onValidated(const Interest& interest, const Name& prefix)
 {
-  //m_validResult = 1;
   RepoCommandParameter parameter;
   try {
     extractParameter(interest, prefix, parameter);
   }
-  catch (RepoCommandParameter::Error) {
+  catch (const RepoCommandParameter::Error&) {
     negativeReply(interest, 403);
     return;
   }
@@ -133,23 +132,23 @@ WriteHandle::onSegmentData(const Interest& interest, const Data& data, ProcessId
 void
 WriteHandle::onSegmentDataValidated(const Interest& interest, const Data& data, ProcessId processId)
 {
-  if (m_processes.count(processId) == 0) {
+  auto it = m_processes.find(processId);
+  if (it == m_processes.end()) {
     return;
   }
-  RepoCommandResponse& response = m_processes[processId].response;
+  RepoCommandResponse& response = it->second.response;
 
   //refresh endBlockId
-  Name::Component finalBlockId = data.getFinalBlockId();
-
-  if (!finalBlockId.empty()) {
-    SegmentNo final = finalBlockId.toSegment();
+  auto finalBlock = data.getFinalBlock();
+  if (finalBlock && finalBlock->isSegment()) {
+    auto finalSeg = finalBlock->toSegment();
     if (response.hasEndBlockId()) {
-      if (final < response.getEndBlockId()) {
-        response.setEndBlockId(final);
+      if (finalSeg < response.getEndBlockId()) {
+        response.setEndBlockId(finalSeg);
       }
     }
     else {
-      response.setEndBlockId(final);
+      response.setEndBlockId(finalSeg);
     }
   }
 
@@ -386,7 +385,7 @@ WriteHandle::onCheckValidated(const Interest& interest, const Name& prefix)
   try {
     extractParameter(interest, prefix, parameter);
   }
-  catch (RepoCommandParameter::Error) {
+  catch (const RepoCommandParameter::Error&) {
     negativeReply(interest, 403);
     return;
   }

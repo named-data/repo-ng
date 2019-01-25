@@ -1,5 +1,4 @@
-repo-ng: Next generation of NDN repository
-==========================================
+# repo-ng: Next generation of NDN repository
 
 [![Build Status](https://travis-ci.org/named-data/repo-ng.svg?branch=master)](https://travis-ci.org/named-data/repo-ng)
 

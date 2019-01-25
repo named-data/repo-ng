@@ -69,3 +69,9 @@ def build(bld):
     bld.recurse('examples')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')
+
+    if Utils.unversioned_sys_platform() == 'linux':
+        bld(features='subst',
+            name='repo-ng.service',
+            source='systemd/repo-ng.service.in',
+            target='systemd/repo-ng.service')

@@ -24,24 +24,26 @@ repo
   ; Right now only a single 'sqlite' option is allowed:
   storage
   {
-    method "sqlite"             ; Currently, only sqlite storage engine is supported
-    path "/var/db/ndn-repo-ng"  ; path to repo-ng storage folder
+    method "sqlite"              ; Currently, only sqlite storage engine is supported
+    path "/var/lib/ndn/repo-ng"  ; Path to repo-ng storage folder
     max-packets 100000
   }
 
   ; Section to enable TCP bulk insert capability
   ; If section is present, then TCP bulk insert is enabled (empty section enables
   ; TCP bulk insert to listen on "localhost:7376")
-  tcp_bulk_insert {
-    ; host "localhost"  ; Set to listen on different IP address or hostname
-    ; port 7376  ; Set to listen on different port number
+  tcp_bulk_insert
+  {
+    ; host "localhost"  ; Set to listen on a different IP address or hostname
+    ; port 7376         ; Set to listen on a different port number
   }
 
   validator
   {
     ; The following rule disables all security in the repo
-    trust-anchor {
-        type any
+    trust-anchor
+    {
+      type any
     }
 
     ; ; These rule are examples of validation of signed interests for commands and data.

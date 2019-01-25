@@ -34,12 +34,11 @@ Database
 --------
 
 The database path is set in "storage.path" key of the config file.
-The default database path is `/var/db/ndn-repo-ng`.
+The default database path is `/var/lib/ndn/repo-ng`.
 
 `ndn-repo-ng` automatically creates a database if one does not exist.
 
-Users should make sure the `ndn-repo-ng` process has write privilege to the database path.
-If the default `/var/db/ndn-repo-ng` is used, repo-ng needs to be started with `sudo`.
+Users should make sure the `ndn-repo-ng` process has write privileges to the database path.
 
 Tools
 -----

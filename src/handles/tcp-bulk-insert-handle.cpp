@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,12 +21,9 @@
 
 #include <ndn-cxx/util/logger.hpp>
 
+NDN_LOG_INIT(repo.TcpHandle);
+
 namespace repo {
-
-NDN_LOG_INIT(repo.tcpHandle);
-
-const size_t MAX_NDN_PACKET_SIZE = 8800;
-
 namespace detail {
 
 class TcpBulkInsertClient : noncopyable
@@ -47,7 +44,7 @@ public:
     BOOST_ASSERT(!client->m_hasStarted);
 
     client->m_socket->async_receive(
-      boost::asio::buffer(client->m_inputBuffer, MAX_NDN_PACKET_SIZE), 0,
+      boost::asio::buffer(client->m_inputBuffer, ndn::MAX_NDN_PACKET_SIZE), 0,
       std::bind(&TcpBulkInsertClient::handleReceive, client, _1, _2, client));
 
     client->m_hasStarted = true;
@@ -63,7 +60,7 @@ private:
   TcpBulkInsertHandle& m_writer;
   std::shared_ptr<boost::asio::ip::tcp::socket> m_socket;
   bool m_hasStarted;
-  uint8_t m_inputBuffer[MAX_NDN_PACKET_SIZE];
+  uint8_t m_inputBuffer[ndn::MAX_NDN_PACKET_SIZE];
   std::size_t m_inputBufferSize;
 };
 
@@ -144,9 +141,9 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
     if (error == boost::system::errc::operation_canceled) // when socket is closed by someone
       return;
 
-    boost::system::error_code error;
-    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-    m_socket->close(error);
+    boost::system::error_code ec;
+    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    m_socket->close(ec);
     return;
   }
 
@@ -175,17 +172,17 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
         else
           NDN_LOG_DEBUG("FAILED to inject " << data.getName());
       }
-      catch (const std::runtime_error& error) {
+      catch (const std::runtime_error&) {
         /// \todo Catch specific error after determining what wireDecode() can throw
         NDN_LOG_ERROR("Error decoding received Data packet");
       }
     }
   }
 
-  if (!isOk && m_inputBufferSize == MAX_NDN_PACKET_SIZE && offset == 0) {
-    boost::system::error_code error;
-    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
-    m_socket->close(error);
+  if (!isOk && m_inputBufferSize == ndn::MAX_NDN_PACKET_SIZE && offset == 0) {
+    boost::system::error_code ec;
+    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    m_socket->close(ec);
     return;
   }
 
@@ -200,9 +197,8 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
   }
 
   m_socket->async_receive(boost::asio::buffer(m_inputBuffer + m_inputBufferSize,
-                                              MAX_NDN_PACKET_SIZE - m_inputBufferSize), 0,
+                                              ndn::MAX_NDN_PACKET_SIZE - m_inputBufferSize), 0,
                           std::bind(&TcpBulkInsertClient::handleReceive, this, _1, _2, client));
 }
-
 
 } // namespace repo

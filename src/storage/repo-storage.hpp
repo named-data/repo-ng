@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -17,10 +17,9 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef REPO_REPO_STORAGE_HPP
-#define REPO_REPO_STORAGE_HPP
+#ifndef REPO_STORAGE_REPO_STORAGE_HPP
+#define REPO_STORAGE_REPO_STORAGE_HPP
 
-#include "../common.hpp"
 #include "storage.hpp"
 #include "../repo-command-parameter.hpp"
 
@@ -93,4 +92,4 @@ private:
 
 } // namespace repo
 
-#endif // REPO_REPO_STORAGE_HPP
+#endif // REPO_STORAGE_REPO_STORAGE_HPP

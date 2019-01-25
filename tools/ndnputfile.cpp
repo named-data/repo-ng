@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -28,13 +28,13 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <fstream>
 #include <iostream>
 #include <string>
 
 #include <boost/asio.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/iostreams/operations.hpp>
 #include <boost/iostreams/read.hpp>
@@ -46,8 +46,6 @@ using namespace ndn::time;
 using std::shared_ptr;
 using std::make_shared;
 using std::bind;
-using std::placeholders::_1;
-using std::placeholders::_2;
 
 static const uint64_t DEFAULT_BLOCK_SIZE = 1000;
 static const uint64_t DEFAULT_INTEREST_LIFETIME = 4000;
@@ -61,11 +59,7 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
   NdnPutFile()
@@ -76,7 +70,7 @@ public:
     , interestLifetime(DEFAULT_INTEREST_LIFETIME)
     , hasTimeout(false)
     , timeout(0)
-    , insertStream(0)
+    , insertStream(nullptr)
     , isVerbose(false)
     , m_scheduler(m_face.getIoService())
     , m_timestampVersion(toUnixTimestamp(system_clock::now()).count())
@@ -188,17 +182,13 @@ NdnPutFile::prepareNextData(uint64_t referenceSegmentNo)
 
   for (size_t i = 0; i < nDataToPrepare && !m_isFinished; ++i) {
     uint8_t buffer[DEFAULT_BLOCK_SIZE];
-
-    std::streamsize readSize =
-      boost::iostreams::read(*insertStream, reinterpret_cast<char*>(buffer), DEFAULT_BLOCK_SIZE);
-
+    auto readSize = boost::iostreams::read(*insertStream,
+                                           reinterpret_cast<char*>(buffer), DEFAULT_BLOCK_SIZE);
     if (readSize <= 0) {
       BOOST_THROW_EXCEPTION(Error("Error reading from the input stream"));
     }
 
-    shared_ptr<ndn::Data> data =
-      make_shared<ndn::Data>(Name(m_dataPrefix)
-                                    .appendSegment(m_currentSegmentNo));
+    auto data = make_shared<ndn::Data>(Name(m_dataPrefix).appendSegment(m_currentSegmentNo));
 
     if (insertStream->peek() == std::istream::traits_type::eof()) {
       data->setFinalBlock(ndn::name::Component::fromSegment(m_currentSegmentNo));
@@ -232,9 +222,8 @@ NdnPutFile::run()
                            bind(&NdnPutFile::onRegisterSuccess, this, _1),
                            bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
 
-
   if (hasTimeout)
-    m_scheduler.scheduleEvent(timeout, bind(&NdnPutFile::stopProcess, this));
+    m_scheduler.scheduleEvent(timeout, [this] { stopProcess(); });
 
   m_face.processEvents();
 }
@@ -265,15 +254,14 @@ void
 NdnPutFile::onInsertCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getCode();
+  auto statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("insert command failed with code " +
                                 boost::lexical_cast<std::string>(statusCode)));
   }
   m_processId = response.getProcessId();
 
-  m_scheduler.scheduleEvent(m_checkPeriod,
-                            bind(&NdnPutFile::startCheckCommand, this));
+  m_scheduler.scheduleEvent(m_checkPeriod, [this] { startCheckCommand(); });
 }
 
 void
@@ -347,7 +335,7 @@ NdnPutFile::onSingleInterest(const ndn::Name& prefix, const ndn::Interest& inter
     BOOST_THROW_EXCEPTION(Error("Input data does not fit into one Data packet"));
   }
 
-  shared_ptr<ndn::Data> data = make_shared<ndn::Data>(m_dataPrefix);
+  auto data = make_shared<ndn::Data>(m_dataPrefix);
   data->setContent(buffer, readSize);
   data->setFreshnessPeriod(freshnessPeriod);
   signData(*data);
@@ -397,7 +385,7 @@ void
 NdnPutFile::onCheckCommandResponse(const ndn::Interest& interest, const ndn::Data& data)
 {
   RepoCommandResponse response(data.getContent().blockFromValue());
-  int statusCode = response.getCode();
+  auto statusCode = response.getCode();
   if (statusCode >= 400) {
     BOOST_THROW_EXCEPTION(Error("Insert check command failed with code: " +
                                 boost::lexical_cast<std::string>(statusCode)));
@@ -421,8 +409,7 @@ NdnPutFile::onCheckCommandResponse(const ndn::Interest& interest, const ndn::Dat
     }
   }
 
-  m_scheduler.scheduleEvent(m_checkPeriod,
-                            bind(&NdnPutFile::startCheckCommand, this));
+  m_scheduler.scheduleEvent(m_checkPeriod, [this] { startCheckCommand(); });
 }
 
 void
@@ -452,36 +439,40 @@ NdnPutFile::generateCommandInterest(const ndn::Name& commandPrefix, const std::s
 }
 
 static void
-usage()
+usage(const char* programName)
 {
-  fprintf(stderr,
-          "ndnputfile [-u] [-s] [-D] [-d] [-i identity] [-I identity]"
-          "  [-x freshness] [-l lifetime] [-w timeout] repo-prefix ndn-name filename\n"
-          "\n"
-          " Write a file into a repo.\n"
-          "  -u: unversioned: do not add a version component\n"
-          "  -s: single: do not add version or segment component, implies -u\n"
-          "  -D: use DigestSha256 signing method instead of SignatureSha256WithRsa\n"
-          "  -i: specify identity used for signing Data\n"
-          "  -I: specify identity used for signing commands\n"
-          "  -x: FreshnessPeriod in milliseconds\n"
-          "  -l: InterestLifetime in milliseconds for each command\n"
-          "  -w: timeout in milliseconds for whole process (default unlimited)\n"
-          "  -v: be verbose\n"
-          "  repo-prefix: repo command prefix\n"
-          "  ndn-name: NDN Name prefix for written Data\n"
-          "  filename: local file name; \"-\" reads from stdin\n"
-          );
-  exit(1);
+  std::cerr << "Usage: "
+            << programName << " [-u] [-s] [-D] [-d] [-i identity] [-I identity] [-x freshness]"
+                              " [-l lifetime] [-w timeout] repo-prefix ndn-name filename\n"
+            << "\n"
+            << "Write a file into a repo.\n"
+            << "\n"
+            << "  -u: unversioned: do not add a version component\n"
+            << "  -s: single: do not add version or segment component, implies -u\n"
+            << "  -D: use DigestSha256 signing method instead of SignatureSha256WithRsa\n"
+            << "  -i: specify identity used for signing Data\n"
+            << "  -I: specify identity used for signing commands\n"
+            << "  -x: FreshnessPeriod in milliseconds\n"
+            << "  -l: InterestLifetime in milliseconds for each command\n"
+            << "  -w: timeout in milliseconds for whole process (default unlimited)\n"
+            << "  -v: be verbose\n"
+            << "  repo-prefix: repo command prefix\n"
+            << "  ndn-name: NDN Name prefix for written Data\n"
+            << "  filename: local file name; \"-\" reads from stdin\n"
+            << std::endl;
 }
 
-int
+static int
 main(int argc, char** argv)
 {
   NdnPutFile ndnPutFile;
+
   int opt;
-  while ((opt = getopt(argc, argv, "usDi:I:x:l:w:vh")) != -1) {
+  while ((opt = getopt(argc, argv, "husDi:I:x:l:w:v")) != -1) {
     switch (opt) {
+    case 'h':
+      usage(argv[0]);
+      return 0;
     case 'u':
       ndnPutFile.isUnversioned = true;
       break;
@@ -503,7 +494,7 @@ main(int argc, char** argv)
       }
       catch (const boost::bad_lexical_cast&) {
         std::cerr << "-x option should be an integer" << std::endl;;
-        return 1;
+        return 2;
       }
       break;
     case 'l':
@@ -512,7 +503,7 @@ main(int argc, char** argv)
       }
       catch (const boost::bad_lexical_cast&) {
         std::cerr << "-l option should be an integer" << std::endl;;
-        return 1;
+        return 2;
       }
       break;
     case 'w':
@@ -522,25 +513,25 @@ main(int argc, char** argv)
       }
       catch (const boost::bad_lexical_cast&) {
         std::cerr << "-w option should be an integer" << std::endl;;
-        return 1;
+        return 2;
       }
       break;
     case 'v':
       ndnPutFile.isVerbose = true;
       break;
-    case 'h':
-      usage();
-      break;
     default:
-      break;
+      usage(argv[0]);
+      return 2;
     }
+  }
+
+  if (argc != optind + 3) {
+    usage(argv[0]);
+    return 2;
   }
 
   argc -= optind;
   argv += optind;
-
-  if (argc != 3)
-    usage();
 
   ndnPutFile.repoPrefix = Name(argv[0]);
   ndnPutFile.ndnName = Name(argv[1]);
@@ -552,7 +543,7 @@ main(int argc, char** argv)
     std::ifstream inputFileStream(argv[2], std::ios::in | std::ios::binary);
     if (!inputFileStream.is_open()) {
       std::cerr << "ERROR: cannot open " << argv[2] << std::endl;
-      return 1;
+      return 2;
     }
 
     ndnPutFile.insertStream = &inputFileStream;
@@ -574,6 +565,6 @@ main(int argc, char** argv)
   }
   catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
-    return 2;
+    return 1;
   }
 }

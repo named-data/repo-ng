@@ -23,6 +23,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -260,20 +261,21 @@ Consumer::onTimeout(const Interest& interest)
   }
 }
 
-static int
-usage(const std::string& filename)
+static void
+usage(const char* programName)
 {
-  std::cerr << "Usage: \n    "
-            << filename << " [-v] [-s] [-u] [-l lifetime] [-w timeout] [-o filename] ndn-name\n\n"
-            << "-v: be verbose\n"
-            << "-s: only get single data packet\n"
-            << "-u: versioned: ndn-name contains version component\n"
-            << "    if -u is not specified, this command will return the rightmost child for the prefix\n"
-            << "-l: InterestLifetime in milliseconds\n"
-            << "-w: timeout in milliseconds for whole process (default unlimited)\n"
-            << "-o: write to local file name instead of stdout\n"
-            << "ndn-name: NDN Name prefix for Data to be read\n";
-  return 1;
+  std::cerr << "Usage: "
+            << programName << " [-v] [-s] [-u] [-l lifetime] [-w timeout] [-o filename] ndn-name\n"
+            << "\n"
+            << "  -v: be verbose\n"
+            << "  -s: only get single data packet\n"
+            << "  -u: versioned: ndn-name contains version component\n"
+            << "      if -u is not specified, this command will return the rightmost child for the prefix\n"
+            << "  -l: InterestLifetime in milliseconds\n"
+            << "  -w: timeout in milliseconds for whole process (default unlimited)\n"
+            << "  -o: write to local file name instead of stdout\n"
+            << "  ndn-name: NDN Name prefix for Data to be read\n"
+            << std::endl;
 }
 
 static int
@@ -286,42 +288,46 @@ main(int argc, char** argv)
   int timeout = 0;  // in milliseconds
 
   int opt;
-  while ((opt = getopt(argc, argv, "vsul:w:o:")) != -1) {
+  while ((opt = getopt(argc, argv, "hvsul:w:o:")) != -1) {
     switch (opt) {
-      case 'v':
-        verbose = true;
-        break;
-      case 's':
-        single = true;
-        break;
-      case 'u':
-        versioned = true;
-        break;
-      case 'l':
-        try {
-          interestLifetime = boost::lexical_cast<int>(optarg);
-        }
-        catch (const boost::bad_lexical_cast&) {
-          std::cerr << "ERROR: -l option should be an integer" << std::endl;
-          return 1;
-        }
-        interestLifetime = std::max(interestLifetime, 0);
-        break;
-      case 'w':
-        try {
-          timeout = boost::lexical_cast<int>(optarg);
-        }
-        catch (const boost::bad_lexical_cast&) {
-          std::cerr << "ERROR: -w option should be an integer" << std::endl;
-          return 1;
-        }
-        timeout = std::max(timeout, 0);
-        break;
-      case 'o':
-        outputFile = optarg;
-        break;
-      default:
-        return usage(argv[0]);
+    case 'h':
+      usage(argv[0]);
+      return 0;
+    case 'v':
+      verbose = true;
+      break;
+    case 's':
+      single = true;
+      break;
+    case 'u':
+      versioned = true;
+      break;
+    case 'l':
+      try {
+        interestLifetime = boost::lexical_cast<int>(optarg);
+      }
+      catch (const boost::bad_lexical_cast&) {
+        std::cerr << "ERROR: -l option should be an integer" << std::endl;
+        return 2;
+      }
+      interestLifetime = std::max(interestLifetime, 0);
+      break;
+    case 'w':
+      try {
+        timeout = boost::lexical_cast<int>(optarg);
+      }
+      catch (const boost::bad_lexical_cast&) {
+        std::cerr << "ERROR: -w option should be an integer" << std::endl;
+        return 2;
+      }
+      timeout = std::max(timeout, 0);
+      break;
+    case 'o':
+      outputFile = optarg;
+      break;
+    default:
+      usage(argv[0]);
+      return 2;
     }
   }
 
@@ -330,7 +336,8 @@ main(int argc, char** argv)
   }
 
   if (name.empty()) {
-    return usage(argv[0]);
+    usage(argv[0]);
+    return 2;
   }
 
   std::streambuf* buf;
@@ -340,7 +347,7 @@ main(int argc, char** argv)
     of.open(outputFile, std::ios::out | std::ios::binary | std::ios::trunc);
     if (!of || !of.is_open()) {
       std::cerr << "ERROR: cannot open " << outputFile << std::endl;
-      return 1;
+      return 2;
     }
     buf = of.rdbuf();
   }
@@ -356,6 +363,7 @@ main(int argc, char** argv)
   }
   catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
+    return 1;
   }
 
   return 0;

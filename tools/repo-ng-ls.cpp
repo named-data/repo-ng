@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,10 +18,10 @@
  */
 
 #include "../src/common.hpp"
-#include "config.hpp"
 
 #include <iostream>
 #include <string>
+#include <unistd.h>
 
 #include <ndn-cxx/util/sqlite3-statement.hpp>
 
@@ -33,20 +33,19 @@
 namespace repo {
 
 static void
-printUsage(const char* programName)
+usage(const char* programName)
 {
-  std::cout
-    << "Usage:\n"
-    << "  " << programName << " [-c <path/to/repo-ng.conf>] [-n] [-h]\n"
-    << "\n"
-    << "List names of Data packets in NDN repository. "
-    << "By default, all names will include the implicit digest of Data packets\n"
-    << "\n"
-    << "Options:\n"
-    << "  -h: show help message\n"
-    << "  -c: set config file path\n"
-    << "  -n: do not show implicit digest\n"
-    << std::endl;
+  std::cerr << "Usage: "
+            << programName << " [-c <path/to/repo-ng.conf>] [-n] [-h]\n"
+            << "\n"
+            << "List names of Data packets in NDN repository.\n"
+            << "By default, all names will include the implicit digest of Data packets.\n"
+            << "\n"
+            << "Options:\n"
+            << "  -h: show help message\n"
+            << "  -c: set config file path\n"
+            << "  -n: do not show implicit digest\n"
+            << std::endl;
 }
 
 class RepoEnumerator
@@ -55,14 +54,10 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
-public:
+  explicit
   RepoEnumerator(const std::string& configFile);
 
   uint64_t
@@ -146,16 +141,17 @@ RepoEnumerator::enumerate(bool showImplicitDigest)
   return nEntries;
 }
 
-int
+static int
 main(int argc, char** argv)
 {
   std::string configPath = DEFAULT_CONFIG_FILE;
   bool showImplicitDigest = true;
+
   int opt;
   while ((opt = getopt(argc, argv, "hc:n")) != -1) {
     switch (opt) {
     case 'h':
-      printUsage(argv[0]);
+      usage(argv[0]);
       return 0;
     case 'c':
       configPath = std::string(optarg);
@@ -164,7 +160,8 @@ main(int argc, char** argv)
       showImplicitDigest = false;
       break;
     default:
-      break;
+      usage(argv[0]);
+      return 2;
     }
   }
 
@@ -176,7 +173,6 @@ main(int argc, char** argv)
 
 } // namespace repo
 
-
 int
 main(int argc, char** argv)
 {
@@ -185,6 +181,6 @@ main(int argc, char** argv)
   }
   catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;
-    return 2;
+    return 1;
   }
 }

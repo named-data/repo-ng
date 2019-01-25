@@ -1,6 +1,5 @@
 language: cpp
 dist: xenial
-sudo: required
 env:
   global:
     - JOB_NAME=limited-build
@@ -22,8 +21,6 @@ matrix:
     # Linux/clang
     # https://apt.llvm.org/
     - os: linux
-      env: COMPILER=clang++-3.5
-    - os: linux
       env: COMPILER=clang++-3.6
     - os: linux
       env: COMPILER=clang++-3.7 DISABLE_ASAN=yes
@@ -43,9 +40,6 @@ matrix:
     # macOS/clang
     # https://docs.travis-ci.com/user/reference/osx/#OS-X-Version
     - os: osx
-      osx_image: xcode7.3
-      env: OSX_VERSION=10.11
-    - os: osx
       osx_image: xcode8.3
       env: OSX_VERSION=10.12
     - os: osx
@@ -53,10 +47,6 @@ matrix:
       env: OSX_VERSION=10.13
 
   allow_failures:
-    - env: COMPILER=g++-6
-    - env: COMPILER=g++-7
-    - env: COMPILER=g++-8
-    - env: COMPILER=clang++-3.5
     - env: COMPILER=clang++-3.6
     - env: COMPILER=clang++-3.7 DISABLE_ASAN=yes
     - env: COMPILER=clang++-3.8

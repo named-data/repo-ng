@@ -5,29 +5,21 @@ from waflib import Utils
 top = '..'
 
 def build(bld):
-    if bld.env['WITH_TESTS']:
-        tests_base = bld(
-            target='tests-base',
-            name='tests-base',
-            features='cxx',
-            source=bld.path.ant_glob(['*.cpp']),
-            use='ndn-repo-objects',
-          )
+    if not bld.env['WITH_TESTS']:
+        return
 
-        # unit tests
-        unit_tests = bld.program(
-            target='../unit-tests',
-            features='cxx cxxprogram',
-            source=bld.path.ant_glob(['unit/**/*.cpp']),
-            use='tests-base',
-            install_path=None,
-          )
+    bld.objects(target='tests-base',
+                source=bld.path.ant_glob('*.cpp'),
+                use='repo-objects')
 
-        # integrated tests
-        integ_tests = bld.program(
-            target='../integrated-tests',
-            features='cxx cxxprogram',
-            source=bld.path.ant_glob(['integrated/**/*.cpp']),
-            use='tests-base',
-            install_path=None,
-          )
+    bld.program(name='unit-tests',
+                target='../unit-tests',
+                source=bld.path.ant_glob('unit/**/*.cpp'),
+                use='tests-base',
+                install_path=None)
+
+    bld.program(name='integrated-tests',
+                target='../integrated-tests',
+                source=bld.path.ant_glob('integrated/**/*.cpp'),
+                use='tests-base',
+                install_path=None)

@@ -8,18 +8,16 @@ import os
 
 def options(opt):
     opt.load(['compiler_cxx', 'gnu_dirs'])
-    opt.load(['default-compiler-flags', 'coverage', 'sanitizers', 'boost',
-              'sqlite3', 'doxygen'],
+    opt.load(['default-compiler-flags', 'coverage', 'sanitizers', 'boost', 'sqlite3'],
              tooldir=['.waf-tools'])
 
     ropt = opt.add_option_group('ndn-repo-ng Options')
-
-    ropt.add_option('--with-examples', action='store_true', default=False, dest='with_examples',
-                    help='''Build examples''')
-    ropt.add_option('--with-tests', action='store_true', default=False, dest='with_tests',
-                    help='''Build unit tests''')
+    ropt.add_option('--with-examples', action='store_true', default=False,
+                    help='Build examples')
+    ropt.add_option('--with-tests', action='store_true', default=False,
+                    help='Build unit tests')
     ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
-                    help='''Do not build tools''')
+                    help='Do not build tools')
 
 def configure(conf):
     conf.load(['compiler_cxx', 'gnu_dirs',
@@ -38,14 +36,8 @@ def configure(conf):
 
     USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'thread', 'log', 'log_setup']
     if conf.env['WITH_TESTS']:
-        conf.define('HAVE_TESTS', 1)
         USED_BOOST_LIBS += ['unit_test_framework']
     conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True, mt=True)
-
-    try:
-        conf.load("doxygen")
-    except:
-        pass
 
     conf.check_compiler_flags()
 
@@ -54,28 +46,23 @@ def configure(conf):
     conf.load('sanitizers')
 
     conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env['SYSCONFDIR'])
-
-    if not conf.options.with_sqlite_locking:
-        conf.define('DISABLE_SQLITE3_FS_LOCKING', 1)
+    conf.define_cond('DISABLE_SQLITE3_FS_LOCKING', not conf.options.with_sqlite_locking)
+    conf.define_cond('HAVE_TESTS', conf.env['WITH_TESTS'])
 
     conf.write_config_header('src/config.hpp')
 
 def build(bld):
-    bld(target="ndn-repo-objects",
-        name="ndn-repo-objects",
-        features=["cxx"],
-        source=bld.path.ant_glob(['src/**/*.cpp'],
-                                 excl=['src/main.cpp']),
-        use='NDN_CXX BOOST SQLITE3',
-        includes="src",
-        export_includes="src",
-        )
+    bld.objects(target='repo-objects',
+                source=bld.path.ant_glob('src/**/*.cpp',
+                                         excl=['src/main.cpp']),
+                use='NDN_CXX BOOST SQLITE3',
+                includes='src',
+                export_includes='src')
 
-    bld(target="ndn-repo-ng",
-        features=["cxx", "cxxprogram"],
-        source=bld.path.ant_glob(['src/main.cpp']),
-        use='ndn-repo-objects',
-        )
+    bld.program(name='ndn-repo-ng',
+                target='bin/ndn-repo-ng',
+                source='src/main.cpp',
+                use='repo-objects')
 
     bld.recurse('tests')
     bld.recurse('tools')

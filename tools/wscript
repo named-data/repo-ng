@@ -3,11 +3,12 @@
 top = '..'
 
 def build(bld):
-    if bld.env['WITH_TOOLS']:
-        for app in bld.path.ant_glob('*.cpp'):
-            bld(features=['cxx', 'cxxprogram'],
-                target='%s' % (str(app.change_ext('', '.cpp'))),
-                source=app,
-                use=["NDN_CXX", "ndn-repo-objects"],
-                includes="../src",
-                )
+    if not bld.env['WITH_TOOLS']:
+        return
+
+    for tool in bld.path.ant_glob('*.cpp'):
+        name = tool.change_ext('').path_from(bld.path.get_bld())
+        bld.program(name=name,
+                    target='../bin/%s' % name,
+                    source=[tool],
+                    use='repo-objects')

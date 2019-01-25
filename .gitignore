@@ -1,23 +1,29 @@
-*.dSYM/
-*.a
-*.dylib
-*.o
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+.\#*
 
-*.cc~
-*.hpp~
-*.h~
+# Visual Studio Code
+.vscode/
 
-
+# macOS
 .DS_Store
-.lock*
-.waf-1*
-.waf-tools/*.pyc
-build/
+.AppleDouble
+.LSOverride
+._*
 
-*.db
-*.dat
-*.properties
-*.pyc
-*.db*
+# Waf build system
+/build/
+.waf-*-*/
+.waf3-*-*/
+.lock-waf*
 
-.tags*
+# Compiled python code
+__pycache__/
+*.py[cod]
+
+# Other
+/VERSION

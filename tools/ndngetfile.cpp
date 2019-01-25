@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -17,7 +17,9 @@
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ndngetfile.hpp"
+#include <ndn-cxx/data.hpp>
+#include <ndn-cxx/face.hpp>
+#include <ndn-cxx/interest.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -29,13 +31,73 @@ namespace repo {
 using ndn::Name;
 using ndn::Interest;
 using ndn::Data;
-using ndn::Block;
 
-using std::bind;
-using std::placeholders::_1;
-using std::placeholders::_2;
+class Consumer : boost::noncopyable
+{
+public:
+  Consumer(const std::string& dataName, std::ostream& os,
+           bool verbose, bool versioned, bool single,
+           int interestLifetime, int timeout,
+           bool mustBeFresh = false,
+           bool canBePrefix = false)
+    : m_dataName(dataName)
+    , m_os(os)
+    , m_verbose(verbose)
+    , m_hasVersion(versioned)
+    , m_isSingle(single)
+    , m_isFinished(false)
+    , m_isFirst(true)
+    , m_interestLifetime(interestLifetime)
+    , m_timeout(timeout)
+    , m_nextSegment(0)
+    , m_totalSize(0)
+    , m_retryCount(0)
+    , m_mustBeFresh(mustBeFresh)
+    , m_canBePrefix(canBePrefix)
+  {
+  }
 
-static const int MAX_RETRY = 3;
+  void
+  run();
+
+private:
+  void
+  fetchData(const ndn::Name& name);
+
+  void
+  onVersionedData(const ndn::Interest& interest, const ndn::Data& data);
+
+  void
+  onUnversionedData(const ndn::Interest& interest, const ndn::Data& data);
+
+  void
+  onTimeout(const ndn::Interest& interest);
+
+  void
+  readData(const ndn::Data& data);
+
+  void
+  fetchNextData(const ndn::Name& name, const ndn::Data& data);
+
+private:
+  ndn::Face m_face;
+  ndn::Name m_dataName;
+  std::ostream& m_os;
+  bool m_verbose;
+  bool m_hasVersion;
+  bool m_isSingle;
+  bool m_isFinished;
+  bool m_isFirst;
+  ndn::time::milliseconds m_interestLifetime;
+  ndn::time::milliseconds m_timeout;
+  uint64_t m_nextSegment;
+  int m_totalSize;
+  int m_retryCount;
+  bool m_mustBeFresh;
+  bool m_canBePrefix;
+
+  static constexpr int MAX_RETRY = 3;
+};
 
 void
 Consumer::fetchData(const Name& name)
@@ -148,7 +210,7 @@ Consumer::onUnversionedData(const Interest& interest, const Data& data)
 void
 Consumer::readData(const Data& data)
 {
-  const Block& content = data.getContent();
+  const auto& content = data.getContent();
   m_os.write(reinterpret_cast<const char*>(content.value()), content.value_size());
   m_totalSize += content.value_size();
   if (m_verbose) {
@@ -198,7 +260,7 @@ Consumer::onTimeout(const Interest& interest)
   }
 }
 
-int
+static int
 usage(const std::string& filename)
 {
   std::cerr << "Usage: \n    "
@@ -214,7 +276,7 @@ usage(const std::string& filename)
   return 1;
 }
 
-int
+static int
 main(int argc, char** argv)
 {
   std::string name;

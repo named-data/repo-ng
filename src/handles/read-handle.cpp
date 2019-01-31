@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -89,7 +89,7 @@ ReadHandle::onDataDeleted(const Name& name)
   auto check = m_insertedDataPrefixes.find(prefix);
   if (check != m_insertedDataPrefixes.end()) {
     if (--(check->second.useCount) <= 0) {
-      m_face.unsetInterestFilter(check->second.prefixId);
+      check->second.hdl.unregister();
       m_insertedDataPrefixes.erase(prefix);
     }
   }
@@ -110,7 +110,7 @@ ReadHandle::onDataInserted(const Name& name)
     // everything down, anyway. If registration failures are ever
     // considered to be recoverable, we would need to make this
     // atomic.
-    const ndn::RegisteredPrefixId* prefixId = m_face.setInterestFilter(filter,
+    auto hdl = m_face.setInterestFilter(filter,
       [this] (const ndn::InterestFilter& filter, const Interest& interest) {
         // Implicit conversion to Name of filter
         onInterest(filter, interest);
@@ -119,7 +119,7 @@ ReadHandle::onDataInserted(const Name& name)
       [this] (const Name& prefix, const std::string& reason) {
         onRegisterFailed(prefix, reason);
       });
-    RegisteredDataPrefix registeredPrefix{prefixId, 1};
+    RegisteredDataPrefix registeredPrefix{hdl, 1};
     // Newly registered prefix
     m_insertedDataPrefixes.emplace(std::make_pair(prefixToRegister, registeredPrefix));
   }

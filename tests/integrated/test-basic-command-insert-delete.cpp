@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -40,9 +40,6 @@ namespace repo {
 namespace tests {
 
 using ndn::time::milliseconds;
-using ndn::time::seconds;
-using ndn::EventId;
-
 
 // All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandInsertDelete)
@@ -111,7 +108,7 @@ public:
   DeleteHandle deleteHandle;
   Face insertFace;
   Face deleteFace;
-  std::map<Name, EventId> insertEvents;
+  std::map<Name, ndn::scheduler::EventId> insertEvents;
   std::map<Name, Name> deleteNamePairs;
   ndn::security::CommandInterestSigner signer;
 };
@@ -124,15 +121,14 @@ Fixture<T>::onInsertInterest(const Interest& interest)
   data.setFreshnessPeriod(0_ms);
   keyChain.sign(data);
   insertFace.put(data);
-  std::map<Name, EventId>::iterator event = insertEvents.find(interest.getName());
-  if (event != insertEvents.end()) {
-    scheduler.cancelEvent(event->second);
-    insertEvents.erase(event);
+  auto eventIt = insertEvents.find(interest.getName());
+  if (eventIt != insertEvents.end()) {
+    eventIt->second.cancel();
+    insertEvents.erase(eventIt);
   }
   // schedule an event 50ms later to check whether insert is Ok
   scheduler.scheduleEvent(500_ms, std::bind(&Fixture<T>::checkInsertOk, this, interest));
 }
-
 
 template<class T> void
 Fixture<T>::onRegisterFailed(const std::string& reason)
@@ -221,7 +217,6 @@ Fixture<T>::checkDeleteOk(const Interest& interest)
   BOOST_CHECK(!data);
 }
 
-
 template<class T> void
 Fixture<T>::scheduleInsertEvent()
 {
@@ -238,8 +233,8 @@ Fixture<T>::scheduleInsertEvent()
     scheduler.scheduleEvent(milliseconds(timeCount * 50 + 1000),
                             std::bind(&Fixture<T>::sendInsertInterest, this, insertInterest));
     // schedule what to do when interest timeout
-    EventId delayEventId = scheduler.scheduleEvent(milliseconds(5000 + timeCount * 50),
-                                                   std::bind(&Fixture<T>::delayedInterest, this));
+    auto delayEventId = scheduler.scheduleEvent(milliseconds(5000 + timeCount * 50),
+                                                std::bind(&Fixture<T>::delayedInterest, this));
     insertEvents[insertParameter.getName()] = delayEventId;
     // The delayEvent will be canceled in onInsertInterest
     insertFace.setInterestFilter(insertParameter.getName(),

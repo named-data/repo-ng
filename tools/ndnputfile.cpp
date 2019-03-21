@@ -223,7 +223,7 @@ NdnPutFile::run()
                            bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
 
   if (hasTimeout)
-    m_scheduler.scheduleEvent(timeout, [this] { stopProcess(); });
+    m_scheduler.schedule(timeout, [this] { stopProcess(); });
 
   m_face.processEvents();
 }
@@ -261,7 +261,7 @@ NdnPutFile::onInsertCommandResponse(const ndn::Interest& interest, const ndn::Da
   }
   m_processId = response.getProcessId();
 
-  m_scheduler.scheduleEvent(m_checkPeriod, [this] { startCheckCommand(); });
+  m_scheduler.schedule(m_checkPeriod, [this] { startCheckCommand(); });
 }
 
 void
@@ -409,7 +409,7 @@ NdnPutFile::onCheckCommandResponse(const ndn::Interest& interest, const ndn::Dat
     }
   }
 
-  m_scheduler.scheduleEvent(m_checkPeriod, [this] { startCheckCommand(); });
+  m_scheduler.schedule(m_checkPeriod, [this] { startCheckCommand(); });
 }
 
 void

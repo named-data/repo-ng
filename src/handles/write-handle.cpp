@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -318,23 +318,22 @@ WriteHandle::handleCheckCommand(const Name& prefix, const Interest& interest,
 void
 WriteHandle::deferredDeleteProcess(ProcessId processId)
 {
-  scheduler.scheduleEvent(PROCESS_DELETE_TIME,
-                          std::bind(&WriteHandle::deleteProcess, this, processId));
+  scheduler.schedule(PROCESS_DELETE_TIME, [=] { deleteProcess(processId); });
 }
 
 void
 WriteHandle::extendNoEndTime(ProcessInfo& process)
 {
-  ndn::time::steady_clock::TimePoint& noEndTime = process.noEndTime;
-  ndn::time::steady_clock::TimePoint now = ndn::time::steady_clock::now();
+  auto& noEndTime = process.noEndTime;
+  auto now = ndn::time::steady_clock::now();
   RepoCommandResponse& response = process.response;
   if (now > noEndTime) {
     response.setCode(405);
     return;
   }
+
   //extends noEndTime
   process.noEndTime = ndn::time::steady_clock::now() + m_noEndTimeout;
-
 }
 
 RepoCommandResponse

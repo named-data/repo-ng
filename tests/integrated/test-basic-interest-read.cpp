@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -79,9 +79,8 @@ public:
 
       Interest readInterest((*i)->getName());
       readInterest.setMustBeFresh(true);
-      scheduler.scheduleEvent(ndn::time::milliseconds(timeCount * 50),
-                              std::bind(&BasicInterestReadFixture<Dataset>::sendInterest, this,
-                                        readInterest));
+      scheduler.schedule(ndn::time::milliseconds(timeCount * 50),
+                         std::bind(&BasicInterestReadFixture<Dataset>::sendInterest, this, readInterest));
       timeCount++;
     }
   }
@@ -133,11 +132,9 @@ using Datasets = boost::mpl::vector<BasicDataset,
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 {
   this->startListen();
-  this->scheduler.scheduleEvent(1_s,
-                                std::bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
+  this->scheduler.schedule(1_s, std::bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
 
   this->repoFace.processEvents(20_s);
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()

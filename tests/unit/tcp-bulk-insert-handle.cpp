@@ -84,8 +84,7 @@ public:
     : scheduler(ioService)
     , bulkInserter(ioService, *handle)
   {
-    guardEvent = scheduler.scheduleEvent(ndn::time::seconds(2),
-                                         std::bind(&TcpBulkInsertFixture::fail, this, "Test timed out"));
+    guardEvent = scheduler.schedule(2_s, std::bind(&TcpBulkInsertFixture::fail, this, "Test timed out"));
   }
 
   virtual void
@@ -118,12 +117,10 @@ public:
     }
 
     if (isFinal) {
-      scheduler.cancelEvent(guardEvent);
+      guardEvent.cancel();
 
       // In case there are some outstanding handlers
-      // ioService.post(bind(&TcpBulkInsertFixture::stop, this));
-      scheduler.scheduleEvent(ndn::time::seconds(1),
-                              std::bind(&TcpBulkInsertFixture::stop, this));
+      scheduler.schedule(1_s, [this] { stop(); });
     }
   }
 
@@ -170,7 +167,6 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkIn
     BOOST_CHECK_EQUAL(*this->handle->readData(i->first), *i->second);
   }
 }
-
 
 BOOST_AUTO_TEST_SUITE_END()
 

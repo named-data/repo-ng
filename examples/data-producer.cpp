@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,9 +18,10 @@
  */
 
 /**
- * This file demonstrates how to generate data to be stored in repo with repo watch
- * protocol and repo insert protocol.
- * The details of the protocols can be find here
+ * @file This file demonstrates how to generate data to be stored in a repo using
+ *       the repo watch protocol and repo insertion protocol.
+ *
+ * The details of the protocols can be found here:
  *  <https://redmine.named-data.net/projects/repo-ng/wiki/Watched_Prefix_Insertion_Protocol>
  *  <https://redmine.named-data.net/projects/repo-ng/wiki/Basic_Repo_Insertion_Protocol>
  *
@@ -33,10 +34,16 @@
  * The description of command parameter can be found in the function usage().
  */
 
-#include "../src/common.hpp"
-
 #include <boost/asio/io_service.hpp>
 #include <boost/lexical_cast.hpp>
+
+#include <ndn-cxx/data.hpp>
+#include <ndn-cxx/face.hpp>
+#include <ndn-cxx/name.hpp>
+#include <ndn-cxx/util/random.hpp>
+#include <ndn-cxx/util/scheduler.hpp>
+#include <ndn-cxx/util/time.hpp>
+
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -46,7 +53,7 @@ namespace repo {
 
 using ndn::time::milliseconds;
 
-static const milliseconds DEFAULT_TIME_INTERVAL(2000);
+const milliseconds DEFAULT_TIME_INTERVAL(2000);
 
 enum Mode {
   AUTO,
@@ -59,23 +66,17 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
 public:
   Publisher()
     : mode(AUTO)
-    , dataPrefix(Name("/example/data"))
+    , dataPrefix("/example/data")
     , timeInterval(DEFAULT_TIME_INTERVAL)
     , duration(0)
     , m_scheduler(m_face.getIoService())
-    , m_randomEngine(std::random_device{}())
     , m_randomDist(200, 1000)
-    , m_range([this] { return m_randomDist(m_randomEngine); })
   {
   }
 
@@ -88,32 +89,30 @@ public:
   void
   generateFromFile();
 
-  std::shared_ptr<ndn::Data>
+  static std::shared_ptr<ndn::Data>
   createData(const ndn::Name& name);
 
 public:
   std::ifstream insertStream;
   Mode mode;
-  Name dataPrefix;
+  ndn::Name dataPrefix;
   milliseconds timeInterval;
   milliseconds duration;
 
 private:
   ndn::Face m_face;
   ndn::Scheduler m_scheduler;
-  std::mt19937 m_randomEngine;
-  std::uniform_int_distribution<unsigned int> m_randomDist;
-  std::function<unsigned int(void)> m_range;
+  std::uniform_int_distribution<> m_randomDist;
 };
 
 void
 Publisher::run()
 {
   if (mode == AUTO) {
-    m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::autoGenerate, this));
+    m_scheduler.schedule(timeInterval, [this] { autoGenerate(); });
   }
   else {
-    m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::generateFromFile, this));
+    m_scheduler.schedule(timeInterval, [this] { generateFromFile(); });
   }
   m_face.processEvents(duration);
 }
@@ -121,11 +120,12 @@ Publisher::run()
 void
 Publisher::autoGenerate()
 {
-  Name name = dataPrefix;
-  name.appendNumber(m_range());
-  std::shared_ptr<Data> data = createData(name);
+  ndn::Name name = dataPrefix;
+  name.appendNumber(m_randomDist(ndn::random::getRandomNumberEngine()));
+  auto data = createData(name);
   m_face.put(*data);
-  m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::autoGenerate, this));
+
+  m_scheduler.schedule(timeInterval, [this] { autoGenerate(); });
 }
 
 void
@@ -134,23 +134,25 @@ Publisher::generateFromFile()
   if (insertStream.eof()) {
     m_face.getIoService().stop();
     return;
-   }
+  }
+
   std::string name;
   getline(insertStream, name);
-  std::shared_ptr<Data> data = createData(Name(name));
+  auto data = createData(ndn::Name(name));
   m_face.put(*data);
-  m_scheduler.scheduleEvent(timeInterval, std::bind(&Publisher::generateFromFile, this));
+
+  m_scheduler.schedule(timeInterval, [this] { generateFromFile(); });
 }
 
-std::shared_ptr<Data>
-Publisher::createData(const Name& name)
+std::shared_ptr<ndn::Data>
+Publisher::createData(const ndn::Name& name)
 {
   static ndn::KeyChain keyChain;
   static std::vector<uint8_t> content(1500, '-');
 
-  std::shared_ptr<ndn::Data> data = std::make_shared<Data>();
+  auto data = std::make_shared<ndn::Data>();
   data->setName(name);
-  data->setContent(&content[0], content.size());
+  data->setContent(content.data(), content.size());
   keyChain.sign(*data);
   return data;
 }
@@ -169,7 +171,7 @@ usage()
 }
 
 static int
-main(int argc, char** argv)
+main(int argc, char* argv[])
 {
   Publisher generator;
   bool isAuto = false;
@@ -179,7 +181,7 @@ main(int argc, char** argv)
     switch (opt) {
     case 'd':
       {
-        generator.dataPrefix = Name(std::string(optarg));
+        generator.dataPrefix = ndn::Name(std::string(optarg));
         generator.mode = AUTO;
         isAuto = true;
       }
@@ -236,7 +238,7 @@ main(int argc, char** argv)
 } // namespace repo
 
 int
-main(int argc, char** argv)
+main(int argc, char* argv[])
 {
   try {
     return repo::main(argc, argv);

@@ -120,6 +120,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_tcpBulkInsertHandle(ioService, m_storageHandle)
 {
   this->enableValidation();
+  m_storageHandle.notifyAboutExistingData();
 }
 
 void

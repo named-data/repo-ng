@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -81,6 +81,12 @@ public:
    */
   virtual std::shared_ptr<Data>
   find(const Name& name, bool exactMatch = false) = 0;
+
+   /**
+   *  @brief Enumerate each entry in database and call @p f with name of stored data
+   */
+  virtual void
+  forEach(const std::function<void(const Name&)>& f) = 0;
 
   /**
    *  @brief  return the size of database

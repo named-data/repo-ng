@@ -47,7 +47,16 @@ public:
   };
 
 public:
+  explicit
   RepoStorage(Storage& store);
+
+  /**
+   * @brief Notify about existing data
+   *
+   * Note, this cannot be in constructor, as have to be called after signal is connected
+   */
+  void
+  notifyAboutExistingData();
 
   /**
    *  @brief  insert data into repo

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2019, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -23,7 +23,7 @@
 #include "common.hpp"
 #include "storage/repo-storage.hpp"
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/tcp.hpp>
 
 namespace repo {
 
@@ -57,6 +57,9 @@ public:
   }
 
 private:
+  void
+  asyncAccept();
+
   void
   handleAccept(const boost::system::error_code& error,
                const std::shared_ptr<boost::asio::ip::tcp::socket>& socket);

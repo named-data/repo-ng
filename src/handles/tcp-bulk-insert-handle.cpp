@@ -19,9 +19,12 @@
 
 #include "tcp-bulk-insert-handle.hpp"
 
+#include <boost/asio/ip/v6_only.hpp>
 #include <ndn-cxx/util/logger.hpp>
 
 NDN_LOG_INIT(repo.TcpHandle);
+
+namespace ip = boost::asio::ip;
 
 namespace repo {
 namespace detail {
@@ -29,25 +32,19 @@ namespace detail {
 class TcpBulkInsertClient : noncopyable
 {
 public:
-  TcpBulkInsertClient(TcpBulkInsertHandle& writer,
-                      const std::shared_ptr<boost::asio::ip::tcp::socket>& socket)
+  TcpBulkInsertClient(TcpBulkInsertHandle& writer, std::shared_ptr<ip::tcp::socket> socket)
     : m_writer(writer)
-    , m_socket(socket)
-    , m_hasStarted(false)
-    , m_inputBufferSize(0)
+    , m_socket(std::move(socket))
   {
   }
 
   static void
-  startReceive(const std::shared_ptr<TcpBulkInsertClient>& client)
+  startReceive(TcpBulkInsertHandle& writer, std::shared_ptr<ip::tcp::socket> socket)
   {
-    BOOST_ASSERT(!client->m_hasStarted);
-
+    auto client = std::make_shared<TcpBulkInsertClient>(writer, std::move(socket));
     client->m_socket->async_receive(
       boost::asio::buffer(client->m_inputBuffer, ndn::MAX_NDN_PACKET_SIZE), 0,
       std::bind(&TcpBulkInsertClient::handleReceive, client, _1, _2, client));
-
-    client->m_hasStarted = true;
   }
 
 private:
@@ -58,10 +55,9 @@ private:
 
 private:
   TcpBulkInsertHandle& m_writer;
-  std::shared_ptr<boost::asio::ip::tcp::socket> m_socket;
-  bool m_hasStarted;
+  std::shared_ptr<ip::tcp::socket> m_socket;
   uint8_t m_inputBuffer[ndn::MAX_NDN_PACKET_SIZE];
-  std::size_t m_inputBufferSize;
+  std::size_t m_inputBufferSize = 0;
 };
 
 } // namespace detail
@@ -76,31 +72,33 @@ TcpBulkInsertHandle::TcpBulkInsertHandle(boost::asio::io_service& ioService,
 void
 TcpBulkInsertHandle::listen(const std::string& host, const std::string& port)
 {
-  using namespace boost::asio;
-
-  ip::tcp::resolver resolver(m_acceptor.get_io_service());
+  ip::tcp::resolver resolver(m_acceptor
+#if BOOST_VERSION >= 107000
+                             .get_executor()
+#else
+                             .get_io_service()
+#endif
+                             );
   ip::tcp::resolver::query query(host, port);
 
   ip::tcp::resolver::iterator endpoint = resolver.resolve(query);
   ip::tcp::resolver::iterator end;
 
   if (endpoint == end)
-    BOOST_THROW_EXCEPTION(Error("Cannot listen on [" + host + ":" + port + "]"));
+    BOOST_THROW_EXCEPTION(Error("Cannot listen on " + host + " port " + port));
 
   m_localEndpoint = *endpoint;
   NDN_LOG_DEBUG("Start listening on " << m_localEndpoint);
 
-  m_acceptor.open(m_localEndpoint .protocol());
+  m_acceptor.open(m_localEndpoint.protocol());
   m_acceptor.set_option(ip::tcp::acceptor::reuse_address(true));
   if (m_localEndpoint.address().is_v6()) {
     m_acceptor.set_option(ip::v6_only(true));
   }
   m_acceptor.bind(m_localEndpoint);
-  m_acceptor.listen(255);
+  m_acceptor.listen();
 
-  auto clientSocket = std::make_shared<ip::tcp::socket>(m_acceptor.get_io_service());
-  m_acceptor.async_accept(*clientSocket,
-                          std::bind(&TcpBulkInsertHandle::handleAccept, this, _1, clientSocket));
+  asyncAccept();
 }
 
 void
@@ -111,25 +109,33 @@ TcpBulkInsertHandle::stop()
 }
 
 void
-TcpBulkInsertHandle::handleAccept(const boost::system::error_code& error,
-                                  const std::shared_ptr<boost::asio::ip::tcp::socket>& socket)
+TcpBulkInsertHandle::asyncAccept()
 {
-  using namespace boost::asio;
+  auto clientSocket = std::make_shared<ip::tcp::socket>(m_acceptor
+#if BOOST_VERSION >= 107000
+                                                        .get_executor()
+#else
+                                                        .get_io_service()
+#endif
+                                                        );
+  m_acceptor.async_accept(*clientSocket,
+                          std::bind(&TcpBulkInsertHandle::handleAccept, this, _1, clientSocket));
+}
 
+void
+TcpBulkInsertHandle::handleAccept(const boost::system::error_code& error,
+                                  const std::shared_ptr<ip::tcp::socket>& socket)
+{
   if (error) {
     return;
   }
 
   NDN_LOG_DEBUG("New connection from " << socket->remote_endpoint());
 
-  std::shared_ptr<detail::TcpBulkInsertClient> client =
-    std::make_shared<detail::TcpBulkInsertClient>(*this, socket);
-  detail::TcpBulkInsertClient::startReceive(client);
+  detail::TcpBulkInsertClient::startReceive(*this, socket);
 
   // prepare accepting the next connection
-  auto clientSocket = std::make_shared<ip::tcp::socket>(m_acceptor.get_io_service());
-  m_acceptor.async_accept(*clientSocket,
-                          std::bind(&TcpBulkInsertHandle::handleAccept, this, _1, clientSocket));
+  asyncAccept();
 }
 
 void
@@ -142,7 +148,7 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
       return;
 
     boost::system::error_code ec;
-    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    m_socket->shutdown(ip::tcp::socket::shutdown_both, ec);
     m_socket->close(ec);
     return;
   }
@@ -181,7 +187,7 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
 
   if (!isOk && m_inputBufferSize == ndn::MAX_NDN_PACKET_SIZE && offset == 0) {
     boost::system::error_code ec;
-    m_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    m_socket->shutdown(ip::tcp::socket::shutdown_both, ec);
     m_socket->close(ec);
     return;
   }

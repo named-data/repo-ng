@@ -1,43 +1,41 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-VERSION = '0.1'
-APPNAME = 'ndn-repo-ng'
-
 from waflib import Utils
 import os
+
+VERSION = '0.1'
+APPNAME = 'ndn-repo-ng'
 
 def options(opt):
     opt.load(['compiler_cxx', 'gnu_dirs'])
     opt.load(['default-compiler-flags', 'coverage', 'sanitizers', 'boost', 'sqlite3'],
              tooldir=['.waf-tools'])
 
-    ropt = opt.add_option_group('ndn-repo-ng Options')
-    ropt.add_option('--with-examples', action='store_true', default=False,
-                    help='Build examples')
-    ropt.add_option('--with-tests', action='store_true', default=False,
-                    help='Build unit tests')
-    ropt.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
-                    help='Do not build tools')
+    optgrp = opt.add_option_group('Repo-ng Options')
+    optgrp.add_option('--with-examples', action='store_true', default=False,
+                      help='Build examples')
+    optgrp.add_option('--with-tests', action='store_true', default=False,
+                      help='Build unit tests')
+    optgrp.add_option('--without-tools', action='store_false', default=True, dest='with_tools',
+                      help='Do not build tools')
 
 def configure(conf):
     conf.load(['compiler_cxx', 'gnu_dirs',
                'default-compiler-flags', 'boost', 'sqlite3'])
 
-    if 'PKG_CONFIG_PATH' not in os.environ:
-        os.environ['PKG_CONFIG_PATH'] = Utils.subst_vars('${LIBDIR}/pkgconfig', conf.env)
-    conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'],
-                   uselib_store='NDN_CXX', mandatory=True)
-
-    conf.check_sqlite3(mandatory=True)
-
     conf.env['WITH_EXAMPLES'] = conf.options.with_examples
     conf.env['WITH_TESTS'] = conf.options.with_tests
     conf.env['WITH_TOOLS'] = conf.options.with_tools
 
-    USED_BOOST_LIBS = ['system', 'iostreams', 'filesystem', 'thread', 'log', 'log_setup']
+    conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'], uselib_store='NDN_CXX',
+                   pkg_config_path=os.environ.get('PKG_CONFIG_PATH', '%s/pkgconfig' % conf.env.LIBDIR))
+
+    conf.check_sqlite3()
+
+    USED_BOOST_LIBS = ['system', 'program_options', 'iostreams', 'filesystem', 'thread', 'log']
     if conf.env['WITH_TESTS']:
         USED_BOOST_LIBS += ['unit_test_framework']
-    conf.check_boost(lib=USED_BOOST_LIBS, mandatory=True, mt=True)
+    conf.check_boost(lib=USED_BOOST_LIBS, mt=True)
 
     conf.check_compiler_flags()
 

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2020,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -26,17 +26,17 @@
 #include <boost/test/unit_test.hpp>
 #include <ndn-cxx/util/dummy-client-face.hpp>
 
-#define CHECK_INTERESTS(NAME,COMPONENT,BOOL)                  \
+#define CHECK_INTERESTS(NAME, COMPONENT, EXPECTED)            \
   do {                                                        \
-    didMatch = false;                                         \
-    for (const auto interest : face.sentInterests) {          \
+    bool didMatch = false;                                    \
+    for (const auto& interest : face.sentInterests) {         \
       bool isPresent = false;                                 \
-      for (const auto section : NAME) {                       \
+      for (const auto& section : NAME) {                      \
         isPresent = isPresent || section == COMPONENT;        \
       }                                                       \
       didMatch = didMatch || isPresent;                       \
     }                                                         \
-    BOOST_CHECK_EQUAL(didMatch,BOOL);                         \
+    BOOST_CHECK_EQUAL(didMatch, EXPECTED);                    \
   } while (0)
 
 namespace repo {
@@ -88,8 +88,8 @@ public:
 BOOST_FIXTURE_TEST_CASE(DataPrefixes, Fixture)
 {
   const std::vector<uint8_t> content(100, 'x');
-  std::shared_ptr<Data> data1 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(1));
-  std::shared_ptr<Data> data2 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(2));
+  auto data1 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(1));
+  auto data2 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(2));
 
   data1->setContent(&content[0], content.size());
   data2->setContent(&content[0], content.size());
@@ -100,7 +100,6 @@ BOOST_FIXTURE_TEST_CASE(DataPrefixes, Fixture)
   keyChain.sign(*data2, ndn::security::SigningInfo(ndn::security::SigningInfo::SIGNER_TYPE_ID,
                                                   identity));
 
-  bool didMatch = false;
   face.sentInterests.clear();
   handle->insertData(*data1);
   face.processEvents(-1_ms);

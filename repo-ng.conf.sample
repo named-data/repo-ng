@@ -1,10 +1,10 @@
 repo
 {
-  ; Section defining list of Data prefixes to register
-  ; Additionally define how many components off the end of data prefixes to insert into NFD
-  ; 'prefix' option can be repeated multiple times
+  ; Section defining the list of Data prefixes to register.
+  ; Additionally defines how many components off the end of these Data prefixes to insert into NFD.
+  ; The 'prefix' option can be repeated multiple times.
   ; 'registration-subset' defines how many components to exclude. This includes the implicit digest
-  ; at the end of the data name.
+  ; at the end of the Data name.
   data
   {
     registration-subset 2
@@ -12,26 +12,24 @@ repo
     prefix "ndn:/example/data/2"
   }
 
-  ; Section defining list of command prefixes (to insert or delete Data) to register.
-  ; Only 'prefix' option is allowed here, which can be repeated multiple times
+  ; Section defining the list of command prefixes (to insert or delete Data) to register.
+  ; Only the 'prefix' option is allowed here and it can be repeated multiple times.
   command
   {
     prefix "ndn:/example/repo/1"
     prefix "ndn:/example/repo/2"
   }
 
-  ; Section to specify where data should be stored
-  ; Right now only a single 'sqlite' option is allowed:
+  ; Section to specify where the data should be stored.
   storage
   {
-    method "sqlite"              ; Currently, only sqlite storage engine is supported
+    method "sqlite"              ; Currently, only the sqlite storage engine is supported
     path "/var/lib/ndn/repo-ng"  ; Path to repo-ng storage folder
     max-packets 100000
   }
 
-  ; Section to enable TCP bulk insert capability
-  ; If section is present, then TCP bulk insert is enabled (empty section enables
-  ; TCP bulk insert to listen on "localhost:7376")
+  ; Section to configure the TCP bulk insert capability.
+  ; An empty section enables TCP bulk insert to listen on localhost, port 7376.
   tcp_bulk_insert
   {
     ; host "localhost"  ; Set to listen on a different IP address or hostname
@@ -46,13 +44,13 @@ repo
       type any
     }
 
-    ; ; These rule are examples of validation of signed interests for commands and data.
-    ; ; User could define its own rule for signed interest or data to be inserted
-    ; ; according to Validator Configuration File Format.
-    ; ; (http://redmine.named-data.net/projects/ndn-cxx/wiki/CommandValidatorConf)
+    ; ; These rules are examples to validate signed Interests for commands and data.
+    ; ; One can define their own rules for signed Interests and Data packets to be
+    ; ; inserted according to the Validator Configuration File Format.
+    ; ; See https://named-data.net/doc/ndn-cxx/current/tutorials/security-validator-config.html
     ; rule
     ; {
-    ;   id "Simple Rule For Interest"
+    ;   id "Simple Rule For Interests"
     ;   for interest
     ;   filter
     ;   {
@@ -67,9 +65,8 @@ repo
     ;     signer
     ;     {
     ;       type file
-    ;       ; repo-ng.cert.sample is just a non-existent certificate.
-    ;       ; User should create its own certification using Security Tool.
-    ;       ; (http://redmine.named-data.net/projects/ndn-cxx/wiki/SecurityTools)
+    ;       ; repo-ng.cert.sample is a non-existent certificate.
+    ;       ; One should create their certificates using the ndnsec tool.
     ;       file-name "repo-ng.cert.sample"
     ;     }
     ;   }
@@ -92,9 +89,8 @@ repo
     ;     signer
     ;     {
     ;       type file
-    ;       ; repo-ng.cert.sample is just a non-existent certificate.
-    ;       ; User should create its own certification using Security Tool.
-    ;       ; (http://redmine.named-data.net/projects/ndn-cxx/wiki/SecurityTools)
+    ;       ; repo-ng.cert.sample is a non-existent certificate.
+    ;       ; One should create their certificates using the ndnsec tool.
     ;       file-name "repo-ng.cert.sample"
     ;     }
     ;   }

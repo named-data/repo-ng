@@ -1,44 +1,37 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
-JDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source "$JDIR"/util.sh
-
-set -x
-
-git submodule init
 git submodule sync
-git submodule update
+git submodule update --init
 
-# Cleanup
-sudo env "PATH=$PATH" ./waf --color=yes distclean
-
-if [[ $JOB_NAME != *"code-coverage" && $JOB_NAME != *"limited-build" ]]; then
-  # Configure/build in optimized mode with tests
-  ./waf --color=yes configure --with-tests
-  ./waf --color=yes build -j${WAF_JOBS:-1}
-
-  # Cleanup
-  sudo env "PATH=$PATH" ./waf --color=yes distclean
-
-  # Configure/build in optimized mode without tests
-  ./waf --color=yes configure
-  ./waf --color=yes build -j${WAF_JOBS:-1}
-
-  # Cleanup
-  sudo env "PATH=$PATH" ./waf --color=yes distclean
-fi
-
-# Configure/build in debug mode with tests
-if [[ $JOB_NAME == *"code-coverage" ]]; then
-    COVERAGE="--with-coverage"
-elif [[ -n $BUILD_WITH_ASAN || -z $TRAVIS ]]; then
+if [[ -z $DISABLE_ASAN ]]; then
     ASAN="--with-sanitizer=address"
 fi
-./waf --color=yes configure --debug --with-tests $COVERAGE $ASAN
-./waf --color=yes build -j${WAF_JOBS:-1}
+if [[ $JOB_NAME == *"code-coverage" ]]; then
+    COVERAGE="--with-coverage"
+fi
 
-# (tests will be run against debug version)
+if [[ $JOB_NAME != *"code-coverage" && $JOB_NAME != *"limited-build" ]]; then
+    # Build in release mode with tests
+    ./waf --color=yes configure --with-tests
+    ./waf --color=yes build -j$WAF_JOBS
+
+    # Cleanup
+    ./waf --color=yes distclean
+
+    # Build in release mode without tests
+    ./waf --color=yes configure
+    ./waf --color=yes build -j$WAF_JOBS
+
+    # Cleanup
+    ./waf --color=yes distclean
+fi
+
+# Build in debug mode with tests and examples
+./waf --color=yes configure --debug --with-tests --with-examples $ASAN $COVERAGE
+./waf --color=yes build -j$WAF_JOBS
+
+# (tests will be run against the debug version)
 
 # Install
-sudo env "PATH=$PATH" ./waf --color=yes install
+sudo_preserve_env PATH -- ./waf --color=yes install

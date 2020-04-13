@@ -1,19 +1,14 @@
-ndn-repo-ng:  Next generation of NDN repository
-===============================================
+# Installing repo-ng
 
-Prerequisites
--------------
+## Prerequisites
 
-Required:
-
-* [ndn-cxx and its dependencies](https://github.com/named-data/ndn-cxx)
+* [ndn-cxx and its dependencies](https://named-data.net/doc/ndn-cxx/current/INSTALL.html)
 * sqlite3
-* Boost libraries
 
-Build
------
+## Build
 
-To build in a terminal, change directory to repo-ng repository.  Enter:
+To build in a terminal, change to the directory containing the repo-ng repository.
+Then enter:
 
     ./waf configure
     ./waf
@@ -21,28 +16,26 @@ To build in a terminal, change directory to repo-ng repository.  Enter:
 
 This builds and installs `ndn-repo-ng` and related tools.
 
-If configured with tests: `./waf configure --with-tests`), the above commands will
-also generate unit tests in `./built/unit-tests`
+If configured with tests (`./waf configure --with-tests`), the above commands will
+also generate unit tests that can be run with `./build/unit-tests`.
 
-Configuration
--------------
+## Configuration
 
 The default configuration file path is `/usr/local/etc/ndn/repo-ng.conf`.
-Users may copy `repo-ng.conf.sample` config sample to the specific path.
+Users may copy the [repo-ng.conf.sample](repo-ng.conf.sample) config sample to that path.
 
-Database
---------
+## Database
 
-The database path is set in "storage.path" key of the config file.
+The database path is set in the `storage.path` key of the configuration file.
 The default database path is `/var/lib/ndn/repo-ng`.
 
-`ndn-repo-ng` automatically creates a database if one does not exist.
+repo-ng will automatically create a database if one does not exist.
 
-Users should make sure the `ndn-repo-ng` process has write privileges to the database path.
+Users should make sure that the `ndn-repo-ng` process has write access to the
+database directory.
 
-Tools
------
+## Tools
 
-Currently, three tools are supported: ndnputfile, ndngetfile, and ndnrepowatch.
-
-Users can find detailed information about these tools in <https://redmine.named-data.net/projects/repo-ng/wiki/Tools>.
+Currently, three tools are included: *ndngetfile*, *ndnputfile*, and *repo-ng-ls*.
+Users can find detailed information about these tools on the
+[repo-ng wiki](https://redmine.named-data.net/projects/repo-ng/wiki/Tools).

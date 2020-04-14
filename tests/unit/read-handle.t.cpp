@@ -26,18 +26,14 @@
 #include <boost/test/unit_test.hpp>
 #include <ndn-cxx/util/dummy-client-face.hpp>
 
-#define CHECK_INTERESTS(NAME, COMPONENT, EXPECTED)            \
-  do {                                                        \
-    bool didMatch = false;                                    \
-    for (const auto& interest : face.sentInterests) {         \
-      bool isPresent = false;                                 \
-      for (const auto& section : NAME) {                      \
-        isPresent = isPresent || section == COMPONENT;        \
-      }                                                       \
-      didMatch = didMatch || isPresent;                       \
-    }                                                         \
-    BOOST_CHECK_EQUAL(didMatch, EXPECTED);                    \
-  } while (0)
+#define CHECK_INTERESTS(NAME, COMPONENT, EXPECTED)                   \
+  do {                                                               \
+    bool didMatch = false;                                           \
+    for (const auto& interest : face.sentInterests) {                \
+      didMatch = didMatch || containsNameComponent(NAME, COMPONENT); \
+    }                                                                \
+    BOOST_CHECK_EQUAL(didMatch, EXPECTED);                           \
+  } while (false)
 
 namespace repo {
 namespace tests {
@@ -48,7 +44,7 @@ class Fixture : public RepoStorageFixture
 {
 public:
   Fixture()
-    : face(ndn::util::DummyClientFace::Options{true, true})
+    : face({true, true})
     , scheduler(face.getIoService())
     , subsetLength(1)
     , dataPrefix("/ndn/test/prefix")
@@ -60,15 +56,14 @@ public:
     readHandle.connectAutoListen();
   }
 
-public:
-  bool
+  static bool
   containsNameComponent(const Name& name, const ndn::name::Component& component)
   {
-    bool isPresent = false;
-    for (const auto section : name) {
-      isPresent = isPresent || section == component;
+    for (const auto& c : name) {
+      if (c == component)
+        return true;
     }
-    return isPresent;
+    return false;
   }
 
 public:

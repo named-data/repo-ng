@@ -28,5 +28,5 @@ to get started.
 
 ## License
 
-ndn-tools is an open source project licensed under the GPL version 3.
+repo-ng is an open source project licensed under the GPL version 3.
 See [`COPYING.md`](COPYING.md) for more information.

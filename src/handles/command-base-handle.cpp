@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2020, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -65,7 +65,7 @@ CommandBaseHandle::makeAuthorization()
       accept(signer);
     },
     [reject] (const ndn::Interest& request,
-              const ndn::security::v2::ValidationError& error) {
+              const ndn::security::ValidationError& error) {
       reject(ndn::mgmt::RejectReply::STATUS403);
     });
   };

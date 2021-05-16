@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2021, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,7 +21,7 @@
 #include "../src/repo-command-response.hpp"
 
 #include <ndn-cxx/face.hpp>
-#include <ndn-cxx/security/command-interest-signer.hpp>
+#include <ndn-cxx/security/interest-signer.hpp>
 #include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
@@ -157,7 +157,7 @@ private:
 
   using DataContainer = std::map<uint64_t, shared_ptr<ndn::Data>>;
   DataContainer m_data;
-  ndn::security::CommandInterestSigner m_cmdSigner;
+  ndn::security::InterestSigner m_cmdSigner;
 };
 
 void
@@ -214,11 +214,11 @@ NdnPutFile::run()
 
   if (isVerbose)
     std::cerr << "setInterestFilter for " << m_dataPrefix << std::endl;
+
   m_face.setInterestFilter(m_dataPrefix,
                            isSingle ?
-                           bind(&NdnPutFile::onSingleInterest, this, _1, _2)
-                           :
-                           bind(&NdnPutFile::onInterest, this, _1, _2),
+                             bind(&NdnPutFile::onSingleInterest, this, _1, _2) :
+                             bind(&NdnPutFile::onInterest, this, _1, _2),
                            bind(&NdnPutFile::onRegisterSuccess, this, _1),
                            bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
 

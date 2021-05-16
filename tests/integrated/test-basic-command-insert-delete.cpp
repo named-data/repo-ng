@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2021, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -27,7 +27,7 @@
 #include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
-#include <ndn-cxx/security/command-interest-signer.hpp>
+#include <ndn-cxx/security/interest-signer.hpp>
 #include <ndn-cxx/security/signing-helpers.hpp>
 #include <ndn-cxx/util/random.hpp>
 #include <ndn-cxx/util/time.hpp>
@@ -110,7 +110,7 @@ public:
   Face deleteFace;
   std::map<Name, ndn::scheduler::EventId> insertEvents;
   std::map<Name, Name> deleteNamePairs;
-  ndn::security::CommandInterestSigner signer;
+  ndn::security::InterestSigner signer;
 };
 
 template<class T> void

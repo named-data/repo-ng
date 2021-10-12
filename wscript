@@ -8,7 +8,8 @@ APPNAME = 'ndn-repo-ng'
 
 def options(opt):
     opt.load(['compiler_cxx', 'gnu_dirs'])
-    opt.load(['default-compiler-flags', 'coverage', 'sanitizers', 'boost', 'sqlite3'],
+    opt.load(['default-compiler-flags',
+              'coverage', 'sanitizers', 'boost', 'sqlite3'],
              tooldir=['.waf-tools'])
 
     optgrp = opt.add_option_group('Repo-ng Options')
@@ -23,19 +24,19 @@ def configure(conf):
     conf.load(['compiler_cxx', 'gnu_dirs',
                'default-compiler-flags', 'boost', 'sqlite3'])
 
-    conf.env['WITH_EXAMPLES'] = conf.options.with_examples
-    conf.env['WITH_TESTS'] = conf.options.with_tests
-    conf.env['WITH_TOOLS'] = conf.options.with_tools
+    conf.env.WITH_EXAMPLES = conf.options.with_examples
+    conf.env.WITH_TESTS = conf.options.with_tests
+    conf.env.WITH_TOOLS = conf.options.with_tools
 
     conf.check_cfg(package='libndn-cxx', args=['--cflags', '--libs'], uselib_store='NDN_CXX',
                    pkg_config_path=os.environ.get('PKG_CONFIG_PATH', '%s/pkgconfig' % conf.env.LIBDIR))
 
     conf.check_sqlite3()
 
-    USED_BOOST_LIBS = ['system', 'program_options', 'iostreams', 'filesystem', 'thread', 'log']
-    if conf.env['WITH_TESTS']:
-        USED_BOOST_LIBS += ['unit_test_framework']
-    conf.check_boost(lib=USED_BOOST_LIBS, mt=True)
+    boost_libs = ['system', 'program_options', 'iostreams', 'filesystem', 'thread', 'log']
+    if conf.env.WITH_TESTS:
+        boost_libs.append('unit_test_framework')
+    conf.check_boost(lib=boost_libs, mt=True)
 
     conf.check_compiler_flags()
 
@@ -43,10 +44,9 @@ def configure(conf):
     conf.load('coverage')
     conf.load('sanitizers')
 
-    conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env['SYSCONFDIR'])
+    conf.define_cond('HAVE_TESTS', conf.env.WITH_TESTS)
     conf.define_cond('DISABLE_SQLITE3_FS_LOCKING', not conf.options.with_sqlite_locking)
-    conf.define_cond('HAVE_TESTS', conf.env['WITH_TESTS'])
-
+    conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env.SYSCONFDIR)
     conf.write_config_header('src/config.hpp')
 
 def build(bld):
@@ -62,8 +62,8 @@ def build(bld):
                 source='src/main.cpp',
                 use='repo-objects')
 
-    bld.recurse('tests')
     bld.recurse('tools')
+    bld.recurse('tests')
     bld.recurse('examples')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')

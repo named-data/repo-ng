@@ -1,7 +1,7 @@
 # repo-ng: Next generation NDN repository
 
-![Language](https://img.shields.io/badge/C%2B%2B-14-blue.svg)
-[![Build Status](https://travis-ci.org/named-data/repo-ng.svg?branch=master)](https://travis-ci.org/named-data/repo-ng)
+[![CI](https://github.com/named-data/repo-ng/actions/workflows/ci.yml/badge.svg)](https://github.com/named-data/repo-ng/actions/workflows/ci.yml)
+![Language](https://img.shields.io/badge/C%2B%2B-14-blue)
 
 **repo-ng** is an implementation of a Named Data Networking (NDN) data repository,
 and follows the [Repo protocol](https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification).

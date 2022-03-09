@@ -1,13 +1,8 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-from waflib import Utils
-
 top = '..'
 
 def build(bld):
-    if not bld.env['WITH_TESTS']:
-        return
-
     bld.objects(target='tests-base',
                 source=bld.path.ant_glob('*.cpp'),
                 use='repo-objects')

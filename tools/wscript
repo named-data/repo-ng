@@ -3,9 +3,6 @@
 top = '..'
 
 def build(bld):
-    if not bld.env['WITH_TOOLS']:
-        return
-
     for tool in bld.path.ant_glob('*.cpp'):
         name = tool.change_ext('').path_from(bld.path.get_bld())
         bld.program(name=name,

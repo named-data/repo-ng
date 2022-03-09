@@ -62,9 +62,14 @@ def build(bld):
                 source='src/main.cpp',
                 use='repo-objects')
 
-    bld.recurse('tools')
-    bld.recurse('tests')
-    bld.recurse('examples')
+    if bld.env.WITH_TOOLS:
+        bld.recurse('tools')
+
+    if bld.env.WITH_TESTS:
+        bld.recurse('tests')
+
+    if bld.env.WITH_EXAMPLES:
+        bld.recurse('examples')
 
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')
 

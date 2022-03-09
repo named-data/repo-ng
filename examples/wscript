@@ -3,9 +3,6 @@
 top = '..'
 
 def build(bld):
-    if not bld.env['WITH_EXAMPLES']:
-        return
-
     for ex in bld.path.ant_glob('*.cpp'):
         name = ex.change_ext('').path_from(bld.path.get_bld())
         bld.program(name='example-%s' % name,

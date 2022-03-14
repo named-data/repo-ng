@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2021, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -32,7 +32,6 @@
 #include <ndn-cxx/util/random.hpp>
 #include <ndn-cxx/util/time.hpp>
 
-#include <boost/asio/io_service.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
 
@@ -44,7 +43,7 @@ using ndn::time::milliseconds;
 // All the test cases in this test suite should be run at once.
 BOOST_AUTO_TEST_SUITE(TestBasicCommandInsertDelete)
 
-const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
+const uint8_t CONTENT[] = {3, 1, 4, 1, 5, 9, 2, 6};
 
 template<class Dataset>
 class Fixture : public CommandFixture, public RepoStorageFixture, public Dataset
@@ -59,7 +58,7 @@ public:
   {
     Name cmdPrefix("/repo/command");
     repoFace.registerPrefix(cmdPrefix, nullptr,
-      [] (const Name& cmdPrefix, const std::string& reason) {
+      [] (const Name&, const std::string& reason) {
         BOOST_FAIL("Command prefix registration error: " << reason);
       });
   }
@@ -113,11 +112,12 @@ public:
   ndn::security::InterestSigner signer;
 };
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::onInsertInterest(const Interest& interest)
 {
   Data data(Name(interest.getName()));
-  data.setContent(content, sizeof(content));
+  data.setContent(CONTENT);
   data.setFreshnessPeriod(0_ms);
   keyChain.sign(data);
   insertFace.put(data);
@@ -126,56 +126,62 @@ Fixture<T>::onInsertInterest(const Interest& interest)
     eventIt->second.cancel();
     insertEvents.erase(eventIt);
   }
-  // schedule an event 50ms later to check whether insert is Ok
-  scheduler.schedule(500_ms, std::bind(&Fixture<T>::checkInsertOk, this, interest));
+
+  // schedule an event to check whether insert is ok
+  scheduler.schedule(500_ms, [=] { this->checkInsertOk(interest); });
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::onRegisterFailed(const std::string& reason)
 {
   BOOST_ERROR("ERROR: Failed to register prefix in local hub's daemon" + reason);
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::delayedInterest()
 {
   BOOST_ERROR("Fetching interest does not come. It may be satisfied in CS or something is wrong");
 }
 
-template<class T> void
-Fixture<T>::onInsertData(const Interest& interest, const Data& data)
+template<class T>
+void
+Fixture<T>::onInsertData(const Interest&, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
-  int statusCode = response.getCode();
-  BOOST_CHECK_EQUAL(statusCode, 100);
+  BOOST_CHECK_EQUAL(response.getCode(), 100);
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::onDeleteData(const Interest& interest, const Data& data)
 {
   RepoCommandResponse response;
   response.wireDecode(data.getContent().blockFromValue());
-  int statusCode = response.getCode();
-  BOOST_CHECK_EQUAL(statusCode, 200);
+  BOOST_CHECK_EQUAL(response.getCode(), 200);
 
-  //schedlute an event to check whether delete is Ok.
-  scheduler.schedule(100_ms, std::bind(&Fixture<T>::checkDeleteOk, this, interest));
+  // schedule an event to check whether delete is ok
+  scheduler.schedule(100_ms, [=] { this->checkDeleteOk(interest); });
 }
 
-template<class T> void
-Fixture<T>::onInsertTimeout(const Interest& interest)
+template<class T>
+void
+Fixture<T>::onInsertTimeout(const Interest&)
 {
   BOOST_ERROR("Insert command timeout");
 }
 
-template<class T> void
-Fixture<T>::onDeleteTimeout(const Interest& interest)
+template<class T>
+void
+Fixture<T>::onDeleteTimeout(const Interest&)
 {
   BOOST_ERROR("Delete command timeout");
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::sendInsertInterest(const Interest& insertInterest)
 {
   insertFace.expressInterest(insertInterest,
@@ -184,7 +190,8 @@ Fixture<T>::sendInsertInterest(const Interest& insertInterest)
                              std::bind(&Fixture<T>::onInsertTimeout, this, _1));
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
 {
   deleteFace.expressInterest(deleteInterest,
@@ -193,41 +200,43 @@ Fixture<T>::sendDeleteInterest(const Interest& deleteInterest)
                              std::bind(&Fixture<T>::onDeleteTimeout, this, _1));
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::checkInsertOk(const Interest& interest)
 {
-  BOOST_TEST_MESSAGE(interest);
-  std::shared_ptr<Data> data = handle->readData(interest);
-  if (data) {
-    int rc = memcmp(data->getContent().value(), content, sizeof(content));
-    BOOST_CHECK_EQUAL(rc, 0);
-  }
-  else {
-    BOOST_ERROR("Check Insert Failed");
+  BOOST_TEST_CONTEXT("Interest " << interest) {
+    auto data = handle->readData(interest);
+    if (data) {
+      BOOST_TEST(data->getContent().value_bytes() == CONTENT, boost::test_tools::per_element());
+    }
+    else {
+      BOOST_ERROR("Insert check failed");
+    }
   }
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::checkDeleteOk(const Interest& interest)
 {
-  std::map<Name, Name>::iterator name = deleteNamePairs.find(interest.getName());
-  BOOST_CHECK_MESSAGE(name != deleteNamePairs.end(), "Delete name not found: " << interest.getName());
-  Interest dataInterest(name->second);
-  std::shared_ptr<Data> data = handle->readData(dataInterest);
+  auto nameIt = deleteNamePairs.find(interest.getName());
+  BOOST_CHECK_MESSAGE(nameIt != deleteNamePairs.end(), "Delete name not found: " << interest.getName());
+  Interest dataInterest(nameIt->second);
+  auto data = handle->readData(dataInterest);
   BOOST_CHECK(!data);
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::scheduleInsertEvent()
 {
   int timeCount = 1;
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) {
+  for (auto i = this->data.begin(); i != this->data.end(); ++i) {
     Name insertCommandName("/repo/command/insert");
     RepoCommandParameter insertParameter;
     insertParameter.setName(Name((*i)->getName())
                             .appendNumber(ndn::random::generateWord64()));
-    insertCommandName.append(insertParameter.wireEncode());
+    insertCommandName.append(tlv::GenericNameComponent, insertParameter.wireEncode());
     Interest insertInterest = signer.makeCommandInterest(insertCommandName);
     // schedule a job to express insertInterest every 50ms
     scheduler.schedule(milliseconds(timeCount * 50 + 1000),
@@ -245,17 +254,17 @@ Fixture<T>::scheduleInsertEvent()
   }
 }
 
-template<class T> void
+template<class T>
+void
 Fixture<T>::scheduleDeleteEvent()
 {
   int timeCount = 1;
-  for (typename T::DataContainer::iterator i = this->data.begin();
-       i != this->data.end(); ++i) {
+  for (auto i = this->data.begin(); i != this->data.end(); ++i) {
     Name deleteCommandName("/repo/command/delete");
     RepoCommandParameter deleteParameter;
     deleteParameter.setProcessId(ndn::random::generateWord64());
     deleteParameter.setName((*i)->getName());
-    deleteCommandName.append(deleteParameter.wireEncode());
+    deleteCommandName.append(tlv::GenericNameComponent, deleteParameter.wireEncode());
     Interest deleteInterest = signer.makeCommandInterest(deleteCommandName);
     deleteNamePairs[deleteInterest.getName()] = (*i)->getName();
     scheduler.schedule(milliseconds(4000 + timeCount * 50),
@@ -271,8 +280,8 @@ using Datasets = boost::mpl::vector<BasicDataset,
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 {
   // schedule events
-  this->scheduler.schedule(0_s, std::bind(&Fixture<T>::scheduleInsertEvent, this));
-  this->scheduler.schedule(10_s, std::bind(&Fixture<T>::scheduleDeleteEvent, this));
+  this->scheduler.schedule(0_s,  [this] { this->scheduleInsertEvent(); });
+  this->scheduler.schedule(10_s, [this] { this->scheduleDeleteEvent(); });
 
   this->repoFace.processEvents(30_s);
 }

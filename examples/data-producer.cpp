@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -138,7 +138,7 @@ Publisher::generateFromFile()
 
   std::string name;
   getline(insertStream, name);
-  auto data = createData(ndn::Name(name));
+  auto data = createData(name);
   m_face.put(*data);
 
   m_scheduler.schedule(timeInterval, [this] { generateFromFile(); });
@@ -148,11 +148,10 @@ std::shared_ptr<ndn::Data>
 Publisher::createData(const ndn::Name& name)
 {
   static ndn::KeyChain keyChain;
-  static std::vector<uint8_t> content(1500, '-');
+  static const std::vector<uint8_t> content(1500, '-');
 
-  auto data = std::make_shared<ndn::Data>();
-  data->setName(name);
-  data->setContent(content.data(), content.size());
+  auto data = std::make_shared<ndn::Data>(name);
+  data->setContent(content);
   keyChain.sign(*data);
   return data;
 }
@@ -203,7 +202,7 @@ main(int argc, char* argv[])
         generator.duration = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-s option should be an integer" << std::endl;;
+        std::cerr << "-s option should be an integer" << std::endl;
         return 1;
       }
       break;
@@ -212,7 +211,7 @@ main(int argc, char* argv[])
         generator.timeInterval = milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
-        std::cerr << "-t option should be an integer" << std::endl;;
+        std::cerr << "-t option should be an integer" << std::endl;
         return 1;
       }
       break;

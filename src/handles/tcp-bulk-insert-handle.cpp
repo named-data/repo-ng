@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -85,7 +85,7 @@ TcpBulkInsertHandle::listen(const std::string& host, const std::string& port)
   ip::tcp::resolver::iterator end;
 
   if (endpoint == end)
-    BOOST_THROW_EXCEPTION(Error("Cannot listen on " + host + " port " + port));
+    NDN_THROW(Error("Cannot listen on " + host + " port " + port));
 
   m_localEndpoint = *endpoint;
   NDN_LOG_DEBUG("Start listening on " << m_localEndpoint);
@@ -157,17 +157,17 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
 
   // do magic
 
+  auto bufferView = ndn::make_span(m_inputBuffer, m_inputBufferSize);
   std::size_t offset = 0;
-
   bool isOk = true;
-  Block element;
-  while (m_inputBufferSize - offset > 0) {
-    std::tie(isOk, element) = Block::fromBuffer(m_inputBuffer + offset, m_inputBufferSize - offset);
+  while (offset < bufferView.size()) {
+    Block element;
+    std::tie(isOk, element) = Block::fromBuffer(bufferView.subspan(offset));
     if (!isOk)
       break;
 
     offset += element.size();
-    BOOST_ASSERT(offset <= m_inputBufferSize);
+    BOOST_ASSERT(offset <= bufferView.size());
 
     if (element.type() == ndn::tlv::Data) {
       try {
@@ -178,9 +178,9 @@ detail::TcpBulkInsertClient::handleReceive(const boost::system::error_code& erro
         else
           NDN_LOG_DEBUG("FAILED to inject " << data.getName());
       }
-      catch (const std::runtime_error&) {
+      catch (const std::runtime_error& e) {
         /// \todo Catch specific error after determining what wireDecode() can throw
-        NDN_LOG_ERROR("Error decoding received Data packet");
+        NDN_LOG_ERROR("Error decoding received Data packet: " << e.what());
       }
     }
   }

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -27,17 +27,14 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <ndn-cxx/util/logger.hpp>
 #include <ndn-cxx/util/time.hpp>
 
 namespace repo {
 namespace tests {
 
-NDN_LOG_INIT(repo.tests.read);
+BOOST_AUTO_TEST_SUITE(TestBasicInterestRead)
 
-BOOST_AUTO_TEST_SUITE(TestBasicInerestRead)
-
-const static uint8_t content[8] = {3, 1, 4, 1, 5, 9, 2, 6};
+const uint8_t CONTENT[] = {3, 1, 4, 1, 5, 9, 2, 6};
 
 template<class Dataset>
 class BasicInterestReadFixture : public RepoStorageFixture, public Dataset
@@ -65,17 +62,13 @@ public:
   scheduleReadEvent()
   {
     int timeCount = 1;
-    for (typename Dataset::DataContainer::iterator i = this->data.begin();
-         i != this->data.end(); ++i) {
-      //First insert a data into database;
-      (*i)->setContent(content, sizeof(content));
+    for (auto i = this->data.begin(); i != this->data.end(); ++i) {
+      // First insert a data into database
+      (*i)->setContent(CONTENT);
       (*i)->setFreshnessPeriod(36000_ms);
       keyChain.sign(**i);
-      NDN_LOG_DEBUG(**i);
       bool rc = handle->insertData(**i);
-
       BOOST_CHECK_EQUAL(rc, true);
-      NDN_LOG_DEBUG("Inserted Data " << (**i).getName());
 
       Interest readInterest((*i)->getName());
       readInterest.setMustBeFresh(true);
@@ -86,30 +79,26 @@ public:
   }
 
   void
-  onReadData(const ndn::Interest& interest, const ndn::Data& data)
+  onReadData(const ndn::Interest&, const ndn::Data& data) const
   {
-    int rc = memcmp(data.getContent().value(), content, sizeof(content));
-    BOOST_CHECK_EQUAL(rc, 0);
+    BOOST_TEST(data.getContent().value_bytes() == CONTENT, boost::test_tools::per_element());
   }
 
   void
-  onReadTimeout(const ndn::Interest& interest)
+  onReadTimeout(const ndn::Interest& interest) const
   {
-    NDN_LOG_DEBUG("Timed out " << interest.getName());
-    BOOST_ERROR("Insert or read not successfull");
+    BOOST_ERROR("Read timeout " << interest.getName());
   }
 
   void
-  onReadNack(const ndn::Interest& interest, const ndn::lp::Nack& nack)
+  onReadNack(const ndn::Interest& interest, const ndn::lp::Nack& nack) const
   {
-    NDN_LOG_DEBUG("Nacked " << interest.getName() << nack.getReason());
-    BOOST_ERROR("Read nacked");
+    BOOST_ERROR("Read nack " << interest.getName() << " " << nack.getReason());
   }
 
   void
   sendInterest(const ndn::Interest& interest)
   {
-    NDN_LOG_DEBUG("Sending Interest " << interest.getName());
     readFace.expressInterest(interest,
                              std::bind(&BasicInterestReadFixture::onReadData, this, _1, _2),
                              std::bind(&BasicInterestReadFixture::onReadNack, this, _1, _2),
@@ -124,7 +113,6 @@ public:
   ndn::Face readFace;
 };
 
-
 using Datasets = boost::mpl::vector<BasicDataset,
                                     FetchByPrefixDataset,
                                     SamePrefixDataset<10>>;
@@ -132,7 +120,7 @@ using Datasets = boost::mpl::vector<BasicDataset,
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 {
   this->startListen();
-  this->scheduler.schedule(1_s, std::bind(&BasicInterestReadFixture<T>::scheduleReadEvent, this));
+  this->scheduler.schedule(1_s, [this] { this->scheduleReadEvent(); });
 
   this->repoFace.processEvents(20_s);
 }

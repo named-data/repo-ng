@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2020,  Regents of the University of California.
+ * Copyright (c) 2014-2022,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -86,8 +86,8 @@ BOOST_FIXTURE_TEST_CASE(DataPrefixes, Fixture)
   auto data1 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(1));
   auto data2 = std::make_shared<Data>(Name{dataPrefix}.appendNumber(2));
 
-  data1->setContent(&content[0], content.size());
-  data2->setContent(&content[0], content.size());
+  data1->setContent(content);
+  data2->setContent(content);
 
   keyChain.createIdentity(identity);
   keyChain.sign(*data1, ndn::security::SigningInfo(ndn::security::SigningInfo::SIGNER_TYPE_ID,

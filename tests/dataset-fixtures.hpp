@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,6 +21,7 @@
 #define REPO_TESTS_DATASET_FIXTURES_HPP
 
 #include "identity-management-fixture.hpp"
+
 #include <vector>
 #include <boost/mpl/vector.hpp>
 
@@ -33,11 +34,7 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
   using DataContainer = std::list<std::shared_ptr<ndn::Data>>;
@@ -56,11 +53,10 @@ protected:
     if (map.count(name) > 0)
       return map[name];
 
-    static std::vector<uint8_t> content(1500, '-');
+    static const std::vector<uint8_t> content(1500, '-');
 
-    std::shared_ptr<ndn::Data> data = std::make_shared<ndn::Data>();
-    data->setName(name);
-    data->setContent(&content[0], content.size());
+    auto data = std::make_shared<ndn::Data>(name);
+    data->setContent(content);
     m_keyChain.sign(*data);
 
     map.insert(std::make_pair(name, data));
@@ -73,7 +69,7 @@ protected:
     if (map.count(name) > 0)
       return map[name];
     else
-      BOOST_THROW_EXCEPTION(Error("Data with name " + name.toUri() + " is not found"));
+      NDN_THROW(Error("Data with name " + name.toUri() + " is not found"));
   }
 
 private:

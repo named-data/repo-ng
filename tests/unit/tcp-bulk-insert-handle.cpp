@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019,  Regents of the University of California.
+ * Copyright (c) 2014-2022,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -101,8 +101,7 @@ public:
     // scatter-gather is limited to at most `min(64,IOV_MAX)` buffers to be transmitted
     // in a single operation
     for (auto i = this->data.begin(); i != this->data.end(); ++i) {
-
-      socket.async_send(boost::asio::buffer((*i)->wireEncode().wire(), (*i)->wireEncode().size()),
+      socket.async_send(boost::asio::buffer((*i)->wireEncode()),
                         std::bind(&TcpBulkInsertFixture::onSendFinished, this, _1, false));
     }
     onSendFinished(error, true);
@@ -147,7 +146,6 @@ public:
   ndn::scheduler::EventId guardEvent;
   repo::TcpBulkInsertHandle bulkInserter;
 };
-
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkInsertFixture<T>)
 {

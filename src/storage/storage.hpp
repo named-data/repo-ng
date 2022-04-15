@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,26 +21,19 @@
 #define REPO_STORAGE_STORAGE_HPP
 
 #include "../common.hpp"
-#include <string>
-#include <iostream>
-#include <stdlib.h>
 
 namespace repo {
 
 /**
-  * @brief Storage is a virtual abstract class which will be called by SqliteStorage
-  */
+ * @brief Storage is a virtual abstract class which will be called by SqliteStorage
+ */
 class Storage : noncopyable
 {
 public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
 public:

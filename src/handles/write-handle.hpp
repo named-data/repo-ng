@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,7 +22,6 @@
 
 #include "command-base-handle.hpp"
 
-#include <ndn-cxx/mgmt/dispatcher.hpp>
 #include <ndn-cxx/util/segment-fetcher.hpp>
 
 #include <queue>
@@ -52,23 +51,16 @@ namespace repo {
  */
 class WriteHandle : public CommandBaseHandle
 {
-
 public:
   class Error : public CommandBaseHandle::Error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : CommandBaseHandle::Error(what)
-    {
-    }
+    using CommandBaseHandle::Error::Error;
   };
 
-
-public:
   WriteHandle(Face& face, RepoStorage& storageHandle,
               ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
-              Validator& validator);
+              ndn::security::Validator& validator);
 
 private:
   /**
@@ -92,7 +84,7 @@ private:
      * It is initialized to now()+noEndTimeout when segmented fetch process begins,
      * and reset to now()+noEndTimeout each time an insert status check command is processed.
      */
-    ndn::time::steady_clock::TimePoint noEndTime;
+    time::steady_clock::time_point noEndTime;
   };
 
 private: // insert command
@@ -105,7 +97,7 @@ private: // insert command
                       const ndn::mgmt::CommandContinuation& done);
 
   void
-  onValidationFailed(const Interest& interest, const ValidationError& error);
+  onValidationFailed(const Interest& interest, const ndn::security::ValidationError& error);
 
 private: // single data fetching
   /**
@@ -171,7 +163,7 @@ private: // insert state check command
                      const ndn::mgmt::CommandContinuation& done);
 
   void
-  onCheckValidationFailed(const Interest& interest, const ValidationError& error);
+  onCheckValidationFailed(const Interest& interest, const ndn::security::ValidationError& error);
 
 private:
   void
@@ -187,15 +179,9 @@ private:
   negativeReply(std::string text, int statusCode);
 
 private:
-  Validator& m_validator;
-
+  ndn::security::Validator& m_validator;
   std::map<ProcessId, ProcessInfo> m_processes;
-
-  int m_credit;
-  bool m_canBePrefix;
-  ndn::time::milliseconds m_maxTimeout;
-  ndn::time::milliseconds m_noEndTimeout;
-  ndn::time::milliseconds m_interestLifetime;
+  time::milliseconds m_interestLifetime = ndn::DEFAULT_INTEREST_LIFETIME;
 };
 
 } // namespace repo

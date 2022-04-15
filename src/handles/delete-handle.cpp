@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -27,7 +27,7 @@ NDN_LOG_INIT(repo.DeleteHandle);
 
 DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle,
                            ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
-                           Validator& validator)
+                           ndn::security::Validator& validator)
   : CommandBaseHandle(face, storageHandle, scheduler, validator)
 {
   dispatcher.addControlCommand<RepoCommandParameter>(ndn::PartialName("delete"),
@@ -72,7 +72,8 @@ DeleteHandle::positiveReply(const Interest& interest, const RepoCommandParameter
 }
 
 RepoCommandResponse
-DeleteHandle::negativeReply(const Interest& interest, uint64_t statusCode, std::string text) const
+DeleteHandle::negativeReply(const Interest& interest, uint64_t statusCode,
+                            const std::string& text) const
 {
   RepoCommandResponse response(statusCode, text);
   response.setBody(response.wireEncode());
@@ -108,9 +109,9 @@ DeleteHandle::processSegmentDeleteCommand(const Interest& interest, const RepoCo
       nDeletedData++;
     }
   }
+
   //All the data deleted, return 200
   done(positiveReply(interest, parameter, 200, nDeletedData));
-
 }
 
 } // namespace repo

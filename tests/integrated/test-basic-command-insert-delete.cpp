@@ -35,8 +35,7 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 using ndn::time::milliseconds;
 
@@ -288,5 +287,4 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

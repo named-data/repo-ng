@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2020, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -19,7 +19,7 @@
 
 #include "command-base-handle.hpp"
 
-#include <ndn-cxx/util/random.hpp>
+#include <optional>
 
 namespace repo {
 
@@ -29,23 +29,23 @@ using SignerTag = ndn::SimpleTag<ndn::Name, 20>;
 
 /** \brief obtain signer from SignerTag attached to Interest, if available
  */
-static ndn::optional<std::string>
+static std::optional<std::string>
 getSignerFromTag(const ndn::Interest& interest)
 {
-  std::shared_ptr<SignerTag> signerTag = interest.getTag<SignerTag>();
+  auto signerTag = interest.getTag<SignerTag>();
   if (signerTag == nullptr) {
-    return ndn::nullopt;
+    return std::nullopt;
   }
   else {
     return signerTag->get().toUri();
   }
 }
 
-CommandBaseHandle::CommandBaseHandle(Face& face, RepoStorage& storageHandle,
-                  Scheduler& scheduler, Validator& validator)
+CommandBaseHandle::CommandBaseHandle(Face& face, RepoStorage& storage,
+                                     Scheduler& sched, ndn::security::Validator& validator)
   : face(face)
-  , storageHandle(storageHandle)
-  , scheduler(scheduler)
+  , storageHandle(storage)
+  , scheduler(sched)
   , m_validator(validator)
 {
 }
@@ -53,19 +53,16 @@ CommandBaseHandle::CommandBaseHandle(Face& face, RepoStorage& storageHandle,
 ndn::mgmt::Authorization
 CommandBaseHandle::makeAuthorization()
 {
-  return [=] (const ndn::Name& prefix, const ndn::Interest& interest,
-            const ndn::mgmt::ControlParameters* params,
-            const ndn::mgmt::AcceptContinuation& accept,
-            const ndn::mgmt::RejectContinuation& reject) {
+  return [=] (const ndn::Name&, const auto& interest,
+              const ndn::mgmt::ControlParameters*,
+              const ndn::mgmt::AcceptContinuation& accept,
+              const ndn::mgmt::RejectContinuation& reject) {
   m_validator.validate(interest,
-    [accept] (const ndn::Interest& request) {
-
-      auto signer1 = getSignerFromTag(request);
-      std::string signer = signer1.value_or("*");
+    [accept] (const auto& request) {
+      auto signer = getSignerFromTag(request).value_or("*");
       accept(signer);
     },
-    [reject] (const ndn::Interest& request,
-              const ndn::security::ValidationError& error) {
+    [reject] (auto&&...) {
       reject(ndn::mgmt::RejectReply::STATUS403);
     });
   };

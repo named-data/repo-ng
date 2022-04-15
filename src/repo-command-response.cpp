@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,6 +18,8 @@
  */
 
 #include "repo-command-response.hpp"
+
+#include <ndn-cxx/encoding/block-helpers.hpp>
 
 namespace repo {
 
@@ -70,9 +72,7 @@ RepoCommandResponse&
 RepoCommandResponse::setCode(uint32_t statusCode)
 {
   m_hasStatusCode = true;
-
-  RepoCommandResponse* response =
-    static_cast<RepoCommandResponse *> (&ndn::mgmt::ControlResponse::setCode(statusCode));
+  auto* response = static_cast<RepoCommandResponse*>(&ndn::mgmt::ControlResponse::setCode(statusCode));
   return *response;
 }
 
@@ -118,20 +118,19 @@ RepoCommandResponse::wireEncode() const
   if (m_wire.hasWire())
     return m_wire;
 
-  EncodingEstimator estimator;
+  ndn::EncodingEstimator estimator;
   size_t estimatedSize = wireEncode(estimator);
 
-  EncodingBuffer buffer(estimatedSize, 0);
+  ndn::EncodingBuffer buffer(estimatedSize, 0);
   wireEncode(buffer);
 
   m_wire = buffer.block();
   return m_wire;
 }
 
-
 template<ndn::encoding::Tag T>
 size_t
-RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
+RepoCommandResponse::wireEncode(ndn::EncodingImpl<T>& encoder) const
 {
   size_t totalLength = 0;
   size_t variableLength = 0;
@@ -171,7 +170,7 @@ RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
     totalLength += encoder.prependVarNumber(tlv::StatusCode);
   }
   else {
-    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
+    NDN_THROW(Error("Required field StatusCode is missing"));
   }
 
   if (m_hasProcessId) {
@@ -189,6 +188,10 @@ RepoCommandResponse::wireEncode(EncodingImpl<T>& encoder) const
 void
 RepoCommandResponse::wireDecode(const Block& wire)
 {
+  if (wire.type() != tlv::RepoCommandResponse) {
+    NDN_THROW(Error("RepoCommandResponse", wire.type()));
+  }
+
   m_hasStartBlockId = false;
   m_hasEndBlockId = false;
   m_hasProcessId = false;
@@ -197,16 +200,10 @@ RepoCommandResponse::wireDecode(const Block& wire)
   m_hasDeleteNum = false;
 
   m_wire = wire;
-
   m_wire.parse();
 
-  Block::element_const_iterator val;
-
-  if (m_wire.type() != tlv::RepoCommandResponse)
-    BOOST_THROW_EXCEPTION(Error("RepoCommandResponse malformed"));
-
   // StartBlockId
-  val = m_wire.find(tlv::StartBlockId);
+  auto val = m_wire.find(tlv::StartBlockId);
   if (val != m_wire.elements_end()) {
     m_hasStartBlockId = true;
     m_startBlockId = readNonNegativeInteger(*val);
@@ -226,13 +223,13 @@ RepoCommandResponse::wireDecode(const Block& wire)
     m_processId = readNonNegativeInteger(*val);
   }
 
-  //StatusCode
+  // StatusCode
   val = m_wire.find(tlv::StatusCode);
   if (val != m_wire.elements_end()) {
     setCode(readNonNegativeInteger(*val));
   }
   else {
-    BOOST_THROW_EXCEPTION(Error("required field StatusCode is missing"));
+    NDN_THROW(Error("Required field StatusCode is missing"));
   }
 
   // InsertNum
@@ -251,33 +248,5 @@ RepoCommandResponse::wireDecode(const Block& wire)
 }
 
 NDN_CXX_DEFINE_WIRE_ENCODE_INSTANTIATIONS(RepoCommandResponse);
-
-std::ostream&
-operator<<(std::ostream& os, const RepoCommandResponse& repoCommandResponse)
-{
-  os << "RepoCommandResponse(";
-
-  if (repoCommandResponse.hasProcessId()) {
-    os << " ProcessId: " << repoCommandResponse.getProcessId();
-  }
-  // if (repoCommandResponse.hasStatusCode()) {
-  //   os << " StatusCode: " << repoCommandResponse.getStatusCode();
-  // }
-  if (repoCommandResponse.hasStartBlockId()) {
-    os << " StartBlockId: " << repoCommandResponse.getStartBlockId();
-  }
-  if (repoCommandResponse.hasEndBlockId()) {
-    os << " EndBlockId: " << repoCommandResponse.getEndBlockId();
-  }
-  if (repoCommandResponse.hasInsertNum()) {
-    os << " InsertNum: " << repoCommandResponse.getInsertNum();
-  }
-  if (repoCommandResponse.hasDeleteNum()) {
-    os << " DeleteNum: " << repoCommandResponse.getDeleteNum();
-
-  }
-  os << " )";
-  return os;
-}
 
 } // namespace repo

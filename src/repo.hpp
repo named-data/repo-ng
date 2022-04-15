@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -31,6 +31,7 @@
 #include "common.hpp"
 
 #include <ndn-cxx/mgmt/dispatcher.hpp>
+#include <ndn-cxx/security/key-chain.hpp>
 #include <ndn-cxx/security/validator-config.hpp>
 
 #include <boost/property_tree/info_parser.hpp>
@@ -40,7 +41,7 @@ namespace repo {
 
 struct RepoConfig
 {
-  static const size_t DISABLED_SUBSET_LENGTH = -1;
+  static constexpr size_t DISABLED_SUBSET_LENGTH = -1;
 
   std::string repoConfigPath;
   std::string dbPath;
@@ -61,11 +62,7 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
 public:
@@ -88,8 +85,8 @@ private:
   ndn::mgmt::Dispatcher m_dispatcher;
   std::shared_ptr<Storage> m_store;
   RepoStorage m_storageHandle;
-  KeyChain m_keyChain;
-  ValidatorConfig m_validator;
+  ndn::KeyChain m_keyChain;
+  ndn::security::ValidatorConfig m_validator;
 
   ReadHandle m_readHandle;
   WriteHandle m_writeHandle;

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,27 +22,20 @@
 
 #include "command-base-handle.hpp"
 
-#include <ndn-cxx/mgmt/dispatcher.hpp>
-
 namespace repo {
 
 class DeleteHandle : public CommandBaseHandle
 {
-
 public:
   class Error : public CommandBaseHandle::Error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : CommandBaseHandle::Error(what)
-    {
-    }
+    using CommandBaseHandle::Error::Error;
   };
 
-public:
   DeleteHandle(Face& face, RepoStorage& storageHandle,
-               ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler, Validator& validator);
+               ndn::mgmt::Dispatcher& dispatcher, Scheduler& scheduler,
+               ndn::security::Validator& validator);
 
 private:
   void
@@ -55,7 +48,7 @@ private:
                 uint64_t statusCode, uint64_t nDeletedData) const;
 
   RepoCommandResponse
-  negativeReply(const Interest& interest, uint64_t statusCode, const std::string text) const;
+  negativeReply(const Interest& interest, uint64_t statusCode, const std::string& text) const;
 
   void
   processSingleDeleteCommand(const Interest& interest, const RepoCommandParameter& parameter,

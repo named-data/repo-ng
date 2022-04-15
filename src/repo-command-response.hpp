@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,37 +20,28 @@
 #ifndef REPO_REPO_COMMAND_RESPONSE_HPP
 #define REPO_REPO_COMMAND_RESPONSE_HPP
 
+#include "common.hpp"
 #include "repo-tlv.hpp"
 
-#include <ndn-cxx/mgmt/control-response.hpp>
-#include <ndn-cxx/encoding/block.hpp>
-#include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
-#include <ndn-cxx/encoding/tlv-nfd.hpp>
+#include <ndn-cxx/mgmt/control-response.hpp>
 
 namespace repo {
 
-using ndn::Block;
-using ndn::EncodingImpl;
-using ndn::EncodingEstimator;
-using ndn::EncodingBuffer;
-
 /**
-* @brief Class defining abstraction of Response for NDN Repo Protocol
-* @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#Repo-Command-Response
-*/
+ * @brief Class defining abstraction of Response for NDN Repo Protocol
+ * @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#Repo-Command-Response
+ */
 class RepoCommandResponse : public ndn::mgmt::ControlResponse
 {
 public:
-  class Error : public ndn::tlv::Error
+  class Error : public tlv::Error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : ndn::tlv::Error(what)
-    {
-    }
+    using tlv::Error::Error;
   };
+
+  RepoCommandResponse() = default;
 
   RepoCommandResponse(uint32_t code, const std::string& text)
     : ndn::mgmt::ControlResponse(code, text)
@@ -61,9 +52,6 @@ public:
     , m_hasDeleteNum(false)
     , m_hasStatusCode(false)
   {
-  }
-
-  RepoCommandResponse(){
   }
 
   explicit
@@ -87,7 +75,7 @@ public:
   uint64_t
   getEndBlockId() const
   {
-    assert(hasEndBlockId());
+    BOOST_ASSERT(hasEndBlockId());
     return m_endBlockId;
   }
 
@@ -141,7 +129,7 @@ public:
 
   template<ndn::encoding::Tag T>
   size_t
-  wireEncode(EncodingImpl<T>& block) const;
+  wireEncode(ndn::EncodingImpl<T>& block) const;
 
   const Block&
   wireEncode() const;

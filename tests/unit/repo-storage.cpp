@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,17 +18,12 @@
  */
 
 #include "storage/repo-storage.hpp"
-#include "storage/sqlite-storage.hpp"
 #include "../dataset-fixtures.hpp"
 #include "../repo-storage-fixture.hpp"
 
-#include <boost/mpl/push_back.hpp>
 #include <boost/test/unit_test.hpp>
-#include <iostream>
-#include <string.h>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 BOOST_AUTO_TEST_SUITE(RepoStorage)
 
@@ -37,11 +32,8 @@ class Fixture : public Dataset, public RepoStorageFixture
 {
 };
 
-
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, CommonDatasets, Fixture<T>)
 {
-  BOOST_TEST_MESSAGE(T::getName());
-
   // Insert data into repo
   for (auto i = this->data.begin(); i != this->data.end(); ++i) {
     BOOST_CHECK_EQUAL(this->handle->insertData(**i), true);
@@ -52,7 +44,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(Bulk, T, CommonDatasets, Fixture<T>)
 
   // Read
   for (auto i = this->interests.begin(); i != this->interests.end(); ++i) {
-    std::shared_ptr<ndn::Data> dataTest = this->handle->readData(i->first);
+    auto dataTest = this->handle->readData(i->first);
     BOOST_CHECK_EQUAL(*dataTest, *i->second);
   }
 
@@ -73,10 +65,8 @@ BOOST_FIXTURE_TEST_CASE(NotifyAboutExistingData, Fixture<BasicDataset>)
 
   std::vector<Name> names;
   handle->afterDataInsertion.connect([&] (const Name& name) {
-      names.push_back(name);
-      BOOST_TEST_MESSAGE("Got notification about " << name);
-    });
-
+    names.push_back(name);
+  });
   handle->notifyAboutExistingData();
 
   BOOST_CHECK_EQUAL(names.size(), this->data.size());
@@ -84,5 +74,4 @@ BOOST_FIXTURE_TEST_CASE(NotifyAboutExistingData, Fixture<BasicDataset>)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

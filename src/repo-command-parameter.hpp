@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,21 +20,13 @@
 #ifndef REPO_REPO_COMMAND_PARAMETER_HPP
 #define REPO_REPO_COMMAND_PARAMETER_HPP
 
+#include "common.hpp"
 #include "repo-tlv.hpp"
 
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
-#include <ndn-cxx/encoding/block-helpers.hpp>
 #include <ndn-cxx/mgmt/control-parameters.hpp>
-#include <ndn-cxx/name.hpp>
 
 namespace repo {
-
-using ndn::Name;
-using ndn::Block;
-using ndn::EncodingImpl;
-using ndn::EncodingEstimator;
-using ndn::EncodingBuffer;
-using namespace ndn::time;
 
 enum RepoParameterField {
   REPO_PARAMETER_NAME,
@@ -54,21 +46,16 @@ const std::string REPO_PARAMETER_FIELD[REPO_PARAMETER_UBOUND] = {
 };
 
 /**
-* @brief Class defining abstraction of parameter of command for NDN Repo Protocol
-* @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
-**/
-
+ * @brief Class defining abstraction of parameter of command for NDN Repo Protocol
+ * @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
+ */
 class RepoCommandParameter : public ndn::mgmt::ControlParameters
 {
 public:
-  class Error : public ndn::tlv::Error
+  class Error : public tlv::Error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : ndn::tlv::Error(what)
-    {
-    }
+    using tlv::Error::Error;
   };
 
   RepoCommandParameter()
@@ -102,7 +89,7 @@ public:
   uint64_t
   getStartBlockId() const
   {
-    assert(hasStartBlockId());
+    BOOST_ASSERT(hasStartBlockId());
     return m_startBlockId;
   }
 
@@ -118,7 +105,7 @@ public:
   uint64_t
   getEndBlockId() const
   {
-    assert(hasEndBlockId());
+    BOOST_ASSERT(hasEndBlockId());
     return m_endBlockId;
   }
 
@@ -134,7 +121,7 @@ public:
   uint64_t
   getProcessId() const
   {
-    assert(hasProcessId());
+    BOOST_ASSERT(hasProcessId());
     return m_processId;
   }
 
@@ -147,15 +134,15 @@ public:
     return m_hasFields[REPO_PARAMETER_PROCESS_ID];
   }
 
-  milliseconds
+  time::milliseconds
   getInterestLifetime() const
   {
-    assert(hasInterestLifetime());
+    BOOST_ASSERT(hasInterestLifetime());
     return m_interestLifetime;
   }
 
   RepoCommandParameter&
-  setInterestLifetime(milliseconds interestLifetime);
+  setInterestLifetime(time::milliseconds interestLifetime);
 
   bool
   hasInterestLifetime() const
@@ -164,19 +151,20 @@ public:
   }
 
   const std::vector<bool>&
-  getPresentFields() const {
+  getPresentFields() const
+  {
     return m_hasFields;
   }
 
   template<ndn::encoding::Tag T>
   size_t
-  wireEncode(EncodingImpl<T>& block) const;
+  wireEncode(ndn::EncodingImpl<T>& block) const;
 
   Block
-  wireEncode() const;
+  wireEncode() const override;
 
   void
-  wireDecode(const Block& wire);
+  wireDecode(const Block& wire) override;
 
 private:
   std::vector<bool> m_hasFields;
@@ -184,7 +172,7 @@ private:
   uint64_t m_startBlockId;
   uint64_t m_endBlockId;
   uint64_t m_processId;
-  milliseconds m_interestLifetime;
+  time::milliseconds m_interestLifetime;
 
   mutable Block m_wire;
 };

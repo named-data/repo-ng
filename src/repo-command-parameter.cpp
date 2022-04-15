@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -19,10 +19,7 @@
 
 #include "repo-command-parameter.hpp"
 
-#include <ndn-cxx/encoding/encoding-buffer.hpp>
 #include <ndn-cxx/encoding/block-helpers.hpp>
-#include <ndn-cxx/mgmt/control-parameters.hpp>
-#include <ndn-cxx/name.hpp>
 
 namespace repo {
 
@@ -63,7 +60,7 @@ RepoCommandParameter::setProcessId(uint64_t processId)
 }
 
 RepoCommandParameter&
-RepoCommandParameter::setInterestLifetime(milliseconds interestLifetime)
+RepoCommandParameter::setInterestLifetime(time::milliseconds interestLifetime)
 {
   m_interestLifetime = interestLifetime;
   m_hasFields[REPO_PARAMETER_INTEREST_LIFETIME] = true;
@@ -73,7 +70,7 @@ RepoCommandParameter::setInterestLifetime(milliseconds interestLifetime)
 
 template<ndn::encoding::Tag T>
 size_t
-RepoCommandParameter::wireEncode(EncodingImpl<T>& encoder) const
+RepoCommandParameter::wireEncode(ndn::EncodingImpl<T>& encoder) const
 {
   size_t totalLength = 0;
   size_t variableLength = 0;
@@ -123,10 +120,10 @@ RepoCommandParameter::wireEncode() const
   if (m_wire.hasWire())
     return m_wire;
 
-  EncodingEstimator estimator;
+  ndn::EncodingEstimator estimator;
   size_t estimatedSize = wireEncode(estimator);
 
-  EncodingBuffer buffer(estimatedSize, 0);
+  ndn::EncodingBuffer buffer(estimatedSize, 0);
   wireEncode(buffer);
 
   m_wire = buffer.block();
@@ -136,15 +133,15 @@ RepoCommandParameter::wireEncode() const
 void
 RepoCommandParameter::wireDecode(const Block& wire)
 {
-  m_wire = wire;
+  if (wire.type() != tlv::RepoCommandParameter) {
+    NDN_THROW(Error("RepoCommandParameter", wire.type()));
+  }
 
+  m_wire = wire;
   m_wire.parse();
 
-  if (m_wire.type() != tlv::RepoCommandParameter)
-    BOOST_THROW_EXCEPTION(Error("Requested decoding of RepoCommandParameter, but Block is of different type"));
-
   // Name
-  Block::element_const_iterator val = m_wire.find(tlv::Name);
+  auto val = m_wire.find(tlv::Name);
   if (val != m_wire.elements_end())
   {
     m_hasFields[REPO_PARAMETER_NAME] = true;
@@ -175,42 +172,13 @@ RepoCommandParameter::wireDecode(const Block& wire)
     m_processId = readNonNegativeInteger(*val);
   }
 
-  // InterestLifeTime
+  // InterestLifetime
   val = m_wire.find(tlv::InterestLifetime);
   if (val != m_wire.elements_end())
   {
     m_hasFields[REPO_PARAMETER_INTEREST_LIFETIME] = true;
-    m_interestLifetime = milliseconds(readNonNegativeInteger(*val));
+    m_interestLifetime = time::milliseconds(readNonNegativeInteger(*val));
   }
-}
-
-std::ostream&
-operator<<(std::ostream& os, const RepoCommandParameter& repoCommandParameter)
-{
-  os << "RepoCommandParameter(";
-
-  // Name
-  if (repoCommandParameter.hasName()) {
-    os << " Name: " << repoCommandParameter.getName();
-  }
-  if (repoCommandParameter.hasStartBlockId()) {
-  // StartBlockId
-    os << " StartBlockId: " << repoCommandParameter.getStartBlockId();
-  }
-  // EndBlockId
-  if (repoCommandParameter.hasEndBlockId()) {
-    os << " EndBlockId: " << repoCommandParameter.getEndBlockId();
-  }
-  // ProcessId
-  if (repoCommandParameter.hasProcessId()) {
-    os << " ProcessId: " << repoCommandParameter.getProcessId();
-  }
-  // InterestLifetime
-  if (repoCommandParameter.hasProcessId()) {
-    os << " InterestLifetime: " << repoCommandParameter.getInterestLifetime();
-  }
-  os << " )";
-  return os;
 }
 
 } // namespace repo

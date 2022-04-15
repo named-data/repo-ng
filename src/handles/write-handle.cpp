@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -26,22 +26,14 @@ namespace repo {
 
 NDN_LOG_INIT(repo.WriteHandle);
 
-static const int DEFAULT_CREDIT = 12;
-static const bool DEFAULT_CANBE_PREFIX = false;
-static const milliseconds MAX_TIMEOUT(60_s);
-static const milliseconds NOEND_TIMEOUT(10000_ms);
-static const milliseconds PROCESS_DELETE_TIME(10000_ms);
-static const milliseconds DEFAULT_INTEREST_LIFETIME(4000_ms);
+const int DEFAULT_CREDIT = 12;
+const time::milliseconds NOEND_TIMEOUT = 10_s;
+const time::milliseconds PROCESS_DELETE_TIME = 10_s;
 
 WriteHandle::WriteHandle(Face& face, RepoStorage& storageHandle, ndn::mgmt::Dispatcher& dispatcher,
-                         Scheduler& scheduler, Validator& validator)
+                         Scheduler& scheduler, ndn::security::Validator& validator)
   : CommandBaseHandle(face, storageHandle, scheduler, validator)
   , m_validator(validator)
-  , m_credit(DEFAULT_CREDIT)
-  , m_canBePrefix(DEFAULT_CANBE_PREFIX)
-  , m_maxTimeout(MAX_TIMEOUT)
-  , m_noEndTimeout(NOEND_TIMEOUT)
-  , m_interestLifetime(DEFAULT_INTEREST_LIFETIME)
 {
   dispatcher.addControlCommand<RepoCommandParameter>(ndn::PartialName("insert"),
     makeAuthorization(),
@@ -62,20 +54,20 @@ WriteHandle::deleteProcess(ProcessId processId)
 
 void
 WriteHandle::handleInsertCommand(const Name& prefix, const Interest& interest,
-                                 const ndn::mgmt::ControlParameters& parameter,
+                                 const ndn::mgmt::ControlParameters& params,
                                  const ndn::mgmt::CommandContinuation& done)
 {
-  RepoCommandParameter* repoParameter =
-    dynamic_cast<RepoCommandParameter*>(const_cast<ndn::mgmt::ControlParameters*>(&parameter));
+  auto& repoParam = dynamic_cast<RepoCommandParameter&>(const_cast<ndn::mgmt::ControlParameters&>(params));
 
-  if (repoParameter->hasStartBlockId() || repoParameter->hasEndBlockId()) {
-    processSegmentedInsertCommand(interest, *repoParameter, done);
+  if (repoParam.hasStartBlockId() || repoParam.hasEndBlockId()) {
+    processSegmentedInsertCommand(interest, repoParam, done);
   }
   else {
-    processSingleInsertCommand(interest, *repoParameter, done);
+    processSingleInsertCommand(interest, repoParam, done);
   }
-  if (repoParameter->hasInterestLifetime())
-    m_interestLifetime = repoParameter->getInterestLifetime();
+  if (repoParam.hasInterestLifetime()) {
+    m_interestLifetime = repoParam.getInterestLifetime();
+  }
 }
 
 void
@@ -83,7 +75,7 @@ WriteHandle::onData(const Interest& interest, const Data& data, ProcessId proces
 {
   m_validator.validate(data,
                        std::bind(&WriteHandle::onDataValidated, this, interest, _1, processId),
-                       [](const Data& data, const ValidationError& error){NDN_LOG_ERROR("Error: " << error);});
+                       [] (auto&&, const auto& error) { NDN_LOG_ERROR("Error: " << error); });
 }
 
 void
@@ -128,7 +120,6 @@ WriteHandle::processSingleInsertCommand(const Interest& interest, RepoCommandPar
 
   response.setCode(300);
   Interest fetchInterest(parameter.getName());
-  fetchInterest.setCanBePrefix(m_canBePrefix);
   fetchInterest.setInterestLifetime(m_interestLifetime);
   face.expressInterest(fetchInterest,
                        std::bind(&WriteHandle::onData, this, _1, _2, processId),
@@ -144,34 +135,32 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
   Name name = parameter.getName();
   SegmentNo startBlockId = parameter.getStartBlockId();
 
-  uint64_t initialCredit = m_credit;
-
+  int initialCredit = DEFAULT_CREDIT;
   if (parameter.hasEndBlockId()) {
-    initialCredit =
-      std::min(initialCredit, parameter.getEndBlockId() - parameter.getStartBlockId() + 1);
+    initialCredit = std::min<int>(initialCredit, parameter.getEndBlockId() - parameter.getStartBlockId() + 1);
   }
   else {
     // set noEndTimeout timer
-    process.noEndTime = ndn::time::steady_clock::now() +
-                        m_noEndTimeout;
+    process.noEndTime = time::steady_clock::now() + NOEND_TIMEOUT;
   }
 
   Name fetchName = name;
-  SegmentNo segment = startBlockId;
-  fetchName.appendSegment(segment);
+  fetchName.appendSegment(startBlockId);
   Interest interest(fetchName);
 
   ndn::util::SegmentFetcher::Options options;
   options.initCwnd = initialCredit;
   options.interestLifetime = m_interestLifetime;
-  options.maxTimeout = m_maxTimeout;
   auto fetcher = ndn::util::SegmentFetcher::start(face, interest, m_validator, options);
-  fetcher->onError.connect([] (uint32_t errorCode, const std::string& errorMsg)
-                           {NDN_LOG_ERROR("Error: " << errorMsg);});
-  fetcher->afterSegmentValidated.connect([this, &fetcher, &processId] (const Data& data)
-                                         {onSegmentData(*fetcher, data, processId);});
-  fetcher->afterSegmentTimedOut.connect([this, &fetcher, &processId] ()
-                                        {onSegmentTimeout(*fetcher, processId);});
+  fetcher->onError.connect([] (uint32_t, const auto& errorMsg) {
+    NDN_LOG_ERROR("Error: " << errorMsg);
+  });
+  fetcher->afterSegmentValidated.connect([this, &fetcher, &processId] (const Data& data) {
+    onSegmentData(*fetcher, data, processId);
+  });
+  fetcher->afterSegmentTimedOut.connect([this, &fetcher, &processId] {
+    onSegmentTimeout(*fetcher, processId);
+  });
 }
 
 void
@@ -193,9 +182,8 @@ WriteHandle::onSegmentData(ndn::util::SegmentFetcher& fetcher, const Data& data,
   ProcessInfo& process = m_processes[processId];
   //read whether notime timeout
   if (!response.hasEndBlockId()) {
-
-    ndn::time::steady_clock::TimePoint& noEndTime = process.noEndTime;
-    ndn::time::steady_clock::TimePoint now = ndn::time::steady_clock::now();
+    auto noEndTime = process.noEndTime;
+    auto now = time::steady_clock::now();
 
     if (now > noEndTime) {
       NDN_LOG_DEBUG("noEndtimeout: " << processId);
@@ -281,10 +269,10 @@ WriteHandle::processSegmentedInsertCommand(const Interest& interest, RepoCommand
 
 void
 WriteHandle::handleCheckCommand(const Name& prefix, const Interest& interest,
-                                const ndn::mgmt::ControlParameters& parameter,
+                                const ndn::mgmt::ControlParameters& params,
                                 const ndn::mgmt::CommandContinuation& done)
 {
-  const RepoCommandParameter& repoParameter = dynamic_cast<const RepoCommandParameter&>(parameter);
+  const auto& repoParameter = dynamic_cast<const RepoCommandParameter&>(params);
 
   //check whether this process exists
   ProcessId processId = repoParameter.getProcessId();
@@ -324,8 +312,8 @@ WriteHandle::deferredDeleteProcess(ProcessId processId)
 void
 WriteHandle::extendNoEndTime(ProcessInfo& process)
 {
-  auto& noEndTime = process.noEndTime;
-  auto now = ndn::time::steady_clock::now();
+  auto noEndTime = process.noEndTime;
+  auto now = time::steady_clock::now();
   RepoCommandResponse& response = process.response;
   if (now > noEndTime) {
     response.setCode(405);
@@ -333,7 +321,7 @@ WriteHandle::extendNoEndTime(ProcessInfo& process)
   }
 
   //extends noEndTime
-  process.noEndTime = ndn::time::steady_clock::now() + m_noEndTimeout;
+  process.noEndTime = time::steady_clock::now() + NOEND_TIMEOUT;
 }
 
 RepoCommandResponse
@@ -341,7 +329,6 @@ WriteHandle::negativeReply(std::string text, int statusCode)
 {
   RepoCommandResponse response(statusCode, text);
   response.setBody(response.wireEncode());
-
   return response;
 }
 

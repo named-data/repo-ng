@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2018,  Regents of the University of California.
+/*
+ * Copyright (c) 2018-2022,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,8 +22,7 @@
 
 #include <ndn-cxx/encoding/tlv.hpp>
 
-namespace repo {
-namespace tlv {
+namespace repo::tlv {
 
 using namespace ndn::tlv;
 
@@ -38,7 +37,6 @@ enum {
   DeleteNum            = 210,
 };
 
-} // namespace tlv
-} // namespace repo
+} // namespace repo::tlv
 
 #endif // REPO_REPO_TLV_HPP

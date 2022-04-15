@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -25,8 +25,6 @@
 
 #include <ndn-cxx/util/signal.hpp>
 
-#include <queue>
-
 namespace repo {
 
 /**
@@ -39,14 +37,9 @@ public:
   class Error : public std::runtime_error
   {
   public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
+    using std::runtime_error::runtime_error;
   };
 
-public:
   explicit
   RepoStorage(Storage& store);
 
@@ -96,7 +89,7 @@ public:
 
 private:
   Storage& m_storage;
-  const int NOTFOUND = -1;
+  static constexpr int NOTFOUND = -1;
 };
 
 } // namespace repo

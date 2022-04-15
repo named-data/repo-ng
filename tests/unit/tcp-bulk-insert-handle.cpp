@@ -24,8 +24,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 BOOST_AUTO_TEST_SUITE(TcpBulkInsertHandle)
 
@@ -149,8 +148,6 @@ public:
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkInsertFixture<T>)
 {
-  BOOST_TEST_MESSAGE(T::getName());
-
   // start bulk inserter
   this->bulkInserter.listen("localhost", "17376");
 
@@ -168,5 +165,4 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkIn
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,7 +22,8 @@
 namespace repo {
 
 void
-RepoCommand::validateRequest(const RepoCommandParameter& parameters) {
+RepoCommand::validateRequest(const RepoCommandParameter& parameters)
+{
   m_requestValidator.validate(parameters);
   check(parameters);
 }
@@ -36,11 +37,11 @@ RepoCommand::FieldValidator::validate(const RepoCommandParameter& parameters) co
     bool isPresent = presentFields[i];
     if (m_required[i]) {
       if (!isPresent) {
-        BOOST_THROW_EXCEPTION(ArgumentError(REPO_PARAMETER_FIELD[i] + " is required but missing"));
+        NDN_THROW(ArgumentError(REPO_PARAMETER_FIELD[i] + " is required but missing"));
       }
     }
     else if (isPresent && !m_optional[i]) {
-      BOOST_THROW_EXCEPTION(ArgumentError(REPO_PARAMETER_FIELD[i] + " is forbidden but present"));
+      NDN_THROW(ArgumentError(REPO_PARAMETER_FIELD[i] + " is forbidden but present"));
     }
   }
 }
@@ -52,7 +53,7 @@ RepoCommand::FieldValidator::FieldValidator()
 }
 
 InsertCommand::InsertCommand()
-: RepoCommand()
+  : RepoCommand()
 {
   m_requestValidator
     .required(REPO_PARAMETER_NAME)
@@ -83,14 +84,14 @@ DeleteCommand::check(const RepoCommandParameter& parameters) const
     if (parameters.hasEndBlockId()) {
       SegmentNo startBlockId = parameters.getStartBlockId();
       SegmentNo endBlockId = parameters.getEndBlockId();
-
       if (startBlockId > endBlockId) {
-        BOOST_THROW_EXCEPTION(ArgumentError("start block Id is bigger than end block Id"));
+        NDN_THROW(ArgumentError("Start block Id is bigger than end block Id"));
       }
     }
     else {
-      BOOST_THROW_EXCEPTION(ArgumentError("Segmented deletion without EndBlockId, not implemented"));
+      NDN_THROW(ArgumentError("Segmented deletion without EndBlockId, not implemented"));
     }
   }
 }
+
 } // namespace repo

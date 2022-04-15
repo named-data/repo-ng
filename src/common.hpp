@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2020, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -25,22 +25,19 @@
 #include <ndn-cxx/data.hpp>
 #include <ndn-cxx/face.hpp>
 #include <ndn-cxx/interest.hpp>
-#include <ndn-cxx/key-locator.hpp>
 #include <ndn-cxx/name.hpp>
-#include <ndn-cxx/security/key-chain.hpp>
-#include <ndn-cxx/security/validator.hpp>
-#include <ndn-cxx/security/validator-config.hpp>
-#include <ndn-cxx/util/time.hpp>
 #include <ndn-cxx/util/scheduler.hpp>
+#include <ndn-cxx/util/time.hpp>
 
-#include <boost/utility.hpp>
+#include <boost/core/noncopyable.hpp>
 
 #include <algorithm>
 #include <functional>
-#include <iostream>
+#include <iosfwd>
 #include <list>
 #include <map>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -52,24 +49,21 @@
 
 namespace repo {
 
-using ndn::Face;
-using ndn::Block;
-using ndn::operator ""_block;
-using ndn::Name;
-namespace name = ndn::name;
-using ndn::Interest;
-using ndn::Data;
-using ndn::KeyLocator;
-using ndn::Scheduler;
-using ndn::security::KeyChain;
-using ndn::security::Validator;
-using ndn::security::ValidationError;
-using ndn::security::ValidatorConfig;
-
 using boost::noncopyable;
 
-typedef uint64_t ProcessId;
-typedef uint64_t SegmentNo;
+using ndn::Face;
+using ndn::Block;
+using ndn::Name;
+using ndn::Interest;
+using ndn::Data;
+using ndn::Scheduler;
+
+using ndn::operator""_block;
+namespace time = ndn::time;
+using namespace ndn::time_literals;
+
+using ProcessId = uint64_t;
+using SegmentNo = uint64_t;
 
 } // namespace repo
 

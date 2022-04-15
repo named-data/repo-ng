@@ -27,10 +27,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <ndn-cxx/util/time.hpp>
-
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 BOOST_AUTO_TEST_SUITE(TestBasicInterestRead)
 
@@ -127,5 +124,4 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

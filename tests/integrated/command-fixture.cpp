@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2018, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -19,8 +19,7 @@
 
 #include "command-fixture.hpp"
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 CommandFixture::CommandFixture()
   : scheduler(repoFace.getIoService())
@@ -33,5 +32,4 @@ CommandFixture::CommandFixture()
   validator.load("tests/integrated/insert-delete-validator-config.conf");
 }
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

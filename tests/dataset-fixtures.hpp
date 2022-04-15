@@ -25,8 +25,7 @@
 #include <vector>
 #include <boost/mpl/vector.hpp>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 class DatasetBase : public virtual IdentityManagementFixture
 {
@@ -37,82 +36,62 @@ public:
     using std::runtime_error::runtime_error;
   };
 
-  using DataContainer = std::list<std::shared_ptr<ndn::Data>>;
-  DataContainer data;
-
-  using InterestContainer = std::list<std::pair<ndn::Interest, std::shared_ptr<ndn::Data>>>;
-  InterestContainer interests;
-
-  using RemovalsContainer = std::list<std::pair<ndn::Interest, size_t>>;
-  RemovalsContainer removals;
+  std::list<std::shared_ptr<Data>> data;
+  std::list<std::pair<Interest, std::shared_ptr<Data>>> interests;
+  std::list<std::pair<Interest, size_t>> removals;
 
 protected:
-  std::shared_ptr<ndn::Data>
-  createData(const ndn::Name& name)
+  std::shared_ptr<Data>
+  createData(const Name& name)
   {
-    if (map.count(name) > 0)
-      return map[name];
+    auto it = m_map.find(name);
+    if (it != m_map.end())
+      return it->second;
 
     static const std::vector<uint8_t> content(1500, '-');
 
-    auto data = std::make_shared<ndn::Data>(name);
+    auto data = std::make_shared<Data>(name);
     data->setContent(content);
     m_keyChain.sign(*data);
 
-    map.insert(std::make_pair(name, data));
+    m_map.emplace(name, data);
     return data;
   }
 
-  std::shared_ptr<ndn::Data>
-  getData(const ndn::Name& name)
+  std::shared_ptr<Data>
+  getData(const Name& name) const
   {
-    if (map.count(name) > 0)
-      return map[name];
-    else
-      NDN_THROW(Error("Data with name " + name.toUri() + " is not found"));
+    auto it = m_map.find(name);
+    if (it != m_map.end())
+      return it->second;
+
+    NDN_THROW(Error("Data with name " + name.toUri() + " not found"));
   }
 
 private:
-  std::map<Name, std::shared_ptr<Data>> map;
+  std::map<Name, std::shared_ptr<Data>> m_map;
 };
-
 
 template<size_t N>
 class SamePrefixDataset : public DatasetBase
 {
 public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "SamePrefixDataset";
-    return name;
-  }
-
   SamePrefixDataset()
   {
-    ndn::Name baseName("/x/y/z/test/1");
+    const Name baseName("/x/y/z/test/1");
     for (size_t i = 0; i < N; i++) {
-      ndn::Name name(baseName);
+      Name name(baseName);
       name.appendSegment(i);
-      std::shared_ptr<Data> data = createData(name);
+      auto data = createData(name);
       this->data.push_back(data);
-
-      this->interests.push_back(std::make_pair(Interest(name), data));
+      this->interests.emplace_back(Interest(name), data);
     }
   }
 };
 
-
 class BasicDataset : public DatasetBase
 {
 public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "BasicDataset";
-    return name;
-  }
-
   BasicDataset()
   {
     this->data.push_back(createData("/a"));
@@ -120,10 +99,10 @@ public:
     this->data.push_back(createData("/a/b/c"));
     this->data.push_back(createData("/a/b/c/d"));
 
-    this->interests.push_back(std::make_pair(Interest("/a"),       getData("/a")));
-    this->interests.push_back(std::make_pair(Interest("/a/b"),     getData("/a/b")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/c"),   getData("/a/b/c")));
-    this->interests.push_back(std::make_pair(Interest("/a/b/c/d"), getData("/a/b/c/d")));
+    this->interests.emplace_back(Interest("/a"),       getData("/a"));
+    this->interests.emplace_back(Interest("/a/b"),     getData("/a/b"));
+    this->interests.emplace_back(Interest("/a/b/c"),   getData("/a/b/c"));
+    this->interests.emplace_back(Interest("/a/b/c/d"), getData("/a/b/c/d"));
   }
 };
 
@@ -131,13 +110,6 @@ public:
 class FetchByPrefixDataset : public DatasetBase
 {
 public:
-  static const std::string&
-  getName()
-  {
-    static std::string name = "FetchByPrefixDataset";
-    return name;
-  }
-
   FetchByPrefixDataset()
   {
     this->data.push_back(createData("/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z"));
@@ -205,7 +177,6 @@ using CommonDatasets = boost::mpl::vector<BasicDataset,
                                           FetchByPrefixDataset,
                                           SamePrefixDataset<10>,
                                           SamePrefixDataset<100>>;
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests
 
 #endif // REPO_TESTS_DATASET_FIXTURES_HPP

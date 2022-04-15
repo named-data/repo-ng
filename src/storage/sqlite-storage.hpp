@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,33 +22,17 @@
 
 #include "storage.hpp"
 
-#include <algorithm>
-#include <iostream>
-#include <queue>
-#include <stdlib.h>
-#include <string>
 #include <sqlite3.h>
-#include <vector>
 
 namespace repo {
 
 class SqliteStorage : public Storage
 {
 public:
-  class Error : public std::runtime_error
-  {
-  public:
-    explicit
-    Error(const std::string& what)
-      : std::runtime_error(what)
-    {
-    }
-  };
-
   explicit
   SqliteStorage(const std::string& dbPath);
 
-  ~SqliteStorage();
+  ~SqliteStorage() override;
 
   /**
    *  @brief  put the data into database
@@ -91,7 +75,6 @@ private:
   sqlite3* m_db;
   std::string m_dbPath;
 };
-
 
 } // namespace repo
 

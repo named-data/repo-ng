@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2017, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,10 +21,10 @@
 #define REPO_TESTS_IDENTITY_MANAGEMENT_FIXTURE_HPP
 
 #include "common.hpp"
+
 #include <ndn-cxx/security/key-chain.hpp>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 /** \brief a fixture providing an in-memory KeyChain
  */
@@ -60,7 +60,6 @@ private:
   std::vector<std::string> m_certFiles;
 };
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests
 
 #endif // REPO_TESTS_IDENTITY_MANAGEMENT_FIXTURE_HPP

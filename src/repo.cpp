@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -34,16 +34,16 @@ parseConfig(const std::string& configPath)
   }
 
   std::ifstream fin(configPath.c_str());
- if (!fin.is_open())
-    BOOST_THROW_EXCEPTION(Repo::Error("failed to open configuration file '" + configPath + "'"));
+  if (!fin.is_open())
+    NDN_THROW(Repo::Error("failed to open configuration file '" + configPath + "'"));
 
   using namespace boost::property_tree;
   ptree propertyTree;
   try {
     read_info(fin, propertyTree);
   }
-  catch (const ptree_error& e) {
-    BOOST_THROW_EXCEPTION(Repo::Error("failed to read configuration file '" + configPath + "'"));
+  catch (const ptree_error&) {
+    NDN_THROW_NESTED(Repo::Error("failed to read configuration file '" + configPath + "'"));
   }
 
   ptree repoConf = propertyTree.get_child("repo");
@@ -58,8 +58,8 @@ parseConfig(const std::string& configPath)
     else if (section.first == "registration-subset")
       repoConfig.registrationSubset = section.second.get_value<int>();
     else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'data' section in "
-                                        "configuration file '"+ configPath +"'"));
+      NDN_THROW(Repo::Error("Unrecognized '" + section.first + "' option in 'data' section in "
+                            "configuration file '"+ configPath +"'"));
   }
 
   ptree commandConf = repoConf.get_child("command");
@@ -67,8 +67,8 @@ parseConfig(const std::string& configPath)
     if (section.first == "prefix")
       repoConfig.repoPrefixes.push_back(Name(section.second.get_value<std::string>()));
     else
-      BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'command' section in "
-                                        "configuration file '"+ configPath +"'"));
+      NDN_THROW(Repo::Error("Unrecognized '" + section.first + "' option in 'command' section in "
+                            "configuration file '"+ configPath +"'"));
   }
 
   auto tcpBulkInsert = repoConf.get_child_optional("tcp_bulk_insert");
@@ -85,8 +85,8 @@ parseConfig(const std::string& configPath)
         port = section.second.get_value<std::string>();
       }
       else
-        BOOST_THROW_EXCEPTION(Repo::Error("Unrecognized '" + section.first + "' option in 'tcp_bulk_insert' section in "
-                                          "configuration file '"+ configPath +"'"));
+        NDN_THROW(Repo::Error("Unrecognized '" + section.first + "' option in 'tcp_bulk_insert' section in "
+                              "configuration file '" + configPath + "'"));
     }
   }
   if (isTcpBulkEnabled) {
@@ -94,7 +94,7 @@ parseConfig(const std::string& configPath)
   }
 
   if (repoConf.get<std::string>("storage.method") != "sqlite") {
-    BOOST_THROW_EXCEPTION(Repo::Error("Only 'sqlite' storage method is supported"));
+    NDN_THROW(Repo::Error("Only 'sqlite' storage method is supported"));
   }
 
   repoConfig.dbPath = repoConf.get<std::string>("storage.path");
@@ -127,10 +127,10 @@ void
 Repo::initializeStorage()
 {
   // Rebuild storage if storage checkpoin exists
-  ndn::time::steady_clock::TimePoint start = ndn::time::steady_clock::now();
-  ndn::time::steady_clock::TimePoint end = ndn::time::steady_clock::now();
-  ndn::time::milliseconds cost = ndn::time::duration_cast<ndn::time::milliseconds>(end - start);
-  NDN_LOG_DEBUG("initialize storage cost: " << cost << "ms");
+  auto start = time::steady_clock::now();
+  auto end = time::steady_clock::now();
+  auto cost = time::duration_cast<time::milliseconds>(end - start);
+  NDN_LOG_DEBUG("initialize storage cost: " << cost);
 }
 
 void
@@ -144,7 +144,7 @@ Repo::enableListening()
     m_face.registerPrefix(cmdPrefix, nullptr,
       [] (const Name& cmdPrefix, const std::string& reason) {
         NDN_LOG_DEBUG("Command prefix " << cmdPrefix << " registration error: " << reason);
-        BOOST_THROW_EXCEPTION(Error("Command prefix registration failed"));
+        NDN_THROW(Error("Command prefix registration failed"));
       });
 
     m_dispatcher.addTopPrefix(cmdPrefix);

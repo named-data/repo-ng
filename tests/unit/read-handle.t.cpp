@@ -35,8 +35,7 @@
     BOOST_CHECK_EQUAL(didMatch, EXPECTED);                           \
   } while (false)
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 BOOST_AUTO_TEST_SUITE(TestReadHandle)
 
@@ -57,7 +56,7 @@ public:
   }
 
   static bool
-  containsNameComponent(const Name& name, const ndn::name::Component& component)
+  containsNameComponent(const Name& name, const Name::Component& component)
   {
     for (const auto& c : name) {
       if (c == component)
@@ -91,42 +90,41 @@ BOOST_FIXTURE_TEST_CASE(DataPrefixes, Fixture)
 
   keyChain.createIdentity(identity);
   keyChain.sign(*data1, ndn::security::SigningInfo(ndn::security::SigningInfo::SIGNER_TYPE_ID,
-                                                  identity));
+                                                   identity));
   keyChain.sign(*data2, ndn::security::SigningInfo(ndn::security::SigningInfo::SIGNER_TYPE_ID,
-                                                  identity));
+                                                   identity));
 
   face.sentInterests.clear();
   handle->insertData(*data1);
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"register"}, true);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"register"}, true);
 
   face.sentInterests.clear();
   handle->deleteData(data1->getFullName());
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, true);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"unregister"}, true);
 
   face.sentInterests.clear();
   handle->insertData(*data1);
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"register"}, true);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"register"}, true);
 
   face.sentInterests.clear();
   handle->insertData(*data2);
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"register"}, false);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"register"}, false);
 
   face.sentInterests.clear();
   handle->deleteData(data1->getFullName());
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, false);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"unregister"}, false);
 
   face.sentInterests.clear();
   handle->deleteData(data2->getFullName());
   face.processEvents(-1_ms);
-  CHECK_INTERESTS(interest.getName(), name::Component{"unregister"}, true);
+  CHECK_INTERESTS(interest.getName(), Name::Component{"unregister"}, true);
 }
 
 BOOST_AUTO_TEST_SUITE_END() // TestReadHandle
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests

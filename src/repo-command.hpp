@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014-2018, Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -16,29 +16,25 @@
  * You should have received a copy of the GNU General Public License along with
  * repo-ng, e.g., in COPYING.md file.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifndef REPO_REPO_COMMAND_HPP
 #define REPO_REPO_COMMAND_HPP
 
 #include "common.hpp"
 #include "repo-command-parameter.hpp"
 
-#include <stdexcept>
-
 namespace repo {
 
 class RepoCommand : boost::noncopyable
 {
 public:
-  /** \brief represents an error in RepoCommandParameters
+  /**
+   * \brief Represents an error in RepoCommandParameters
    */
   class ArgumentError : public std::invalid_argument
   {
   public:
-    explicit
-    ArgumentError(const std::string& what)
-      : std::invalid_argument(what)
-    {
-    }
+    using std::invalid_argument::invalid_argument;
   };
 
   virtual

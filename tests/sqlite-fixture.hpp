@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
-/**
- * Copyright (c) 2014,  Regents of the University of California.
+/*
+ * Copyright (c) 2014-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -23,10 +23,8 @@
 #include "storage/sqlite-storage.hpp"
 
 #include <boost/filesystem.hpp>
-#include <boost/test/unit_test.hpp>
 
-namespace repo {
-namespace tests {
+namespace repo::tests {
 
 class SqliteFixture
 {
@@ -46,7 +44,6 @@ public:
   SqliteStorage* handle;
 };
 
-} // namespace tests
-} // namespace repo
+} // namespace repo::tests
 
 #endif // REPO_TESTS_SQLITE_FIXTURE_HPP

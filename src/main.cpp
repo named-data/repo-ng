@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2018-2019, Regents of the University of California.
+ * Copyright (c) 2018-2022, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,6 +21,7 @@
 #include "extended-error-message.hpp"
 #include "repo.hpp"
 
+#include <iostream>
 #include <string.h> // for strsignal()
 
 #include <boost/asio/io_service.hpp>

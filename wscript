@@ -28,6 +28,11 @@ def configure(conf):
     conf.env.WITH_TESTS = conf.options.with_tests
     conf.env.WITH_TOOLS = conf.options.with_tools
 
+    # Prefer pkgconf if it's installed, because it gives more correct results
+    # on Fedora/CentOS/RHEL/etc. See https://bugzilla.redhat.com/show_bug.cgi?id=1953348
+    # Store the result in env.PKGCONFIG, which is the variable used inside check_cfg()
+    conf.find_program(['pkgconf', 'pkg-config'], var='PKGCONFIG')
+
     pkg_config_path = os.environ.get('PKG_CONFIG_PATH', f'{conf.env.LIBDIR}/pkgconfig')
     conf.check_cfg(package='libndn-cxx', args=['libndn-cxx >= 0.8.0', '--cflags', '--libs'],
                    uselib_store='NDN_CXX', pkg_config_path=pkg_config_path)
@@ -37,6 +42,7 @@ def configure(conf):
     boost_libs = ['system', 'program_options', 'filesystem', 'iostreams']
     if conf.env.WITH_TESTS:
         boost_libs.append('unit_test_framework')
+
     conf.check_boost(lib=boost_libs, mt=True)
 
     conf.check_compiler_flags()

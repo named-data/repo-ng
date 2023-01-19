@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-* [ndn-cxx and its dependencies](https://named-data.net/doc/ndn-cxx/current/INSTALL.html)
+* [ndn-cxx and its dependencies](https://docs.named-data.net/ndn-cxx/current/INSTALL.html)
 * sqlite3
 
 ## Build
@@ -16,13 +16,14 @@ Then enter:
 
 This builds and installs `ndn-repo-ng` and related tools.
 
-If configured with tests (`./waf configure --with-tests`), the above commands will
-also generate unit tests that can be run with `./build/unit-tests`.
+If configured with tests (`./waf configure --with-tests`), the above commands
+will also generate unit tests that can be run with `./build/unit-tests`.
 
 ## Configuration
 
 The default configuration file path is `/usr/local/etc/ndn/repo-ng.conf`.
-Users may copy the [repo-ng.conf.sample](repo-ng.conf.sample) config sample to that path.
+Users may copy the [`repo-ng.conf.sample`](repo-ng.conf.sample) example config
+to that path.
 
 ## Database
 
@@ -36,6 +37,6 @@ database directory.
 
 ## Tools
 
-Currently, three tools are included: *ndngetfile*, *ndnputfile*, and *repo-ng-ls*.
+Currently, three tools are included: `ndngetfile`, `ndnputfile`, and `repo-ng-ls`.
 Users can find detailed information about these tools on the
 [repo-ng wiki](https://redmine.named-data.net/projects/repo-ng/wiki/Tools).

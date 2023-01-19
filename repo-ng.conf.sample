@@ -13,9 +13,9 @@ repo
   }
 
   ; Section defining the list of command prefixes (to insert or delete Data) to register.
-  ; Only the 'prefix' option is allowed here and it can be repeated multiple times.
   command
   {
+    ; Only the 'prefix' option is allowed here and it can be repeated multiple times.
     prefix "ndn:/example/repo/1"
     prefix "ndn:/example/repo/2"
   }
@@ -44,10 +44,11 @@ repo
       type any
     }
 
-    ; ; These rules are examples to validate signed Interests for commands and data.
-    ; ; One can define their own rules for signed Interests and Data packets to be
-    ; ; inserted according to the Validator Configuration File Format.
-    ; ; See https://named-data.net/doc/ndn-cxx/current/tutorials/security-validator-config.html
+    ; The following rules are examples to validate signed Interests for commands and data.
+    ; One can define their own rules for signed Interests and Data packets to be inserted
+    ; according to the Validator Configuration File Format.
+    ; See https://docs.named-data.net/ndn-cxx/current/tutorials/security-validator-config.html
+    ;
     ; rule
     ; {
     ;   id "Simple Rule For Interests"

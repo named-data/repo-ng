@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -81,8 +81,8 @@ private:
 private:
   size_t m_prefixSubsetLength;
   std::map<ndn::Name, RegisteredDataPrefix> m_insertedDataPrefixes;
-  ndn::util::signal::ScopedConnection afterDataDeletionConnection;
-  ndn::util::signal::ScopedConnection afterDataInsertionConnection;
+  ndn::signal::ScopedConnection afterDataDeletionConnection;
+  ndn::signal::ScopedConnection afterDataInsertionConnection;
   Face& m_face;
   RepoStorage& m_storageHandle;
 };

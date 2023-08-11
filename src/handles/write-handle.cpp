@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -148,10 +148,10 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
   fetchName.appendSegment(startBlockId);
   Interest interest(fetchName);
 
-  ndn::util::SegmentFetcher::Options options;
+  ndn::SegmentFetcher::Options options;
   options.initCwnd = initialCredit;
   options.interestLifetime = m_interestLifetime;
-  auto fetcher = ndn::util::SegmentFetcher::start(face, interest, m_validator, options);
+  auto fetcher = ndn::SegmentFetcher::start(face, interest, m_validator, options);
   fetcher->onError.connect([] (uint32_t, const auto& errorMsg) {
     NDN_LOG_ERROR("Error: " << errorMsg);
   });
@@ -164,7 +164,7 @@ WriteHandle::segInit(ProcessId processId, const RepoCommandParameter& parameter)
 }
 
 void
-WriteHandle::onSegmentData(ndn::util::SegmentFetcher& fetcher, const Data& data, ProcessId processId)
+WriteHandle::onSegmentData(ndn::SegmentFetcher& fetcher, const Data& data, ProcessId processId)
 {
   auto it = m_processes.find(processId);
   if (it == m_processes.end()) {
@@ -210,7 +210,7 @@ WriteHandle::onSegmentData(ndn::util::SegmentFetcher& fetcher, const Data& data,
 }
 
 void
-WriteHandle::onSegmentTimeout(ndn::util::SegmentFetcher& fetcher, ProcessId processId)
+WriteHandle::onSegmentTimeout(ndn::SegmentFetcher& fetcher, ProcessId processId)
 {
   NDN_LOG_DEBUG("SegTimeout");
   if (m_processes.count(processId) == 0) {

@@ -6,6 +6,6 @@ def build(bld):
     for tool in bld.path.ant_glob('*.cpp'):
         name = tool.change_ext('').path_from(bld.path.get_bld())
         bld.program(name=name,
-                    target='../bin/%s' % name,
+                    target=f'{top}/bin/{name}',
                     source=[tool],
-                    use='repo-objects')
+                    use='BOOST_TOOLS repo-objects')

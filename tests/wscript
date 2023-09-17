@@ -5,16 +5,16 @@ top = '..'
 def build(bld):
     bld.objects(target='tests-base',
                 source=bld.path.ant_glob('*.cpp'),
-                use='repo-objects')
+                use='BOOST_TESTS repo-objects')
 
     bld.program(name='unit-tests',
-                target='../unit-tests',
+                target=f'{top}/unit-tests',
                 source=bld.path.ant_glob('unit/**/*.cpp'),
                 use='tests-base',
                 install_path=None)
 
     bld.program(name='integrated-tests',
-                target='../integrated-tests',
+                target=f'{top}/integrated-tests',
                 source=bld.path.ant_glob('integrated/**/*.cpp'),
                 use='tests-base',
                 install_path=None)

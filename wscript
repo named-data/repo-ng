@@ -1,7 +1,7 @@
 # -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
-from waflib import Utils
 import os
+from waflib import Utils
 
 VERSION = '0.1'
 APPNAME = 'ndn-repo-ng'
@@ -39,11 +39,13 @@ def configure(conf):
 
     conf.check_sqlite3()
 
-    boost_libs = ['system', 'program_options', 'filesystem', 'iostreams']
-    if conf.env.WITH_TESTS:
-        boost_libs.append('unit_test_framework')
+    conf.check_boost(lib='filesystem program_options', mt=True)
 
-    conf.check_boost(lib=boost_libs, mt=True)
+    if conf.env.WITH_TESTS:
+        conf.check_boost(lib='unit_test_framework', mt=True, uselib_store='BOOST_TESTS')
+
+    if conf.env.WITH_TOOLS:
+        conf.check_boost(lib='iostreams', mt=True, uselib_store='BOOST_TOOLS')
 
     conf.check_compiler_flags()
 
@@ -53,35 +55,37 @@ def configure(conf):
 
     conf.define_cond('HAVE_TESTS', conf.env.WITH_TESTS)
     conf.define_cond('DISABLE_SQLITE3_FS_LOCKING', not conf.options.with_sqlite_locking)
-    conf.define('DEFAULT_CONFIG_FILE', '%s/ndn/repo-ng.conf' % conf.env.SYSCONFDIR)
+    conf.define('DEFAULT_CONFIG_FILE', f'{conf.env.SYSCONFDIR}/ndn/repo-ng.conf')
     conf.write_config_header('src/config.hpp')
 
 def build(bld):
-    bld.objects(target='repo-objects',
-                source=bld.path.ant_glob('src/**/*.cpp',
-                                         excl=['src/main.cpp']),
-                use='NDN_CXX BOOST SQLITE3',
-                includes='src',
-                export_includes='src')
+    bld.objects(
+        target='repo-objects',
+        source=bld.path.ant_glob('src/**/*.cpp', excl=['src/main.cpp']),
+        use='BOOST NDN_CXX SQLITE3',
+        includes='src',
+        export_includes='src')
 
-    bld.program(name='ndn-repo-ng',
-                target='bin/ndn-repo-ng',
-                source='src/main.cpp',
-                use='repo-objects')
-
-    if bld.env.WITH_TOOLS:
-        bld.recurse('tools')
+    bld.program(
+        name='ndn-repo-ng',
+        target='bin/ndn-repo-ng',
+        source='src/main.cpp',
+        use='repo-objects')
 
     if bld.env.WITH_TESTS:
         bld.recurse('tests')
 
+    if bld.env.WITH_TOOLS:
+        bld.recurse('tools')
+
     if bld.env.WITH_EXAMPLES:
         bld.recurse('examples')
 
+    # Install sample config
     bld.install_files('${SYSCONFDIR}/ndn', 'repo-ng.conf.sample')
 
     if Utils.unversioned_sys_platform() == 'linux':
         bld(features='subst',
-            name='repo-ng.service',
+            name='systemd-units',
             source='systemd/repo-ng.service.in',
             target='systemd/repo-ng.service')

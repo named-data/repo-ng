@@ -3,11 +3,11 @@
 top = '..'
 
 def build(bld):
+    # List all .cpp files (whole example in one .cpp)
     for ex in bld.path.ant_glob('*.cpp'):
         name = ex.change_ext('').path_from(bld.path.get_bld())
-        bld.program(name='example-%s' % name,
+        bld.program(name=f'example-{name}',
                     target=name,
                     source=[ex],
                     use='NDN_CXX',
-                    includes='../src',
                     install_path=None)

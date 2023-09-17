@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2018-2022, Regents of the University of California.
+ * Copyright (c) 2018-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -24,7 +24,7 @@
 #include <iostream>
 #include <string.h> // for strsignal()
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/program_options.hpp>
 
@@ -66,24 +66,24 @@ main(int argc, char** argv)
     return 0;
   }
 
-  boost::asio::io_service ioService;
+  boost::asio::io_context ioCtx;
 
   /// \todo reload config file on SIGHUP
-  boost::asio::signal_set signalSet(ioService, SIGINT, SIGTERM);
-  signalSet.async_wait([&ioService] (const boost::system::error_code& error, int signalNo) {
+  boost::asio::signal_set signalSet(ioCtx, SIGINT, SIGTERM);
+  signalSet.async_wait([&ioCtx] (const boost::system::error_code& error, int signalNo) {
     if (!error) {
       NDN_LOG_FATAL("Exiting on signal " << signalNo << "/" << strsignal(signalNo));
-      ioService.stop();
+      ioCtx.stop();
     }
   });
 
   try {
-    repo::Repo repo(ioService, repo::parseConfig(configFile));
+    repo::Repo repo(ioCtx, repo::parseConfig(configFile));
     repo.initializeStorage();
     repo.enableValidation();
     repo.enableListening();
 
-    ioService.run();
+    ioCtx.run();
   }
   catch (const std::exception& e) {
     NDN_LOG_FATAL(repo::getExtendedErrorMessage(e));

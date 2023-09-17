@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -106,10 +106,10 @@ parseConfig(const std::string& configPath)
   return repoConfig;
 }
 
-Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
+Repo::Repo(boost::asio::io_context& io, const RepoConfig& config)
   : m_config(config)
-  , m_scheduler(ioService)
-  , m_face(ioService)
+  , m_scheduler(io)
+  , m_face(io)
   , m_dispatcher(m_face, m_keyChain)
   , m_store(std::make_shared<SqliteStorage>(config.dbPath))
   , m_storageHandle(*m_store)
@@ -117,7 +117,7 @@ Repo::Repo(boost::asio::io_service& ioService, const RepoConfig& config)
   , m_readHandle(m_face, m_storageHandle, m_config.registrationSubset)
   , m_writeHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
   , m_deleteHandle(m_face, m_storageHandle, m_dispatcher, m_scheduler, m_validator)
-  , m_tcpBulkInsertHandle(ioService, m_storageHandle)
+  , m_tcpBulkInsertHandle(io, m_storageHandle)
 {
   this->enableValidation();
   m_storageHandle.notifyAboutExistingData();

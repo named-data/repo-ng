@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -20,6 +20,7 @@
 #include "tcp-bulk-insert-handle.hpp"
 
 #include <boost/asio/ip/v6_only.hpp>
+
 #include <ndn-cxx/util/logger.hpp>
 
 NDN_LOG_INIT(repo.TcpHandle);
@@ -62,9 +63,9 @@ private:
 
 } // namespace detail
 
-TcpBulkInsertHandle::TcpBulkInsertHandle(boost::asio::io_service& ioService,
+TcpBulkInsertHandle::TcpBulkInsertHandle(boost::asio::io_context& io,
                                          RepoStorage& storageHandle)
-  : m_acceptor(ioService)
+  : m_acceptor(io)
   , m_storageHandle(storageHandle)
 {
 }
@@ -72,18 +73,11 @@ TcpBulkInsertHandle::TcpBulkInsertHandle(boost::asio::io_service& ioService,
 void
 TcpBulkInsertHandle::listen(const std::string& host, const std::string& port)
 {
-  ip::tcp::resolver resolver(m_acceptor
-#if BOOST_VERSION >= 107000
-                             .get_executor()
-#else
-                             .get_io_service()
-#endif
-                             );
+  ip::tcp::resolver resolver(m_acceptor.get_executor());
   ip::tcp::resolver::query query(host, port);
 
   ip::tcp::resolver::iterator endpoint = resolver.resolve(query);
   ip::tcp::resolver::iterator end;
-
   if (endpoint == end)
     NDN_THROW(Error("Cannot listen on " + host + " port " + port));
 
@@ -111,13 +105,7 @@ TcpBulkInsertHandle::stop()
 void
 TcpBulkInsertHandle::asyncAccept()
 {
-  auto clientSocket = std::make_shared<ip::tcp::socket>(m_acceptor
-#if BOOST_VERSION >= 107000
-                                                        .get_executor()
-#else
-                                                        .get_io_service()
-#endif
-                                                        );
+  auto clientSocket = std::make_shared<ip::tcp::socket>(m_acceptor.get_executor());
   m_acceptor.async_accept(*clientSocket,
                           std::bind(&TcpBulkInsertHandle::handleAccept, this, _1, clientSocket));
 }

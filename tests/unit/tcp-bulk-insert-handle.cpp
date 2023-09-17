@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022,  Regents of the University of California.
+ * Copyright (c) 2014-2023,  Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -31,11 +31,6 @@ BOOST_AUTO_TEST_SUITE(TcpBulkInsertHandle)
 class TcpClient
 {
 public:
-  TcpClient()
-    : socket(ioService)
-  {
-  }
-
   virtual
   ~TcpClient() = default;
 
@@ -44,7 +39,7 @@ public:
   {
     using namespace boost::asio;
 
-    ip::tcp::resolver resolver(ioService);
+    ip::tcp::resolver resolver(ioCtx);
     ip::tcp::resolver::query query(host, port);
 
     ip::tcp::resolver::iterator endpoint = resolver.resolve(query);
@@ -69,8 +64,8 @@ public:
   }
 
 public:
-  boost::asio::io_service ioService;
-  boost::asio::ip::tcp::socket socket;
+  boost::asio::io_context ioCtx;
+  boost::asio::ip::tcp::socket socket{ioCtx};
 };
 
 template<class Dataset>
@@ -80,8 +75,8 @@ class TcpBulkInsertFixture : public TcpClient,
 {
 public:
   TcpBulkInsertFixture()
-    : scheduler(ioService)
-    , bulkInserter(ioService, *handle)
+    : scheduler(ioCtx)
+    , bulkInserter(ioCtx, *handle)
   {
     guardEvent = scheduler.schedule(2_s, std::bind(&TcpBulkInsertFixture::fail, this, "Test timed out"));
   }
@@ -125,7 +120,7 @@ public:
   void
   fail(const std::string& info)
   {
-    ioService.stop();
+    ioCtx.stop();
     BOOST_FAIL(info);
   }
 
@@ -137,7 +132,7 @@ public:
     socket.close();
 
     bulkInserter.stop();
-    // may be ioService.stop() as well
+    // may be ioCtx.stop() as well
   }
 
 public:
@@ -155,7 +150,7 @@ BOOST_FIXTURE_TEST_CASE_TEMPLATE(BulkInsertAndRead, T, CommonDatasets, TcpBulkIn
   this->start("localhost", "17376");
 
   // actually run the test
-  this->ioService.run();
+  this->ioCtx.run();
 
   // Read (all items should exist)
   for (auto i = this->interests.begin(); i != this->interests.end(); ++i) {

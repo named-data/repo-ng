@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -37,8 +37,7 @@ public:
   };
 
 public:
-  TcpBulkInsertHandle(boost::asio::io_service& ioService,
-                      RepoStorage& storageHandle);
+  TcpBulkInsertHandle(boost::asio::io_context& io, RepoStorage& storageHandle);
 
   void
   listen(const std::string& host, const std::string& port);

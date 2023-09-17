@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -34,7 +34,7 @@
  * The description of command parameter can be found in the function usage().
  */
 
-#include <boost/asio/io_service.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <ndn-cxx/data.hpp>
@@ -49,11 +49,7 @@
 #include <random>
 #include <string>
 
-namespace repo {
-
-using ndn::time::milliseconds;
-
-const milliseconds DEFAULT_TIME_INTERVAL(2000);
+namespace repo::examples {
 
 enum Mode {
   AUTO,
@@ -70,16 +66,6 @@ public:
   };
 
 public:
-  Publisher()
-    : mode(AUTO)
-    , dataPrefix("/example/data")
-    , timeInterval(DEFAULT_TIME_INTERVAL)
-    , duration(0)
-    , m_scheduler(m_face.getIoService())
-    , m_randomDist(200, 1000)
-  {
-  }
-
   void
   run();
 
@@ -94,15 +80,15 @@ public:
 
 public:
   std::ifstream insertStream;
-  Mode mode;
-  ndn::Name dataPrefix;
-  milliseconds timeInterval;
-  milliseconds duration;
+  Mode mode{AUTO};
+  ndn::Name dataPrefix{"/example/data"};
+  ndn::time::milliseconds timeInterval{2000};
+  ndn::time::milliseconds duration{0};
 
 private:
   ndn::Face m_face;
-  ndn::Scheduler m_scheduler;
-  std::uniform_int_distribution<> m_randomDist;
+  ndn::Scheduler m_scheduler{m_face.getIoService()};
+  std::uniform_int_distribution<> m_randomDist{200, 1000};
 };
 
 void
@@ -199,7 +185,7 @@ main(int argc, char* argv[])
       break;
     case 's':
       try {
-        generator.duration = milliseconds(boost::lexical_cast<uint64_t>(optarg));
+        generator.duration = ndn::time::milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
         std::cerr << "-s option should be an integer" << std::endl;
@@ -208,7 +194,7 @@ main(int argc, char* argv[])
       break;
     case 't':
       try {
-        generator.timeInterval = milliseconds(boost::lexical_cast<uint64_t>(optarg));
+        generator.timeInterval = ndn::time::milliseconds(boost::lexical_cast<uint64_t>(optarg));
       }
       catch (const boost::bad_lexical_cast&) {
         std::cerr << "-t option should be an integer" << std::endl;
@@ -234,13 +220,13 @@ main(int argc, char* argv[])
   return 0;
 }
 
-} // namespace repo
+} // namespace repo::examples
 
 int
 main(int argc, char* argv[])
 {
   try {
-    return repo::main(argc, argv);
+    return repo::examples::main(argc, argv);
   }
   catch (const std::exception& e) {
     std::cerr << "ERROR: " << e.what() << std::endl;

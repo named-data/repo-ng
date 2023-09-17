@@ -110,9 +110,7 @@ public:
   ndn::Face readFace;
 };
 
-using Datasets = boost::mpl::vector<BasicDataset,
-                                    FetchByPrefixDataset,
-                                    SamePrefixDataset<10>>;
+using Datasets = boost::mp11::mp_list<BasicDataset, FetchByPrefixDataset, SamePrefixDataset<10>>;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(Read, T, Datasets, BasicInterestReadFixture<T>)
 {

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -32,7 +32,6 @@
 #include <ndn-cxx/util/random.hpp>
 #include <ndn-cxx/util/time.hpp>
 
-#include <boost/mpl/vector.hpp>
 #include <boost/test/unit_test.hpp>
 
 namespace repo::tests {
@@ -272,9 +271,7 @@ Fixture<T>::scheduleDeleteEvent()
   }
 }
 
-using Datasets = boost::mpl::vector<BasicDataset,
-                                    FetchByPrefixDataset,
-                                    SamePrefixDataset<10>>;
+using Datasets = boost::mp11::mp_list<BasicDataset, FetchByPrefixDataset, SamePrefixDataset<10>>;
 
 BOOST_FIXTURE_TEST_CASE_TEMPLATE(InsertDelete, T, Datasets, Fixture<T>)
 {

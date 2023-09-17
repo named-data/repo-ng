@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,8 +22,11 @@
 
 #include "identity-management-fixture.hpp"
 
+#include <list>
+#include <map>
 #include <vector>
-#include <boost/mpl/vector.hpp>
+
+#include <boost/mp11/list.hpp>
 
 namespace repo::tests {
 
@@ -173,10 +176,11 @@ public:
   }
 };
 
-using CommonDatasets = boost::mpl::vector<BasicDataset,
-                                          FetchByPrefixDataset,
-                                          SamePrefixDataset<10>,
-                                          SamePrefixDataset<100>>;
+using CommonDatasets = boost::mp11::mp_list<BasicDataset,
+                                            FetchByPrefixDataset,
+                                            SamePrefixDataset<10>,
+                                            SamePrefixDataset<100>>;
+
 } // namespace repo::tests
 
 #endif // REPO_TESTS_DATASET_FIXTURES_HPP

@@ -89,3 +89,9 @@ def build(bld):
             name='systemd-units',
             source='systemd/repo-ng.service.in',
             target='systemd/repo-ng.service')
+
+def dist(ctx):
+    ctx.algo = 'tar.xz'
+
+def distcheck(ctx):
+    ctx.algo = 'tar.xz'

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -29,7 +29,7 @@ class RepoCommand : boost::noncopyable
 {
 public:
   /**
-   * \brief Represents an error in RepoCommandParameters
+   * \brief Represents an error in RepoCommandParameter.
    */
   class ArgumentError : public std::invalid_argument
   {
@@ -37,15 +37,13 @@ public:
     using std::invalid_argument::invalid_argument;
   };
 
-  virtual
-  ~RepoCommand() = default;
-
   class FieldValidator
   {
   public:
     FieldValidator();
 
-    /** \brief declare a required field
+    /**
+     * \brief Declare a required field.
      */
     FieldValidator&
     required(RepoParameterField field)
@@ -54,7 +52,8 @@ public:
       return *this;
     }
 
-    /** \brief declare an optional field
+    /**
+     * \brief Declare an optional field.
      */
     FieldValidator&
     optional(RepoParameterField field)
@@ -78,36 +77,39 @@ public:
   void
   validateRequest(const RepoCommandParameter& parameters);
 
+protected:
+  ~RepoCommand() = default;
+
 private:
   virtual void
   check(const RepoCommandParameter& parameters) const
   {
   }
 
-public:
+protected:
   FieldValidator m_requestValidator;
 };
 
-class InsertCommand : public RepoCommand
+class InsertCommand final : public RepoCommand
 {
 public:
   InsertCommand();
 };
 
-class InsertCheckCommand : public RepoCommand
+class InsertCheckCommand final : public RepoCommand
 {
 public:
   InsertCheckCommand();
 };
 
-class DeleteCommand : public RepoCommand
+class DeleteCommand final : public RepoCommand
 {
 public:
   DeleteCommand();
 
 private:
   void
-  check(const RepoCommandParameter& parameters) const override;
+  check(const RepoCommandParameter& parameters) const final;
 };
 
 } // namespace repo

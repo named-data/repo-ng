@@ -31,9 +31,6 @@ BOOST_AUTO_TEST_SUITE(TcpBulkInsertHandle)
 class TcpClient
 {
 public:
-  virtual
-  ~TcpClient() = default;
-
   void
   start(const std::string& host, const std::string& port)
   {
@@ -59,7 +56,6 @@ public:
   {
     if (error) {
       BOOST_FAIL("TCP connection aborted");
-      return;
     }
   }
 
@@ -81,8 +77,8 @@ public:
     guardEvent = scheduler.schedule(2_s, std::bind(&TcpBulkInsertFixture::fail, this, "Test timed out"));
   }
 
-  virtual void
-  onSuccessfullConnect(const boost::system::error_code& error)
+  void
+  onSuccessfullConnect(const boost::system::error_code& error) override
   {
     TcpClient::onSuccessfullConnect(error);
 

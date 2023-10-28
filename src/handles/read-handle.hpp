@@ -31,10 +31,10 @@ namespace repo {
 
 class ReadHandle : public noncopyable
 {
-
 public:
   using DataPrefixRegistrationCallback = std::function<void(const ndn::Name&)>;
   using DataPrefixUnregistrationCallback = std::function<void(const ndn::Name&)>;
+
   struct RegisteredDataPrefix
   {
     ndn::RegisteredPrefixHandle hdl;

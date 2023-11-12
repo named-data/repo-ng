@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2023, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -30,15 +30,19 @@ namespace repo::tests {
 class CommandFixture : public virtual IdentityManagementFixture
 {
 protected:
-  CommandFixture();
+  CommandFixture()
+  {
+    addIdentity("/ndn/test/repo");
+    saveIdentityCertificate("/ndn/test/repo", "tests/integrated/insert-delete-test.cert");
+    validator.load("tests/integrated/insert-delete-validator-config.conf");
+  }
 
 protected:
   Face repoFace;
-  Scheduler scheduler;
-  ndn::KeyChain& keyChain;
-  ndn::mgmt::Dispatcher dispatcher;
+  Scheduler scheduler{repoFace.getIoContext()};
+  ndn::mgmt::Dispatcher dispatcher{repoFace, m_keyChain};
   /// \todo #4091 switch to ValidatorPolicyConf and load insert-delete-validator-config.conf
-  ndn::security::ValidatorConfig validator;
+  ndn::security::ValidatorConfig validator{repoFace};
 };
 
 } // namespace repo::tests

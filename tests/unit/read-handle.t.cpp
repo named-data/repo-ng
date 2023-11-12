@@ -44,7 +44,7 @@ class Fixture : public RepoStorageFixture
 public:
   Fixture()
     : face({true, true})
-    , scheduler(face.getIoService())
+    , scheduler(face.getIoContext())
     , subsetLength(1)
     , dataPrefix("/ndn/test/prefix")
     , identity("/ndn/test/identity")

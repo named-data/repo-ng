@@ -38,15 +38,15 @@ class BasicInterestReadFixture : public RepoStorageFixture, public Dataset
 {
 public:
   BasicInterestReadFixture()
-    : scheduler(repoFace.getIoService())
+    : scheduler(repoFace.getIoContext())
     , readHandle(repoFace, *handle, 0)
-    , readFace(repoFace.getIoService())
+    , readFace(repoFace.getIoContext())
   {
   }
 
   ~BasicInterestReadFixture()
   {
-    repoFace.getIoService().stop();
+    repoFace.getIoContext().stop();
   }
 
   void

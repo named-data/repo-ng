@@ -55,10 +55,6 @@ private:
   void
   asyncAccept();
 
-  void
-  handleAccept(const boost::system::error_code& error,
-               const std::shared_ptr<boost::asio::ip::tcp::socket>& socket);
-
 private:
   boost::asio::ip::tcp::acceptor m_acceptor;
   boost::asio::ip::tcp::endpoint m_localEndpoint;

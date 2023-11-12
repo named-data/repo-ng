@@ -50,9 +50,9 @@ public:
   Fixture()
     : writeHandle(repoFace, *handle, dispatcher, scheduler, validator)
     , deleteHandle(repoFace, *handle, dispatcher, scheduler, validator)
-    , insertFace(repoFace.getIoService())
-    , deleteFace(repoFace.getIoService())
-    , signer(keyChain)
+    , insertFace(repoFace.getIoContext())
+    , deleteFace(repoFace.getIoContext())
+    , signer(m_keyChain)
   {
     Name cmdPrefix("/repo/command");
     repoFace.registerPrefix(cmdPrefix, nullptr,
@@ -114,11 +114,11 @@ template<class T>
 void
 Fixture<T>::onInsertInterest(const Interest& interest)
 {
-  Data data(Name(interest.getName()));
+  Data data(interest.getName());
   data.setContent(CONTENT);
-  data.setFreshnessPeriod(0_ms);
-  keyChain.sign(data);
+  m_keyChain.sign(data);
   insertFace.put(data);
+
   auto eventIt = insertEvents.find(interest.getName());
   if (eventIt != insertEvents.end()) {
     eventIt->second.cancel();

@@ -87,7 +87,7 @@ public:
 
 private:
   ndn::Face m_face;
-  ndn::Scheduler m_scheduler{m_face.getIoService()};
+  ndn::Scheduler m_scheduler{m_face.getIoContext()};
   std::uniform_int_distribution<> m_randomDist{200, 1000};
 };
 
@@ -118,7 +118,7 @@ void
 Publisher::generateFromFile()
 {
   if (insertStream.eof()) {
-    m_face.getIoService().stop();
+    m_face.getIoContext().stop();
     return;
   }
 

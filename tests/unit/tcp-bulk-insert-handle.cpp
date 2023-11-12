@@ -18,10 +18,11 @@
  */
 
 #include "handles/tcp-bulk-insert-handle.hpp"
-#include "storage/sqlite-storage.hpp"
+
 #include "../repo-storage-fixture.hpp"
 #include "../dataset-fixtures.hpp"
 
+#include <boost/asio/ip/tcp.hpp>
 #include <boost/test/unit_test.hpp>
 
 namespace repo::tests {
@@ -34,28 +35,21 @@ public:
   void
   start(const std::string& host, const std::string& port)
   {
-    using namespace boost::asio;
-
-    ip::tcp::resolver resolver(ioCtx);
-    ip::tcp::resolver::query query(host, port);
-
-    ip::tcp::resolver::iterator endpoint = resolver.resolve(query);
-    ip::tcp::resolver::iterator end;
-
-    if (endpoint == end)
+    boost::asio::ip::tcp::resolver resolver(ioCtx);
+    boost::system::error_code ec;
+    auto results = resolver.resolve(host, port, ec);
+    if (ec) {
       BOOST_FAIL("Cannot resolve [" + host + ":" + port + "]");
+    }
 
-    ip::tcp::endpoint serverEndpoint = *endpoint;
-
-    socket.async_connect(serverEndpoint,
-                         std::bind(&TcpClient::onSuccessfullConnect, this, _1));
+    socket.async_connect(*results.begin(), std::bind(&TcpClient::handleConnect, this, _1));
   }
 
   virtual void
-  onSuccessfullConnect(const boost::system::error_code& error)
+  handleConnect(const boost::system::error_code& error)
   {
     if (error) {
-      BOOST_FAIL("TCP connection aborted");
+      BOOST_FAIL("TCP connection failed");
     }
   }
 
@@ -78,9 +72,9 @@ public:
   }
 
   void
-  onSuccessfullConnect(const boost::system::error_code& error) override
+  handleConnect(const boost::system::error_code& error) override
   {
-    TcpClient::onSuccessfullConnect(error);
+    TcpClient::handleConnect(error);
 
     // This value may need to be adjusted if some dataset exceeds 100k
     socket.set_option(boost::asio::socket_base::send_buffer_size(100000));

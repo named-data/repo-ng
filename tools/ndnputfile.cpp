@@ -72,7 +72,7 @@ public:
     , timeout(0)
     , insertStream(nullptr)
     , isVerbose(false)
-    , m_scheduler(m_face.getIoService())
+    , m_scheduler(m_face.getIoContext())
     , m_timestampVersion(toUnixTimestamp(system_clock::now()).count())
     , m_processId(0)
     , m_checkPeriod(DEFAULT_CHECK_PERIOD)
@@ -109,9 +109,6 @@ private:
 
   void
   onRegisterFailed(const ndn::Name& prefix, const std::string& reason);
-
-  void
-  stopProcess();
 
   void
   signData(ndn::Data& data);
@@ -222,7 +219,7 @@ NdnPutFile::run()
                            bind(&NdnPutFile::onRegisterFailed, this, _1, _2));
 
   if (hasTimeout)
-    m_scheduler.schedule(timeout, [this] { stopProcess(); });
+    m_scheduler.schedule(timeout, [this] { m_face.getIoContext().stop(); });
 
   m_face.processEvents();
 }
@@ -349,12 +346,6 @@ NdnPutFile::onRegisterFailed(const ndn::Name& prefix, const std::string& reason)
 }
 
 void
-NdnPutFile::stopProcess()
-{
-  m_face.getIoService().stop();
-}
-
-void
 NdnPutFile::signData(ndn::Data& data)
 {
   if (useDigestSha256) {
@@ -393,7 +384,7 @@ NdnPutFile::onCheckCommandResponse(const ndn::Interest&, const ndn::Data& data)
 
     if (isSingle) {
       if (insertCount == 1) {
-        m_face.getIoService().stop();
+        m_face.getIoContext().stop();
         return;
       }
     }
@@ -401,7 +392,7 @@ NdnPutFile::onCheckCommandResponse(const ndn::Interest&, const ndn::Data& data)
     // write operation has been finished
 
     if (insertCount == m_currentSegmentNo) {
-      m_face.getIoService().stop();
+      m_face.getIoContext().stop();
       return;
     }
   }

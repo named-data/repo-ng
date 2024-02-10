@@ -7,6 +7,7 @@ APT_PKGS=(
     libboost-date-time-dev
     libboost-dev
     libboost-filesystem-dev
+    libboost-iostreams-dev
     libboost-log-dev
     libboost-program-options-dev
     libboost-stacktrace-dev

@@ -10,9 +10,11 @@
 To build in a terminal, change to the directory containing the repo-ng repository.
 Then enter:
 
-    ./waf configure
-    ./waf
-    sudo ./waf install
+```shell
+./waf configure
+./waf
+sudo ./waf install
+```
 
 This builds and installs `ndn-repo-ng` and related tools.
 

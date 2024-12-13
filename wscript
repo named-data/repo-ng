@@ -39,7 +39,7 @@ def configure(conf):
 
     conf.check_sqlite3()
 
-    conf.check_boost(lib='filesystem program_options', mt=True)
+    conf.check_boost(lib='program_options', mt=True)
 
     if conf.env.WITH_TESTS:
         conf.check_boost(lib='unit_test_framework', mt=True, uselib_store='BOOST_TESTS')

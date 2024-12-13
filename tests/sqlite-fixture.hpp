@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2024, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -22,26 +22,22 @@
 
 #include "storage/sqlite-storage.hpp"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace repo::tests {
 
 class SqliteFixture
 {
 public:
-  SqliteFixture()
-    : handle(new SqliteStorage("unittestdb"))
-  {
-  }
-
   ~SqliteFixture()
   {
-    delete handle;
-    boost::filesystem::remove_all(boost::filesystem::path("unittestdb"));
+    handle.reset();
+    std::error_code ec;
+    std::filesystem::remove_all(std::filesystem::path("unittestdb"), ec);
   }
 
 public:
-  SqliteStorage* handle;
+  std::unique_ptr<SqliteStorage> handle = std::make_unique<SqliteStorage>("unittestdb");
 };
 
 } // namespace repo::tests

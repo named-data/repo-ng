@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2019, Regents of the University of California.
+ * Copyright (c) 2014-2024, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -18,15 +18,12 @@
  */
 
 #include "sqlite-storage.hpp"
-#include "config.hpp"
 
+#include <ndn-cxx/util/logger.hpp>
 #include <ndn-cxx/util/sha256.hpp>
 #include <ndn-cxx/util/sqlite3-statement.hpp>
 
-#include <boost/filesystem.hpp>
-#include <istream>
-
-#include <ndn-cxx/util/logger.hpp>
+#include <filesystem>
 
 namespace repo {
 
@@ -35,24 +32,21 @@ NDN_LOG_INIT(repo.SqliteStorage);
 SqliteStorage::SqliteStorage(const std::string& dbPath)
 {
   if (dbPath.empty()) {
-    m_dbPath = std::string("ndn_repo.db");
-    NDN_LOG_DEBUG("Create db file in local location [" << m_dbPath << "]. " );
-    NDN_LOG_DEBUG("You can assign the path using -d option" );
+    m_dbPath = "ndn_repo.db";
   }
   else {
-    boost::filesystem::path fsPath(dbPath);
-    boost::filesystem::file_status fsPathStatus = boost::filesystem::status(fsPath);
-    if (!boost::filesystem::is_directory(fsPathStatus)) {
-      if (!boost::filesystem::create_directory(boost::filesystem::path(fsPath))) {
-        NDN_THROW(Error("Folder '" + dbPath + "' does not exists and cannot be created"));
+    std::filesystem::path fsPath(dbPath);
+    if (!std::filesystem::is_directory(fsPath)) {
+      if (!std::filesystem::create_directory(fsPath)) {
+        NDN_THROW(Error("Directory '" + dbPath + "' does not exists and cannot be created"));
       }
     }
-
     m_dbPath = dbPath + "/ndn_repo.db";
   }
+
+  NDN_LOG_DEBUG("Using database file " << m_dbPath);
   initializeRepo();
 }
-
 
 void
 SqliteStorage::initializeRepo()
@@ -95,7 +89,7 @@ SqliteStorage::insert(const Data& data)
   Name name = data.getFullName(); // store the full name
   ndn::util::Sqlite3Statement stmt(m_db, "INSERT INTO NDN_REPO_V2 (name, data) VALUES (?, ?);");
 
-  //Insert
+  // Insert
   // Bind NULL to name value in NDN_REPO_V2 when initialize result.
   auto result = sqlite3_bind_null(stmt, 1);
   if (result == SQLITE_OK) {
@@ -106,7 +100,6 @@ SqliteStorage::insert(const Data& data)
     result = stmt.bind(2, data.wireEncode(), SQLITE_STATIC);
   }
 
-  int id = 0;
   if (result == SQLITE_OK) {
     int rc = 0;
     rc = stmt.step();
@@ -115,12 +108,11 @@ SqliteStorage::insert(const Data& data)
       NDN_THROW(Error("Insert failed"));
     }
     sqlite3_reset(stmt);
-    id = sqlite3_last_insert_rowid(m_db);
+    return sqlite3_last_insert_rowid(m_db);
   }
   else {
-    NDN_THROW(Error("Some error with insert"));
+    NDN_THROW(Error("Database insert failure (code: " + std::to_string(result)));
   }
-  return id;
 }
 
 bool
@@ -250,7 +242,7 @@ SqliteStorage::forEach(const std::function<void(const Name&)>& f)
       break;
     }
     else {
-      NDN_THROW(Error("Database query failure (code: " + ndn::to_string(rc)));
+      NDN_THROW(Error("Database query failure (code: " + std::to_string(rc)));
     }
   }
 }
@@ -266,8 +258,7 @@ SqliteStorage::size()
     NDN_THROW(Error("Database query failure"));
   }
 
-  uint64_t nData = stmt.getInt(0);
-  return nData;
+  return stmt.getInt(0);
 }
 
 } // namespace repo

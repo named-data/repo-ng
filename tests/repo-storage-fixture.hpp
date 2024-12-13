@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2018-2022, Regents of the University of California.
+ * Copyright (c) 2018-2024, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -23,27 +23,22 @@
 #include "storage/repo-storage.hpp"
 #include "storage/sqlite-storage.hpp"
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace repo::tests {
 
 class RepoStorageFixture
 {
 public:
-  RepoStorageFixture()
-    : store(std::make_shared<SqliteStorage>("unittestdb"))
-    , handle(std::make_shared<RepoStorage>(*store))
-  {
-  }
-
   ~RepoStorageFixture()
   {
-    boost::filesystem::remove_all(boost::filesystem::path("unittestdb"));
+    std::error_code ec;
+    std::filesystem::remove_all(std::filesystem::path("unittestdb"), ec);
   }
 
 public:
-  std::shared_ptr<Storage> store;
-  std::shared_ptr<RepoStorage> handle;
+  std::shared_ptr<Storage> store = std::make_shared<SqliteStorage>("unittestdb");
+  std::shared_ptr<RepoStorage> handle = std::make_shared<RepoStorage>(*store);
 };
 
 } // namespace repo::tests

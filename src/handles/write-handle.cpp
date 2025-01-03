@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2023, Regents of the University of California.
+ * Copyright (c) 2014-2025, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -53,11 +53,11 @@ WriteHandle::deleteProcess(ProcessId processId)
 }
 
 void
-WriteHandle::handleInsertCommand(const Name& prefix, const Interest& interest,
-                                 const ndn::mgmt::ControlParameters& params,
+WriteHandle::handleInsertCommand(const Name&, const Interest& interest,
+                                 const ndn::mgmt::ControlParametersBase& params,
                                  const ndn::mgmt::CommandContinuation& done)
 {
-  auto& repoParam = dynamic_cast<RepoCommandParameter&>(const_cast<ndn::mgmt::ControlParameters&>(params));
+  const auto& repoParam = dynamic_cast<const RepoCommandParameter&>(params);
 
   if (repoParam.hasStartBlockId() || repoParam.hasEndBlockId()) {
     processSegmentedInsertCommand(interest, repoParam, done);
@@ -79,7 +79,7 @@ WriteHandle::onData(const Interest& interest, const Data& data, ProcessId proces
 }
 
 void
-WriteHandle::onDataValidated(const Interest& interest, const Data& data, ProcessId processId)
+WriteHandle::onDataValidated(const Interest&, const Data& data, ProcessId processId)
 {
   if (m_processes.count(processId) == 0) {
     return;
@@ -97,14 +97,14 @@ WriteHandle::onDataValidated(const Interest& interest, const Data& data, Process
 }
 
 void
-WriteHandle::onTimeout(const Interest& interest, ProcessId processId)
+WriteHandle::onTimeout(const Interest&, ProcessId processId)
 {
   NDN_LOG_DEBUG("Timeout" << std::endl);
   m_processes.erase(processId);
 }
 
 void
-WriteHandle::processSingleInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+WriteHandle::processSingleInsertCommand(const Interest&, const RepoCommandParameter& parameter,
                                         const ndn::mgmt::CommandContinuation& done)
 {
   ProcessId processId = ndn::random::generateWord64();
@@ -220,7 +220,7 @@ WriteHandle::onSegmentTimeout(ndn::SegmentFetcher& fetcher, ProcessId processId)
 }
 
 void
-WriteHandle::processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+WriteHandle::processSegmentedInsertCommand(const Interest&, const RepoCommandParameter& parameter,
                                            const ndn::mgmt::CommandContinuation& done)
 {
   if (parameter.hasEndBlockId()) {
@@ -268,8 +268,8 @@ WriteHandle::processSegmentedInsertCommand(const Interest& interest, RepoCommand
 }
 
 void
-WriteHandle::handleCheckCommand(const Name& prefix, const Interest& interest,
-                                const ndn::mgmt::ControlParameters& params,
+WriteHandle::handleCheckCommand(const Name&, const Interest&,
+                                const ndn::mgmt::ControlParametersBase& params,
                                 const ndn::mgmt::CommandContinuation& done)
 {
   const auto& repoParameter = dynamic_cast<const RepoCommandParameter&>(params);

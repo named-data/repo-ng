@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2025, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -38,11 +38,11 @@ DeleteHandle::DeleteHandle(Face& face, RepoStorage& storageHandle,
 }
 
 void
-DeleteHandle::handleDeleteCommand(const Name& prefix, const Interest& interest,
-                                  const ndn::mgmt::ControlParameters& parameter,
+DeleteHandle::handleDeleteCommand(const Name&, const Interest& interest,
+                                  const ndn::mgmt::ControlParametersBase& parameter,
                                   const ndn::mgmt::CommandContinuation& done)
 {
-  const RepoCommandParameter& repoParameter = dynamic_cast<const RepoCommandParameter&>(parameter);
+  const auto& repoParameter = dynamic_cast<const RepoCommandParameter&>(parameter);
 
   if (!repoParameter.hasStartBlockId() && !repoParameter.hasEndBlockId()) {
     processSingleDeleteCommand(interest, repoParameter, done);
@@ -53,7 +53,7 @@ DeleteHandle::handleDeleteCommand(const Name& prefix, const Interest& interest,
 }
 
 RepoCommandResponse
-DeleteHandle::positiveReply(const Interest& interest, const RepoCommandParameter& parameter,
+DeleteHandle::positiveReply(const Interest&, const RepoCommandParameter& parameter,
                             uint64_t statusCode, uint64_t nDeletedData) const
 {
   RepoCommandResponse response(statusCode, "Deletion Successful");
@@ -72,7 +72,7 @@ DeleteHandle::positiveReply(const Interest& interest, const RepoCommandParameter
 }
 
 RepoCommandResponse
-DeleteHandle::negativeReply(const Interest& interest, uint64_t statusCode,
+DeleteHandle::negativeReply(const Interest&, uint64_t statusCode,
                             const std::string& text) const
 {
   RepoCommandResponse response(statusCode, text);
@@ -110,7 +110,7 @@ DeleteHandle::processSegmentDeleteCommand(const Interest& interest, const RepoCo
     }
   }
 
-  //All the data deleted, return 200
+  // All the data deleted, return 200
   done(positiveReply(interest, parameter, 200, nDeletedData));
 }
 

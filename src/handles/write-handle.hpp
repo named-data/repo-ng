@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2023, Regents of the University of California.
+ * Copyright (c) 2014-2025, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -93,7 +93,7 @@ private: // insert command
    */
   void
   handleInsertCommand(const Name& prefix, const Interest& interest,
-                      const ndn::mgmt::ControlParameters& parameters,
+                      const ndn::mgmt::ControlParametersBase& parameters,
                       const ndn::mgmt::CommandContinuation& done);
 
   void
@@ -116,7 +116,7 @@ private: // single data fetching
   onTimeout(const Interest& interest, ProcessId processId);
 
   void
-  processSingleInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+  processSingleInsertCommand(const Interest& interest, const RepoCommandParameter& parameter,
                              const ndn::mgmt::CommandContinuation& done);
 
 private:  // segmented data fetching
@@ -139,7 +139,7 @@ private:  // segmented data fetching
   segInit(ProcessId processId, const RepoCommandParameter& parameter);
 
   void
-  processSegmentedInsertCommand(const Interest& interest, RepoCommandParameter& parameter,
+  processSegmentedInsertCommand(const Interest& interest, const RepoCommandParameter& parameter,
                                 const ndn::mgmt::CommandContinuation& done);
 
 private:
@@ -159,7 +159,7 @@ private: // insert state check command
 
   void
   handleCheckCommand(const Name& prefix, const Interest& interest,
-                     const ndn::mgmt::ControlParameters& parameters,
+                     const ndn::mgmt::ControlParametersBase& parameters,
                      const ndn::mgmt::CommandContinuation& done);
 
   void

@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2022, Regents of the University of California.
+ * Copyright (c) 2014-2025, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -24,7 +24,7 @@
 #include "repo-tlv.hpp"
 
 #include <ndn-cxx/encoding/encoding-buffer.hpp>
-#include <ndn-cxx/mgmt/control-parameters.hpp>
+#include <ndn-cxx/mgmt/control-parameters-base.hpp>
 
 namespace repo {
 
@@ -49,7 +49,7 @@ const std::string REPO_PARAMETER_FIELD[REPO_PARAMETER_UBOUND] = {
  * @brief Class defining abstraction of parameter of command for NDN Repo Protocol
  * @sa link https://redmine.named-data.net/projects/repo-ng/wiki/Repo_Protocol_Specification#RepoCommandParameter
  */
-class RepoCommandParameter : public ndn::mgmt::ControlParameters
+class RepoCommandParameter : public ndn::mgmt::ControlParametersBase
 {
 public:
   class Error : public tlv::Error

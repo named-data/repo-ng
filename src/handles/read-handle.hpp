@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2023, Regents of the University of California.
+ * Copyright (c) 2014-2025, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -21,11 +21,7 @@
 #define REPO_HANDLES_READ_HANDLE_HPP
 
 #include "common.hpp"
-
 #include "storage/repo-storage.hpp"
-#include "repo-command-response.hpp"
-#include "repo-command-parameter.hpp"
-#include "repo-command.hpp"
 
 namespace repo {
 
@@ -59,9 +55,6 @@ PUBLIC_WITH_TESTS_ELSE_PRIVATE:
   void
   onDataDeleted(const Name& name);
 
-  /**
-   * @param after Do something after successfully registering the data prefix
-   */
   void
   onDataInserted(const Name& name);
 

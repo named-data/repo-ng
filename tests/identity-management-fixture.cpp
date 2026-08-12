@@ -1,6 +1,6 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
 /*
- * Copyright (c) 2014-2024, Regents of the University of California.
+ * Copyright (c) 2014-2026, Regents of the University of California.
  *
  * This file is part of NDN repo-ng (Next generation of NDN repository).
  * See AUTHORS.md for complete list of repo-ng authors and contributors.
@@ -26,6 +26,8 @@
 #include <ndn-cxx/util/io.hpp>
 
 #include <filesystem>
+#include <fstream>
+#include <system_error>
 
 namespace repo::tests {
 
@@ -71,7 +73,8 @@ IdentityManagementFixture::saveIdentityCertificate(const Name& identity, const s
 
   m_certFiles.push_back(filename);
   try {
-    ndn::io::save(cert, filename);
+    std::ofstream file(filename);
+    ndn::io::saveTlv(cert, file, ndn::io::BASE64);
     return true;
   }
   catch (const ndn::io::Error&) {
